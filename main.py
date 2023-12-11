@@ -8,11 +8,10 @@ import image_maker
 import json
 import asyncio
 import logging
-import config
 import utils
 import kb
 
-bot = Bot(token=config.BOT_TOKEN, parse_mode=ParseMode.HTML)
+bot = Bot(token="YOUR_BOT_TOKEN", parse_mode=ParseMode.HTML)
 dp = Dispatcher(storage=MemoryStorage())
 
 
