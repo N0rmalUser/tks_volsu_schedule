@@ -1,17 +1,21 @@
-from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton, ReplyKeyboardMarkup, \
-    ReplyKeyboardRemove
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton, ReplyKeyboardMarkup
 
 student_menu = [
     [
-        KeyboardButton(text="Изменить данные"),
+        KeyboardButton(text="Расписание на сегодня"),
+    ], [
+        KeyboardButton(text="Изменить оформление")
     ]
 ]
 teacher_menu = [
     [
-        KeyboardButton(text="Расписание групп"),
+        KeyboardButton(text="Расписание на сегодня"),
+    ], [
+        KeyboardButton(text="Группы"),
+        KeyboardButton(text="Преподаватели"),
         KeyboardButton(text="Кабинеты")
     ], [
-        KeyboardButton(text="Изменить данные"),
+        KeyboardButton(text="Изменить оформление")
     ]
 ]
 rooms = [
@@ -76,8 +80,9 @@ teachers = [
         InlineKeyboardButton(text="Стебенькова Н.А.", callback_data="teacher-Стебенькова Н.А."),
     ], [
         InlineKeyboardButton(text="Тюхтяев Д.А.", callback_data="teacher-Тюхтяев Д.А."),
-        InlineKeyboardButton(text="Чадаев Д.И.", callback_data="teacher-Чадаев Д.И."),
+        InlineKeyboardButton(text="Стебеньков А.М.", callback_data="teacher-Стебеньков А.М."),
     ], [
+        InlineKeyboardButton(text="Чадаев Д.И.", callback_data="teacher-Чадаев Д.И."),
         InlineKeyboardButton(text="Черных С.В.", callback_data="teacher-Черных С.В."),
     ]
 ]
@@ -167,10 +172,16 @@ room_week1 = [
         InlineKeyboardButton(text="Чт", callback_data="day/room/1/4"),
         InlineKeyboardButton(text="Пт", callback_data="day/room/1/5"),
         InlineKeyboardButton(text="Сб", callback_data="day/room/1/6"),
-    ],
-    [
+    ], [
         InlineKeyboardButton(text="✅ Знаменатель", callback_data="ignore"),
         InlineKeyboardButton(text="Числитель ➡️", callback_data="week-room-0"),
+    ]
+]
+view = [
+    [
+        InlineKeyboardButton(text="Картинка", callback_data="view_image")
+    ], [
+        InlineKeyboardButton(text="Текст", callback_data="view_text")
     ]
 ]
 group_week0 = InlineKeyboardMarkup(inline_keyboard=group_week0)
@@ -185,6 +196,8 @@ room_week1 = InlineKeyboardMarkup(inline_keyboard=room_week1)
 rooms = InlineKeyboardMarkup(inline_keyboard=rooms)
 groups = InlineKeyboardMarkup(inline_keyboard=groups)
 teachers = InlineKeyboardMarkup(inline_keyboard=teachers)
+
+view = InlineKeyboardMarkup(inline_keyboard=view)
 
 student_menu = ReplyKeyboardMarkup(keyboard=student_menu, resize_keyboard=True)
 teacher_menu = ReplyKeyboardMarkup(keyboard=teacher_menu, resize_keyboard=True)

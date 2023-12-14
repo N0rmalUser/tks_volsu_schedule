@@ -4,30 +4,39 @@ import re
 import json
 
 
-# Функция для извлечения и форматирования расписания из одного файла
 def extract_and_format_schedule(docx_file):
     doc = Document(docx_file)
     table = doc.tables[0]
-    schedule = {
-        "Числитель": {},
-        "Знаменатель": {}
-    }
+    schedule = {"Числитель": {},"Знаменатель": {}}
     temp_schedule = {}
     position_pattern = r'(\,? доцент|\,? старший преподаватель|\,? ассистент|\,? профессор)'
+    auditorium_pattern = r'Ауд\..+'
 
     for row in table.rows[1:]:
         day, time, info = row.cells[:3]
 
         parts = re.split(r'(?<=\)),', info.text)
         subject = parts[0].strip()
-        teacher_and_classroom = parts[1].split(",") if len(parts) > 1 else ["", ""]
-        teacher = re.sub(position_pattern, '', teacher_and_classroom[0]).strip()
-        classroom = teacher_and_classroom[1].strip() if len(teacher_and_classroom) > 1 else ""
-        classroom = classroom.replace('Ауд. ', '').strip()
+
+        if len(parts) > 1 and parts[1].strip():
+            auditorium_match = re.search(auditorium_pattern, parts[1])
+            if auditorium_match:
+                auditorium = auditorium_match.group()
+                teachers_text = parts[1].replace(auditorium, '')
+            else:
+                auditorium = ''
+                teachers_text = ''
+            teachers_text = re.sub(position_pattern, '', teachers_text)
+            teachers = [teacher.strip() for teacher in teachers_text.split(',') if teacher.strip()]
+            teacher = ', '.join(teachers)
+            classroom = auditorium.replace('Ауд.', '').replace(" ", "").replace("Спортивныйзал", "")
+        else:
+            teacher = ''
+            classroom = ''
+
         formatted_time = time.text.split('-')[0]
         key = (day.text, formatted_time)
 
-        # Проверяем, что есть информация о предмете, преподавателе и аудитории
         if subject.strip() and teacher.strip() and classroom.strip():
             schedule_entry = {
                 "Предмет": subject,
@@ -50,7 +59,7 @@ def extract_and_format_schedule(docx_file):
     return schedule
 
 
-directory_path = 'C:\\Users\\normal\\Desktop\\raspisanie\\files'
+directory_path = 'C:\\Users\\normal\\Desktop\\raspisanie\\подготовка\\расписания'
 all_schedules = {}
 
 for filename in os.listdir(directory_path):
