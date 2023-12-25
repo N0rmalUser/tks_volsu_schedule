@@ -28,7 +28,7 @@ def convert_schedule_for_groups(original_data):
                 for time, details in times.items():
                     class_info = {
                         "time": time,
-                        "subject": details.get("Предмет", ""),
+                        "discipline": details.get("Предмет", ""),
                         "room": details.get("Аудитория", ""),
                         "teacher": details.get("Преподаватель", "")
                     }
@@ -67,7 +67,7 @@ def convert_schedule_for_teachers_with_merged_days(original_data):
                 for class_key, groups in classes.items():
                     class_info = {
                         "time": class_key[0],
-                        "subject": class_key[1],
+                        "discipline": class_key[1],
                         "room": class_key[2],
                         "group": ', '.join(sorted(set(groups)))  # Remove duplicate groups and sort
                     }
@@ -106,7 +106,7 @@ def convert_schedule_for_rooms_with_group_and_room_merging(original_data):
                 for class_key, groups in classes.items():
                     class_info = {
                         "time": class_key[0],
-                        "subject": class_key[1],
+                        "discipline": class_key[1],
                         "teacher": class_key[2],
                         "group": ', '.join(sorted(set(groups)))  # Remove duplicate groups and sort
                     }
