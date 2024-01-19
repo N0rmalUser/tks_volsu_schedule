@@ -1,8 +1,15 @@
 import json
+from typing import List, Dict, Any
+
 import data.config
 
 
-def transform_schedule(input_schedule):
+def transform_schedule(input_schedule: dict) -> dict[str, list[Any] | dict[Any, Any] | list[dict[str, Any]]]:
+    """
+    Extracts the teachers schedule from the groups schedule and adds it to the end of the schedule    
+    :param input_schedule: :dict: schedule in the json format
+    :return:  transformed schedule
+    """
     transformed = {
         "groups": [],
         "teachers": {}
@@ -49,10 +56,16 @@ def transform_schedule(input_schedule):
     return transformed
 
 
-def merge_schedules(existing_schedule, additional_schedule):
-    existing_schedule_dict = {teacher['teacher']: teacher['weeks'] for teacher in existing_schedule}
+def merge_schedules(university_schedule: dict, college_schedule: dict) -> list[dict[str, Any]]:
+    """
+    Add college teachers schedule into university schedule.
+    :param university_schedule:  university schedule in the json format
+    :param college_schedule:  college schedule in the json format
+    :return:  :list: updated university schedule
+    """
+    existing_schedule_dict = {teacher['teacher']: teacher['weeks'] for teacher in university_schedule}
 
-    for teacher in additional_schedule['teachers']:
+    for teacher in college_schedule['teachers']:
         teacher_name = teacher['teacher']
         if teacher_name not in existing_schedule_dict:
             existing_schedule_dict[teacher_name] = teacher['weeks']
@@ -77,7 +90,12 @@ def merge_schedules(existing_schedule, additional_schedule):
     return updated_schedule
 
 
-def transform_to_room_schedule(input_schedule):
+def transform_to_room_schedule(input_schedule: dict) -> list[dict[str, Any]]:
+    """
+    Add rooms schedule into file with groups and teachers schedule.
+    :param input_schedule:  schedule in the json format
+    :return:  :list: updated schedule with rooms
+    """
     room_schedule = {}
     for teacher_schedule in input_schedule['teachers']:
         for week_type, days in teacher_schedule['weeks'].items():
@@ -100,7 +118,7 @@ def transform_to_room_schedule(input_schedule):
     return room_schedule_list
 
 
-directory_path = data.config.SCHEDULE_PATH
+directory_path = data.config.ORIGINAL_SCHEDULES_PATH
 
 with open(directory_path + 'schedule.json', 'r', encoding='utf-8') as file:
     input_data = json.load(file)

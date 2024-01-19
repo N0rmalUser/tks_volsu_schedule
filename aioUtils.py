@@ -11,6 +11,11 @@ from typing import Callable, Dict, Any, Awaitable
 
 
 class ChatTypeFilter(BaseFilter):
+    """
+    A filter that accepts the chat type and returns True or False
+    :param chat_type:  The type of chat to be checked
+    :type chat_type:  str or list
+    """
     def __init__(self, chat_type: Union[str, list]):
         self.chat_type = chat_type
 
@@ -22,6 +27,9 @@ class ChatTypeFilter(BaseFilter):
 
 
 class AntiSpamMiddleware(BaseMiddleware):
+    """
+    A middleware that deletes messages that are sent too often
+    """
     def __init__(self):
         self.users_last_message_time = {}
         self.users_warned = set()
@@ -33,6 +41,13 @@ class AntiSpamMiddleware(BaseMiddleware):
             event: Update,
             data: Dict[str, Any]
     ) -> Any:
+        """
+        Method that is called when a message is received
+        :param handler:  Wrapped handler in middlewares chain
+        :param event:  Incoming event (Subclass of :class:`aiogram.types.base.TelegramObject`)
+        :param data:  Contextual data. Will be mapped to handler arguments
+        :return:  :class:`Any`
+        """
 
         if isinstance(event, Message):
             user = event.from_user
@@ -45,4 +60,3 @@ class AntiSpamMiddleware(BaseMiddleware):
             self.users_last_message_time[user.id] = datetime.now()
             self.users_warned.discard(user.id)
         return await handler(event, data)
-

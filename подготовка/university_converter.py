@@ -21,7 +21,7 @@ def clean_schedule(schedule):
     return schedule
 
 
-directory_path = data.config.SCHEDULE_PATH
+directory_path = data.config.ORIGINAL_SCHEDULES_PATH
 all_schedules = {}
 
 for filename in os.listdir(directory_path):

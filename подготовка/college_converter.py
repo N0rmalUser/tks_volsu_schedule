@@ -28,7 +28,7 @@ def split_subject_info(subject_info):
             subject_info.split('.')[0])
 
 
-directory_path = data.config.SCHEDULE_PATH
+directory_path = data.config.ORIGINAL_SCHEDULES_PATH
 files = [f for f in os.listdir(directory_path) if f.endswith('.xlsx')]
 teachers_schedule = {"teachers": []}
 rooms_schedule = {"rooms": []}

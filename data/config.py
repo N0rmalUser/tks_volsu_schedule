@@ -3,16 +3,14 @@ GROUP_CHAT_ID = -1001966122887
 
 # Ключ для преподавателей
 TEACHER_KEY = "0L3QtSDQu"
-# Время задержки для спама
+# Время задержки для спама (Сколько должно пройти времени между сообщениями для того, чтобы не считаться спамом)
 THROTTLE_TIME = 3
 
-# Путь до папки с расписаниями
-SCHEDULE_PATH = "C:\\Users\\normal\\Desktop\\raspisanie\\подготовка\\расписания\\"
+# Путь до папки с исходниками расписаний
+ORIGINAL_SCHEDULES_PATH = "C:\\Users\\normal\\Desktop\\raspisanie\\подготовка\\расписания\\"
 # Путь до базы данных
 DB_PATH = "C:\\Users\\normal\\Desktop\\raspisanie\\data\\users.db"
-# Путь до "чистых" расписаний
-CLEAN_SCHEDULE_PATH = "C:\\Users\\normal\\Desktop\\raspisanie\\data\\json_schedules\\"
 # Путь до файла с расписанием в формате json
-SCHEDULE = "C:\\Users\\normal\\Desktop\\raspisanie\\data\\combined_schedule.json"
+SCHEDULE_PATH = "C:\\Users\\normal\\Desktop\\raspisanie\\data\\combined_schedule.json"
 
 schedule = None

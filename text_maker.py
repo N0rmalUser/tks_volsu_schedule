@@ -1,11 +1,16 @@
 from data import config
-import utils
+import dbUtils
 
 import re
 
 
 def get_group_schedule(user_id: int) -> str:
-    week, day, group_name = weeks[utils.get_week(user_id)], days[utils.get_day(user_id)], utils.get_group(user_id)
+    """
+    Method for getting schedule for group by user_id from schedule in json format
+    :param user_id:  :type: int
+    :return:  :rtype: str
+    """
+    week, day, group_name = weeks[dbUtils.get_week(user_id)], days[dbUtils.get_day(user_id)], dbUtils.get_group(user_id)
     data = config.schedule
 
     text = header = f'{day}       {week}\n{group_name}\n'
@@ -27,7 +32,12 @@ def get_group_schedule(user_id: int) -> str:
 
 
 def get_teacher_schedule(user_id: int) -> str:
-    week, day, teacher_name = weeks[utils.get_week(user_id)], days[utils.get_day(user_id)], utils.get_teacher(user_id)
+    """
+    Method for getting schedule for teacher by user_id from schedule in json format
+    :param user_id:  :type: int
+    :return:  :rtype: str
+    """
+    week, day, teacher_name = weeks[dbUtils.get_week(user_id)], days[dbUtils.get_day(user_id)], dbUtils.get_teacher(user_id)
     data = config.schedule
 
     text = header = f'{day}       {week}\n{teacher_name}\n'
@@ -49,7 +59,12 @@ def get_teacher_schedule(user_id: int) -> str:
 
 
 def get_room_schedule(user_id: int) -> str:
-    week, day, room_name = weeks[utils.get_week(user_id)], days[utils.get_day(user_id)], rooms[utils.get_room(user_id)]
+    """
+    Method for getting schedule for room by user_id from schedule in json format
+    :param user_id:  :type: int
+    :return:  :rtype: str
+    """
+    week, day, room_name = weeks[dbUtils.get_week(user_id)], days[dbUtils.get_day(user_id)], rooms[dbUtils.get_room(user_id)]
     data = config.schedule
 
     combined_lessons = []
@@ -74,7 +89,12 @@ def get_room_schedule(user_id: int) -> str:
     return f'{header}\n\nИнформация о группе не найдена!'
 
 
-def get_lesson_label(subject: str):
+def get_lesson_label(subject: str) -> str:
+    """
+    Method for getting lesson label by bad label from schedule
+    :param subject:  :type: str
+    :return:  :rtype: str
+    """
     if 'Пр' in subject:
         return 'Практика'
     elif 'пр' in subject:
@@ -107,12 +127,22 @@ def get_lesson_label(subject: str):
         return ''
 
 
-def time_to_minutes(time_str: str):
+def time_to_minutes(time_str: str) -> int:
+    """
+    Method for converting time from string to minutes
+    :param time_str:  :type: str
+    :return:  :rtype: int
+    """
     hours, minutes = map(int, time_str.split(':'))
     return hours * 60 + minutes
 
 
-def get_time_symbol(start_time: str):
+def get_time_symbol(start_time: str) -> str:
+    """
+    Method for getting time symbol by start time
+    :param start_time:  :type: str
+    :return:  :rtype: str
+    """
     hour = int(start_time.split(':')[0])
     if 8 <= hour < 10:
         return '🕣 '
