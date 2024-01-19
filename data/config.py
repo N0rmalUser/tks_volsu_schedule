@@ -1,5 +1,7 @@
 BOT_TOKEN = "6310285588:AAGFIo5qQz8UMhZ4NWFTIJ5ic0Yeochyu2I"
+# ID админской группы в которую будут приходить сообщения о юзеров
 GROUP_CHAT_ID = -1001966122887
+
 
 # Ключ для преподавателей
 TEACHER_KEY = "0L3QtSDQu"

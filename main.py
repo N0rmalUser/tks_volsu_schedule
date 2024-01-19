@@ -87,8 +87,8 @@ async def _admin_handler(msg: Message) -> None:
     /admin command handler. Send message to admin chat. If user already has topic, send message to topic.
     """
     await bot.send_message(msg.from_user.id, "Модератор скоро напишет вам, ожидайте")
-    if dbUtils.get_tracking(msg.from_user.id):
-        await bot.send_message(GROUP_CHAT_ID, message_thread_id=dbUtils.get_topic_id(msg.from_user.id), text="Юзверь просит помощи админа @n0rmal_user")
+    await bot.send_message(GROUP_CHAT_ID, message_thread_id=dbUtils.get_topic_id(msg.from_user.id), text="Юзверь просит помощи админа @n0rmal_user")
+    dbUtils.set_tracking(msg, True)
 
 
 @dp.message(Command("schedule_update"), ChatTypeFilter(chat_type="private"))
