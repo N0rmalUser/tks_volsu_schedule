@@ -1,0 +1,48 @@
+from aiogram import BaseMiddleware
+from aiogram.filters import BaseFilter
+from aiogram.types import Message, Update
+
+from data.config import THROTTLE_TIME
+
+from datetime import datetime, timedelta
+
+from typing import Union
+from typing import Callable, Dict, Any, Awaitable
+
+
+class ChatTypeFilter(BaseFilter):
+    def __init__(self, chat_type: Union[str, list]):
+        self.chat_type = chat_type
+
+    async def __call__(self, message: Message) -> bool:
+        if isinstance(self.chat_type, str):
+            return message.chat.type == self.chat_type
+        else:
+            return message.chat.type in self.chat_type
+
+
+class AntiSpamMiddleware(BaseMiddleware):
+    def __init__(self):
+        self.users_last_message_time = {}
+        self.users_warned = set()
+        self.spam_threshold = timedelta(seconds=THROTTLE_TIME)
+
+    async def __call__(
+            self,
+            handler: Callable[[Update, Dict[str, Any]], Awaitable[Any]],
+            event: Update,
+            data: Dict[str, Any]
+    ) -> Any:
+
+        if isinstance(event, Message):
+            user = event.from_user
+            last_message_time = self.users_last_message_time.get(user.id)
+            if last_message_time and datetime.now() - last_message_time < self.spam_threshold:
+                await event.delete()
+                if user.id not in self.users_warned:
+                    self.users_warned.add(user.id)
+                return
+            self.users_last_message_time[user.id] = datetime.now()
+            self.users_warned.discard(user.id)
+        return await handler(event, data)
+

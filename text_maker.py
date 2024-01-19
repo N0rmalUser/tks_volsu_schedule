@@ -1,10 +1,12 @@
-from data import schedules as sch, utils
+from data import config
+import utils
+
 import re
 
 
-def get_group_schedule(user_id):
+def get_group_schedule(user_id: int) -> str:
     week, day, group_name = weeks[utils.get_week(user_id)], days[utils.get_day(user_id)], utils.get_group(user_id)
-    data = sch.group_json
+    data = config.schedule
 
     text = header = f'{day}       {week}\n{group_name}\n'
     for group in data['groups']:
@@ -24,9 +26,9 @@ def get_group_schedule(user_id):
     return f'{header}\n\nИнформация о группе не найдена!'
 
 
-def get_teacher_schedule(user_id):
+def get_teacher_schedule(user_id: int) -> str:
     week, day, teacher_name = weeks[utils.get_week(user_id)], days[utils.get_day(user_id)], utils.get_teacher(user_id)
-    data = sch.teacher_json
+    data = config.schedule
 
     text = header = f'{day}       {week}\n{teacher_name}\n'
     for teacher in data['teachers']:
@@ -46,18 +48,16 @@ def get_teacher_schedule(user_id):
     return f'{header}\n\nИнформация о преподавателе не найдена!'
 
 
-def get_room_schedule(user_id):
+def get_room_schedule(user_id: int) -> str:
     week, day, room_name = weeks[utils.get_week(user_id)], days[utils.get_day(user_id)], rooms[utils.get_room(user_id)]
-    data = sch.room_json
+    data = config.schedule
 
     combined_lessons = []
     text = header = f'{day}       {week}\n{room_name}\n'
     for room in data['rooms']:
         if room['room'] == room_name or (room['room'].startswith(room_name[:-1]) and room['room'].endswith('М')):
-
             if week not in room['weeks']:
                 return f'{header}\nНа этой неделе пар нет!'
-
             if day not in room['weeks'][week]:
                 return f'{header}\nСегодня пар нет!!'
 
@@ -65,38 +65,54 @@ def get_room_schedule(user_id):
                 lesson['indicator'] = " (а)" if room['room'].endswith('аМ') else " (б)" if room['room'].endswith('бМ') else ""
                 combined_lessons.append(lesson)
 
-            sorted_lessons = sorted(combined_lessons, key=lambda x: time_to_minutes(x['time']))
-            for lesson in sorted_lessons:
-                subject = re.sub(r'\([^)]*\)', '', lesson['subject'])
-                label = get_lesson_label(subject)
-                text += f"\n{get_time_symbol(lesson['time'])}{lesson['time']}{lesson['indicator']}       {label}\n📖 {subject}\n👫 {lesson['group']}\n‍👨‍🏫 {lesson['teacher']}\n"
-            return text
+        sorted_lessons = sorted(combined_lessons, key=lambda x: time_to_minutes(x['time']))
+        for lesson in sorted_lessons:
+            subject = re.sub(r'\([^)]*\)', '', lesson['subject'])
+            label = get_lesson_label(subject)
+            text += f"\n{get_time_symbol(lesson['time'])}{lesson['time']}{lesson['indicator']}       {label}\n📖 {subject}\n👫 {lesson['group']}\n‍👨‍🏫 {lesson['teacher']}\n"
+        return text
     return f'{header}\n\nИнформация о группе не найдена!'
 
 
-def get_lesson_label(subject):
+def get_lesson_label(subject: str):
     if 'Пр' in subject:
         return 'Практика'
     elif 'пр' in subject:
+        return 'Практика'
+    elif 'Пр.' in subject:
+        return 'Практика'
+    elif 'пр.' in subject:
         return 'Практика'
     elif 'Лаб' in subject:
         return 'Лабораторные'
     elif 'лаб' in subject:
         return 'Лабораторные'
+    elif 'Лаб.' in subject:
+        return 'Лабораторные'
+    elif '.' in subject:
+        return 'Лабораторные'
     elif 'Л' in subject:
         return 'Лекция'
     elif 'л' in subject:
         return 'Лекция'
+    elif 'Л.' in subject:
+        return 'Лекция'
+    elif 'л.' in subject:
+        return 'Лекция'
+    elif 'кур/проект' in subject:
+        return 'Курсовой проект'
+    elif 'кур/проек.' in subject:
+        return 'Курсовой проект'
     else:
         return ''
 
 
-def time_to_minutes(time_str):
+def time_to_minutes(time_str: str):
     hours, minutes = map(int, time_str.split(':'))
     return hours * 60 + minutes
 
 
-def get_time_symbol(start_time):
+def get_time_symbol(start_time: str):
     hour = int(start_time.split(':')[0])
     if 8 <= hour < 10:
         return '🕣 '
@@ -117,16 +133,16 @@ def get_time_symbol(start_time):
 
 
 days = {
-    "1": "Понедельник",
-    "2": "Вторник",
-    "3": "Среда",
-    "4": "Четверг",
-    "5": "Пятница",
-    "6": "Суббота"
+    1: "Понедельник",
+    2: "Вторник",
+    3: "Среда",
+    4: "Четверг",
+    5: "Пятница",
+    6: "Суббота"
 }
 weeks = {
-    "0": "Числитель",
-    "1": "Знаменатель"
+    1: "Числитель",
+    2: "Знаменатель"
 }
 rooms = {
     "1-19m": "1-19М",
