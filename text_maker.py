@@ -19,7 +19,7 @@ def get_group_schedule(user_id: int) -> str:
             schedule = group['weeks'].get(week, {}).get(day)
             if not schedule:
                 status = 'На этой неделе пар нет!' if week not in group['weeks'] else 'Сегодня пар нет!'
-                return f'{header}\n{group_name}\n\n{status}'
+                return f'{header}\n{status}'
 
             sorted_lessons = sorted(schedule, key=lambda x: time_to_minutes(x['time']))
 

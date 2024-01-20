@@ -18,17 +18,20 @@ def sql_kit(db=":memory:"):
     :param db:  path to database
     :return:  function result
     """
+
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
             conn = sqlite3.connect(db)
             try:
-                result = func(*args,  **kwargs, _cursor=conn.cursor())
+                result = func(*args, **kwargs, _cursor=conn.cursor())
                 conn.commit()
                 return result
             finally:
                 conn.close()
+
         return wrapper
+
     return decorator
 
 
@@ -46,7 +49,6 @@ def init_db(_cursor):
             username TEXT,
             fullname TEXT,
             topic_id INTEGER,
-            full_name TEXT,
             start_date TEXT,
             last_date TEXT,
             inviter_id INTEGER,
@@ -57,7 +59,7 @@ def init_db(_cursor):
     _cursor.execute("""
         CREATE TABLE IF NOT EXISTS Temp_Data (
             user_id INTEGER PRIMARY KEY,
-            tracking BOOLEAN DEFAULT false,
+            tracking BOOLEAN DEFAULT true,
             week INTEGER,
             day INTEGER,
             teacher_name TEXT,
@@ -153,7 +155,7 @@ def set_user_type(msg: Message, user_type: str, _cursor=None):
             INSERT INTO User_Info(user_id, start_date)
             VALUES(?, ?) ON CONFLICT(user_id) DO UPDATE
             SET start_date=excluded.start_date;
-            """, (msg.from_user.id, f"{msg.date.strftime('%d-%m-%Y')}"
+            """, (msg.from_user.id, f"{msg.date.strftime('%d-%m-%Y')} "
                                     f"{msg.date.strftime('%H:%M:%S')}"))
 
 
@@ -169,7 +171,7 @@ def set_last_date(msg: Message, _cursor=None):
         INSERT INTO User_Info(user_id, last_date)
         VALUES(?, ?) ON CONFLICT(user_id) DO UPDATE
         SET last_date=excluded.last_date;
-        """, (msg.from_user.id, f"{msg.date.strftime('%d-%m-%Y')}"
+        """, (msg.from_user.id, f"{msg.date.strftime('%d-%m-%Y')} "
                                 f"{msg.date.strftime('%H:%M:%S')}"))
 
 
@@ -303,7 +305,7 @@ def get_user_id(topic_id: int, _cursor=None) -> int:
         WHERE topic_id = ?
         """, (topic_id,))
     result = _cursor.fetchone()
-    return result[0] if result else False
+    return result[0] if result else None
 
 
 @sql_kit(DB_PATH)
@@ -418,6 +420,26 @@ def set_room(user_id: int, room: str, _cursor=None):
 
 
 @sql_kit(DB_PATH)
+def get_user_info(user_id, _cursor):
+    _cursor.execute("""
+        SELECT * FROM User_Info
+        WHERE user_id = ?
+        """, (user_id,))
+    data = _cursor.fetchone()
+    return f"""
+Информация о пользователе:
+`user_id:``    ``{data[0]}`
+`user_type:``  ``{data[1]}`
+`username:``   ``{data[2]}`
+`fullname:``   ``{data[3]}`
+`topic_id:``   ``{data[4]}`
+`start_date:`` ``{data[5]}`
+`last_date:``  ``{data[6]}`
+`inviter_id:`` ``{data[7]}`
+"""
+
+
+@sql_kit(DB_PATH)
 def get_all_user_ids(_cursor) -> list:
     """
     Get all user ids
@@ -441,6 +463,29 @@ async def broadcast_message(bot, text) -> None:
             await bot.send_message(user_id, text)
         except Exception as e:
             print(f"Не удалось отправить сообщение пользователю {user_id}: {e}")
+
+
+async def tracking_manage(tracking: bool) -> None:
+    """
+    Manage tracking param
+    :param tracking:  :class:`bool` tracking True or False
+    :return:  None
+    """
+    for user_id in get_all_user_ids():
+        set_tracking(user_id, tracking)
+
+
+async def get_tracked_users() -> list:
+    """
+    Get tracked users
+    :return:  :class:`list` user id`s
+    """
+    user_ids = get_all_user_ids()
+    tracked_users = []
+    for user_id in user_ids:
+        if get_tracking(user_id):
+            tracked_users.append(user_id)
+    return tracked_users
 
 
 def open_schedule_file():

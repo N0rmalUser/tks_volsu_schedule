@@ -6,7 +6,7 @@ from aioUtils import ChatTypeFilter, AntiSpamMiddleware
 
 import asyncio
 
-from data.config import BOT_TOKEN, GROUP_CHAT_ID, TEACHER_KEY
+from data.config import BOT_TOKEN, ADMIN_CHAT_ID, TEACHER_KEY
 
 import dbUtils
 
@@ -43,14 +43,14 @@ async def topic_create(msg: Message) -> None:
     else:
         topic_name = f"{msg.from_user.full_name} {str(user_id)}"
 
-    result = await bot.create_forum_topic(GROUP_CHAT_ID, topic_name)
+    result = await bot.create_forum_topic(ADMIN_CHAT_ID, topic_name)
     topic_id = result.message_thread_id
     dbUtils.set_topic_id(user_id, topic_id)
     user_info = (f"Пользователь: {msg.from_user.full_name}\nID: {user_id}\nUsername: @{msg.from_user.username}\n"
                  f"Номер телефона: {msg.contact}\nПригласил: {dbUtils.get_inviter(user_id) if dbUtils.get_inviter(user_id) else 'Никто'}\n"
                  f"Тип пользователя: {dbUtils.get_user_type(user_id)}")
-    if dbUtils.get_tracking(user_id):
-        await bot.send_message(GROUP_CHAT_ID, message_thread_id=topic_id, text=user_info)
+    await bot.send_message(ADMIN_CHAT_ID, message_thread_id=topic_id, text=user_info)
+    dbUtils.set_tracking(msg, False)
 
 
 @dp.message(Command("start"), ChatTypeFilter(chat_type="private"))
@@ -69,16 +69,18 @@ async def _start_handler(msg: Message) -> None:
     dbUtils.set_user_type(msg, user_type)
     menu, keyboard = (kb.teacher_menu, kb.teachers) if user_type == "teacher" else (kb.student_menu, kb.groups)
     if user_type == "teacher":
-        await msg.answer(f"Привет, {msg.from_user.full_name}\nВот ссылка для приглашения преподавателей: https://t.me/tks_schedule_bot?start={user_id}={TEACHER_KEY}", reply_markup=menu)
+        await msg.answer(f"Привет, {msg.from_user.full_name}\n"
+                         f"Вот ссылка для приглашения преподавателей: https://t.me/tks_schedule_bot?start={user_id}={TEACHER_KEY}", reply_markup=menu)
         await msg.answer("Выбери себя в списке", reply_markup=keyboard)
     else:
         dbUtils.set_user_type(msg, "student")
-        await msg.answer(f'Привет, {msg.from_user.full_name}\nВот ссылка для приглашения: https://t.me/tks_schedule_bot?start={user_id}', reply_markup=menu)
+        await msg.answer(f'Привет, {msg.from_user.full_name}\n'
+                         f'Вот ссылка для приглашения: https://t.me/tks_schedule_bot?start={user_id}', reply_markup=menu)
         await msg.answer("Выбери свою группу", reply_markup=keyboard)
     dbUtils.set_inviter(user_id, int(args[1].split('=')[0]) if len(args) > 1 else None)
     await topic_create(msg)
-    if dbUtils.get_tracking(user_id):
-        await bot.send_message(GROUP_CHAT_ID, message_thread_id=dbUtils.get_topic_id(user_id), text=msg.text)
+    await bot.forward_message(ADMIN_CHAT_ID, from_chat_id=msg.chat.id, message_id=msg.message_id,
+                              message_thread_id=dbUtils.get_topic_id(msg.from_user.id))
 
 
 @dp.message(Command("admin"), ChatTypeFilter(chat_type="private"))
@@ -87,7 +89,9 @@ async def _admin_handler(msg: Message) -> None:
     /admin command handler. Send message to admin chat. If user already has topic, send message to topic.
     """
     await bot.send_message(msg.from_user.id, "Модератор скоро напишет вам, ожидайте")
-    await bot.send_message(GROUP_CHAT_ID, message_thread_id=dbUtils.get_topic_id(msg.from_user.id), text="Юзверь просит помощи админа @n0rmal_user")
+    await bot.send_message(ADMIN_CHAT_ID, message_thread_id=dbUtils.get_topic_id(msg.from_user.id), text="Юзверь просит помощи админа @n0rmal_user")
+    await bot.forward_message(ADMIN_CHAT_ID, from_chat_id=msg.chat.id, message_id=msg.message_id,
+                              message_thread_id=dbUtils.get_topic_id(msg.from_user.id))
     dbUtils.set_tracking(msg, True)
 
 
@@ -150,7 +154,7 @@ async def _week_day_handler(callback: CallbackQuery) -> None:
     elif dbUtils.get_week(user_id) == 2:
         await callback.message.edit_text(text, reply_markup=kb2)
     if dbUtils.get_tracking(user_id):
-        await bot.send_message(GROUP_CHAT_ID, message_thread_id=dbUtils.get_topic_id(callback.from_user.id), text=callback.data)
+        await bot.send_message(ADMIN_CHAT_ID, message_thread_id=dbUtils.get_topic_id(callback.from_user.id), text=callback.data)
     await callback.answer()
 
 
@@ -185,7 +189,7 @@ async def _room_teacher_group_handler(callback: CallbackQuery) -> None:
     elif dbUtils.get_week(user_id) == 2:
         await callback.message.edit_text(text, reply_markup=week_kb2)
     if dbUtils.get_tracking(user_id):
-        await bot.send_message(GROUP_CHAT_ID, message_thread_id=dbUtils.get_topic_id(callback.from_user.id), text=callback.data)
+        await bot.send_message(ADMIN_CHAT_ID, message_thread_id=dbUtils.get_topic_id(callback.from_user.id), text=callback.data)
     await callback.answer()
 
 
@@ -204,8 +208,14 @@ async def _handler(msg: Message) -> None:
             if not entity_id:
                 await bot.send_message(user_id, f"Сначала выберите {'ФИО преподавателя' if user_type == 'teacher' else 'группу'}, нажав на соответствующую кнопку.")
                 return
-            week_kb = kb.teacher_week1 if dbUtils.get_week(user_id) == 1 else kb.teacher_week2
-            await bot.send_message(user_id, text_maker.get_teacher_schedule(user_id), reply_markup=week_kb)
+            if user_type == "teacher":
+                week_kb = kb.teacher_week1 if dbUtils.get_week(user_id) == 1 else kb.teacher_week2
+                await bot.send_message(user_id, text_maker.get_teacher_schedule(user_id), reply_markup=week_kb)
+            elif user_type == "student":
+                week_kb = kb.group_week1 if dbUtils.get_week(user_id) == 1 else kb.group_week2
+                await bot.send_message(user_id, text_maker.get_group_schedule(user_id), reply_markup=week_kb)
+            else:
+                await bot.send_message(user_id, "Ошибка! Напишите админу /admin")
         elif msg.text == "Кабинеты":
             await bot.send_message(user_id, f"Выберите кабинет", reply_markup=kb.rooms)
         elif msg.text == "Группы":
@@ -213,11 +223,12 @@ async def _handler(msg: Message) -> None:
         elif msg.text == "Преподаватели":
             await bot.send_message(user_id, f"Выберите преподавателя", reply_markup=kb.teachers)
         if dbUtils.get_tracking(user_id):
-            await bot.send_message(GROUP_CHAT_ID, message_thread_id=dbUtils.get_topic_id(msg.from_user.id), text=msg.text)
+            await bot.forward_message(ADMIN_CHAT_ID, from_chat_id=msg.chat.id, message_id=msg.message_id,
+                                      message_thread_id=dbUtils.get_topic_id(msg.from_user.id))
     else:
         await bot.send_message(user_id, text="Я тебя не понимаю, буковы пиши!")
         if dbUtils.get_tracking(user_id):
-            await bot.send_message(GROUP_CHAT_ID, message_thread_id=dbUtils.get_topic_id(msg.from_user.id), text="Пытался отправить не тектовое сообщение")
+            await bot.send_message(ADMIN_CHAT_ID, message_thread_id=dbUtils.get_topic_id(msg.from_user.id), text="Пытался отправить не тектовое сообщение")
     dbUtils.set_last_date(msg)
 
 
@@ -226,10 +237,44 @@ async def _handle_topic_command(msg: Message) -> None:
     """
     /track [start,stop] command handler. Set tracking for user topic.
     """
-    data = msg.text.split(' ')
-    if msg.chat.id == GROUP_CHAT_ID and not msg.from_user.is_bot:
+    data = msg.text.split(' ')[1]
+    if msg.chat.id == ADMIN_CHAT_ID and not msg.from_user.is_bot:
         if msg.message_thread_id:
-            dbUtils.set_tracking(msg, True if data[1] == "start" else False)
+            if data == "start":
+                dbUtils.set_tracking(msg, True)
+                await bot.send_message(ADMIN_CHAT_ID,
+                                       f"Трекинг {'включен' if dbUtils.get_tracking(msg.from_user.id) else 'выключен'}",
+                                       message_thread_id=msg.message_thread_id)
+            elif data == "stop":
+                dbUtils.set_tracking(msg, False)
+                await bot.send_message(ADMIN_CHAT_ID,
+                                       f"Трекинг {'включен' if dbUtils.get_tracking(msg.from_user.id) else 'выключен'}",
+                                       message_thread_id=msg.message_thread_id)
+            elif data == "status":
+                await bot.send_message(ADMIN_CHAT_ID,
+                                       f"Трекинг {'включен' if dbUtils.get_tracking(msg.from_user.id) else 'выключен'}",
+                                       message_thread_id=msg.message_thread_id)
+        else:
+            if data == "start":
+                await dbUtils.tracking_manage(True)
+            elif data == "stop":
+                await dbUtils.tracking_manage(False)
+            elif data == "status":
+                users = await dbUtils.get_tracked_users()
+                tracked = '\n'.join([str(user) for user in users])
+                await bot.send_message(ADMIN_CHAT_ID,
+                                       f"Трекаются: " + tracked if users else "Никто не трекается")
+
+
+@dp.message(Command("info"), ChatTypeFilter(chat_type=["group", "supergroup"]))
+async def _handle_topic_command(msg: Message) -> None:
+    """
+    /track [start,stop] command handler. Set tracking for user topic.
+    """
+    if msg.chat.id == ADMIN_CHAT_ID and not msg.from_user.is_bot:
+        if msg.message_thread_id:
+            await bot.send_message(ADMIN_CHAT_ID, dbUtils.get_user_info(dbUtils.get_user_id(msg.message_thread_id)),
+                                   message_thread_id=msg.message_thread_id, parse_mode="MarkdownV2")
 
 
 @dp.message(ChatTypeFilter(chat_type=["group", "supergroup"]))
@@ -237,8 +282,8 @@ async def _handle_topic_message(msg: Message) -> None:
     """
     Group chat message handler. Send message to users from topic. If topic name "General", send message to all users.
     """
-    if msg.chat.id == GROUP_CHAT_ID and not msg.from_user.is_bot:
-        if msg.message_thread_id:
+    if msg.chat.id == ADMIN_CHAT_ID and not msg.from_user.is_bot:
+        if msg.message_thread_id is not None:
             await bot.send_message(dbUtils.get_user_id(msg.message_thread_id), text=msg.text)
         else:
             await dbUtils.broadcast_message(bot, msg.text)
