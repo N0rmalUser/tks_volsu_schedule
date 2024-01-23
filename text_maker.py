@@ -25,7 +25,7 @@ def get_group_schedule(user_id: int) -> str:
 
             for lesson in sorted_lessons:
                 subject = re.sub(r'\([^)]*\)', '', lesson['subject'])
-                label = get_lesson_label(subject)
+                label = get_lesson_label(str(re.search(r'\(([^)]*)\)', lesson['subject'])))
                 text += f"\n{get_time_symbol(lesson['time'])}{lesson['time']}       {label}\n📖 {subject}\n👨‍🏫 {lesson['teacher']}\n🏠 Ауд. {lesson['room']}\n"
             return text
     return f'{header}\n\nИнформация о группе не найдена!'
@@ -52,10 +52,41 @@ def get_teacher_schedule(user_id: int) -> str:
 
             for lesson in sorted_lessons:
                 subject = re.sub(r'\([^)]*\)', '', lesson['subject'])
-                label = get_lesson_label(subject)
+                label = get_lesson_label(str(re.search(r'\(([^)]*)\)', lesson['subject'])))
                 text += f"\n{get_time_symbol(lesson['time'])}{lesson['time']}       {label}\n📖 {subject}\n👫{lesson['group']}\n🏠Ауд. {lesson['room']}\n"
             return text
     return f'{header}\n\nИнформация о преподавателе не найдена!'
+
+
+# def get_room_schedule(user_id: int) -> str:
+#     """
+#     Method for getting schedule for room by user_id from schedule in json format
+#     :param user_id:  :type: int
+#     :return:  :rtype: str
+#     """
+#     week, day, room_name = weeks[dbUtils.get_week(user_id)], days[dbUtils.get_day(user_id)], rooms[dbUtils.get_room(user_id)]
+#     data = config.schedule
+#
+#     combined_lessons = []
+#     text = header = f'{day}       {week}\n{room_name}\n'
+#     for room in data['rooms']:
+#         if room['room'] == room_name or (room['room'].startswith(room_name[:-1]) and room['room'].endswith('М')):
+#             if week not in room['weeks']:
+#                 return f'{header}\nНа этой неделе пар нет!'
+#             if day not in room['weeks'][week]:
+#                 return f'{header}\nСегодня пар нет!!'
+#
+#             for lesson in room['weeks'][week][day]:
+#                 lesson['indicator'] = " (а)" if room['room'].endswith('аМ') else " (б)" if room['room'].endswith('бМ') else ""
+#                 combined_lessons.append(lesson)
+#
+#             sorted_lessons = sorted(combined_lessons, key=lambda x: time_to_minutes(x['time']))
+#             for lesson in sorted_lessons:
+#                 subject = re.sub(r'\([^)]*\)', '', lesson['subject'])
+#                 label = get_lesson_label(subject)
+#                 text += f"\n{get_time_symbol(lesson['time'])}{lesson['time']}{lesson['indicator']}       {label}\n📖 {subject}\n👫 {lesson['group']}\n‍👨‍🏫 {lesson['teacher']}\n"
+#             return text
+#     return f'{header}\n\nИнформация о группе не найдена!'
 
 
 def get_room_schedule(user_id: int) -> str:
@@ -66,27 +97,35 @@ def get_room_schedule(user_id: int) -> str:
     """
     week, day, room_name = weeks[dbUtils.get_week(user_id)], days[dbUtils.get_day(user_id)], rooms[dbUtils.get_room(user_id)]
     data = config.schedule
+    room_variants = [room_name + variant for variant in ['М', 'аМ', 'бМ']] if room_name == '2-13' else [room_name]
 
     combined_lessons = []
-    text = header = f'{day}       {week}\n{room_name}\n'
-    for room in data['rooms']:
-        if room['room'] == room_name or (room['room'].startswith(room_name[:-1]) and room['room'].endswith('М')):
-            if week not in room['weeks']:
-                return f'{header}\nНа этой неделе пар нет!'
-            if day not in room['weeks'][week]:
-                return f'{header}\nСегодня пар нет!!'
+    text = f'{day}       {week}\n{room_name}\n'
 
-            for lesson in room['weeks'][week][day]:
-                lesson['indicator'] = " (а)" if room['room'].endswith('аМ') else " (б)" if room['room'].endswith('бМ') else ""
-                combined_lessons.append(lesson)
+    for room_variant in room_variants:
+        for room in data['rooms']:
+            if room['room'] == room_variant or (room['room'].startswith(room_variant[:-1]) and room['room'].endswith('М')):
+                if week not in room['weeks']:
+                    continue
+                if day not in room['weeks'][week]:
+                    continue
 
-        sorted_lessons = sorted(combined_lessons, key=lambda x: time_to_minutes(x['time']))
-        for lesson in sorted_lessons:
-            subject = re.sub(r'\([^)]*\)', '', lesson['subject'])
-            label = get_lesson_label(subject)
-            text += f"\n{get_time_symbol(lesson['time'])}{lesson['time']}{lesson['indicator']}       {label}\n📖 {subject}\n👫 {lesson['group']}\n‍👨‍🏫 {lesson['teacher']}\n"
-        return text
-    return f'{header}\n\nИнформация о группе не найдена!'
+                for lesson in room['weeks'][week][day]:
+                    lesson['indicator'] = " (а)" if room['room'].endswith('аМ') else " (б)" if room['room'].endswith('бМ') else ""
+                    lesson['room'] = room_variant
+                    combined_lessons.append(lesson)
+
+    if not combined_lessons:
+        return f'{day}       {week}\n{room_name}\n\nИнформация о группе не найдена!'
+
+    # Сортировка всех уроков по времени
+    sorted_lessons = sorted(combined_lessons, key=lambda x: time_to_minutes(x['time']))
+    for lesson in sorted_lessons:
+        subject = re.sub(r'\([^)]*\)', '', lesson['subject'])
+        label = get_lesson_label(str(re.search(r'\(([^)]*)\)', lesson['subject'])))
+        text += f"\n{get_time_symbol(lesson['time'])}{lesson['time']}{lesson['indicator']}       {label}\n📖 {subject}\n👫 {lesson['group']}\n‍👨‍🏫 {lesson['teacher']}\n"
+
+    return text
 
 
 def get_lesson_label(subject: str) -> str:
@@ -109,7 +148,7 @@ def get_lesson_label(subject: str) -> str:
         return 'Лабораторные'
     elif 'Лаб.' in subject:
         return 'Лабораторные'
-    elif '.' in subject:
+    elif 'лаб.' in subject:
         return 'Лабораторные'
     elif 'Л' in subject:
         return 'Лекция'

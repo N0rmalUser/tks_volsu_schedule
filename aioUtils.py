@@ -1,6 +1,6 @@
 from aiogram import BaseMiddleware
 from aiogram.filters import BaseFilter
-from aiogram.types import Message, Update
+from aiogram.types import Message, Update, CallbackQuery
 
 from data.config import THROTTLE_TIME
 
@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 
 from typing import Union
 from typing import Callable, Dict, Any, Awaitable
+from aiogram.exceptions import TelegramBadRequest
 
 
 class ChatTypeFilter(BaseFilter):
@@ -16,6 +17,7 @@ class ChatTypeFilter(BaseFilter):
     :param chat_type:  The type of chat to be checked
     :type chat_type:  str or list
     """
+
     def __init__(self, chat_type: Union[str, list]):
         self.chat_type = chat_type
 
@@ -30,6 +32,7 @@ class AntiSpamMiddleware(BaseMiddleware):
     """
     A middleware that deletes messages that are sent too often
     """
+
     def __init__(self):
         self.users_last_message_time = {}
         self.users_warned = set()
@@ -60,3 +63,28 @@ class AntiSpamMiddleware(BaseMiddleware):
             self.users_last_message_time[user.id] = datetime.now()
             self.users_warned.discard(user.id)
         return await handler(event, data)
+
+
+class IgnoreMessageNotModifiedMiddleware(BaseMiddleware):
+    """
+    Middleware that ignores the "message is not modified" error from Telegram.
+    """
+    async def __call__(
+            self,
+            handler: Callable[[CallbackQuery, Dict[str, Any]], Awaitable[Any]],
+            event: CallbackQuery,
+            data: Dict[str, Any]
+    ) -> Any:
+        """
+        Method that is called when an update is received.
+        :param handler: Wrapped handler in middlewares chain.
+        :param event: Incoming event (Subclass of :class:`aiogram.types.base.TelegramObject`).
+        :param data: Contextual data. Will be mapped to handler arguments.
+        :return: :class:`Any`
+        """
+        try:
+            return await handler(event, data)
+        except TelegramBadRequest as e:
+            if 'message is not modified' in str(e):
+                await event.answer("Ты уже тут")
+                return
