@@ -118,7 +118,6 @@ def get_room_schedule(user_id: int) -> str:
     if not combined_lessons:
         return f'{day}       {week}\n{room_name}\n\nИнформация о группе не найдена!'
 
-    # Сортировка всех уроков по времени
     sorted_lessons = sorted(combined_lessons, key=lambda x: time_to_minutes(x['time']))
     for lesson in sorted_lessons:
         subject = re.sub(r'\([^)]*\)', '', lesson['subject'])

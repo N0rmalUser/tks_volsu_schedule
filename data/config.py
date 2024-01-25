@@ -9,10 +9,10 @@ TEACHER_KEY = "0L3QtSDQu"
 THROTTLE_TIME = 3
 
 # Путь до папки с исходниками расписаний
-ORIGINAL_SCHEDULES_PATH = "C:\\Users\\normal\\Desktop\\raspisanie\\подготовка\\расписания\\"
+ORIGINAL_SCHEDULES_PATH = "подготовка\\расписания\\"
 # Путь до базы данных
-DB_PATH = "C:\\Users\\normal\\Desktop\\tks_volsu_schedule\\data\\users.db"
+DB_PATH = "data\\users.db"
 # Путь до файла с расписанием в формате json
-SCHEDULE_PATH = "C:\\Users\\normal\\Desktop\\tks_volsu_schedule\\data\\combined_schedule.json"
+SCHEDULE_PATH = "data\\combined_schedule.json"
 
 schedule = None
