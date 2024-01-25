@@ -2,7 +2,7 @@ from aiogram import Bot, Dispatcher
 from aiogram.filters import Command
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.types import CallbackQuery, Message
-from aioUtils import ChatTypeFilter, AntiSpamMiddleware, IgnoreMessageNotModifiedMiddleware
+from aioUtils import ChatTypeFilter, AntiSpamMessageMiddleware, AntiSpamCallbackMiddleware, IgnoreMessageNotModifiedMiddleware
 
 import asyncio
 
@@ -19,7 +19,8 @@ import text_maker
 
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher(storage=MemoryStorage())
-dp.message.middleware(AntiSpamMiddleware())
+dp.message.middleware(AntiSpamMessageMiddleware())
+dp.callback_query.middleware(AntiSpamCallbackMiddleware())
 dp.callback_query.middleware(IgnoreMessageNotModifiedMiddleware())
 
 

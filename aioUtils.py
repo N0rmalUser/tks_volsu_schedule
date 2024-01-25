@@ -28,7 +28,7 @@ class ChatTypeFilter(BaseFilter):
             return message.chat.type in self.chat_type
 
 
-class AntiSpamMiddleware(BaseMiddleware):
+class AntiSpamMessageMiddleware(BaseMiddleware):
     """
     A middleware that deletes messages that are sent too often
     """
@@ -88,3 +88,40 @@ class IgnoreMessageNotModifiedMiddleware(BaseMiddleware):
             if 'message is not modified' in str(e):
                 await event.answer("Ты уже тут")
                 return
+
+
+class AntiSpamCallbackMiddleware(BaseMiddleware):
+    """
+    A middleware that deletes messages that are sent too often
+    """
+
+    def __init__(self):
+        self.users_last_message_time = {}
+        self.users_warned = set()
+        self.spam_threshold = timedelta(seconds=1)
+
+    async def __call__(
+            self,
+            handler: Callable[[CallbackQuery, Dict[str, Any]], Awaitable[Any]],
+            event: CallbackQuery,
+            data: Dict[str, Any]
+    ) -> Any:
+        """
+        Method that is called when a message is received
+        :param handler:  Wrapped handler in middlewares chain
+        :param event:  Incoming event (Subclass of :class:`aiogram.types.base.TelegramObject`)
+        :param data:  Contextual data. Will be mapped to handler arguments
+        :return:  :class:`Any`
+        """
+
+        if isinstance(event, CallbackQuery):
+            user = event.from_user
+            last_message_time = self.users_last_message_time.get(user.id)
+            if last_message_time and datetime.now() - last_message_time < self.spam_threshold:
+                await event.delete()
+                if user.id not in self.users_warned:
+                    self.users_warned.add(user.id)
+                return
+            self.users_last_message_time[user.id] = datetime.now()
+            self.users_warned.discard(user.id)
+        return await handler(event, data)
