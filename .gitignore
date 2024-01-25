@@ -1,0 +1,9 @@
+.db
+
+подготовка/
+venv/
+env/
+.idea/
+__pycache__/
+
+**.log
