@@ -2,8 +2,7 @@ from aiogram import BaseMiddleware
 from aiogram.filters import BaseFilter
 from aiogram.types import Message, Update, CallbackQuery
 
-import dbUtils
-from data.config import THROTTLE_TIME, ADMIN_CHAT_ID
+from data.config import THROTTLE_TIME
 
 from datetime import datetime, timedelta
 

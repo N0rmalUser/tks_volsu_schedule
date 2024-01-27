@@ -1,7 +1,8 @@
 from aiogram import Bot, Dispatcher
 from aiogram.filters import Command, CommandStart, CommandObject
+from aiogram.filters.chat_member_updated import ChatMemberUpdatedFilter, MEMBER, KICKED
 from aiogram.fsm.storage.memory import MemoryStorage
-from aiogram.types import CallbackQuery, Message
+from aiogram.types import CallbackQuery, Message, ChatMemberUpdated
 from aioUtils import ChatTypeFilter, AntiSpamMessageMiddleware, AntiSpamCallbackMiddleware, IgnoreMessageNotModifiedMiddleware
 
 import asyncio
@@ -16,18 +17,17 @@ import logging
 
 import text_maker
 
-
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher(storage=MemoryStorage())
-dp.message.middleware(AntiSpamMessageMiddleware())
-dp.callback_query.middleware(AntiSpamCallbackMiddleware())
-dp.callback_query.middleware(IgnoreMessageNotModifiedMiddleware())
 
 
 async def main() -> None:
     """
     Bot launch function. Open schedule file. Delete webhook. Start polling.
     """
+    dp.message.middleware(AntiSpamMessageMiddleware())
+    dp.callback_query.middleware(AntiSpamCallbackMiddleware())
+    dp.callback_query.middleware(IgnoreMessageNotModifiedMiddleware())
     dbUtils.open_schedule_file()
     await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
@@ -48,11 +48,14 @@ async def topic_create(msg: Message) -> None:
     result = await bot.create_forum_topic(ADMIN_CHAT_ID, topic_name)
     topic_id = result.message_thread_id
     dbUtils.set_topic_id(user_id, topic_id)
-    user_info = (f"Пользователь: {msg.from_user.full_name}\nID: {user_id}\nUsername: @{msg.from_user.username}\n"
-                 f"Номер телефона: {msg.contact}\nПригласил: {dbUtils.get_inviter(user_id) if dbUtils.get_inviter(user_id) else 'Никто'}\n"
+    user_info = (f"Пользователь: <code>{msg.from_user.full_name}</code>\n"
+                 f"ID: <code>{user_id}</code>\n"
+                 f"Username: @{msg.from_user.username}\n"
+                 f"Номер телефона: {msg.contact}\n"
+                 f"Пригласил: <code>{dbUtils.get_inviter(user_id) if dbUtils.get_inviter(user_id) else 'Никто'}</code>\n"
                  f"Тип пользователя: {dbUtils.get_user_type(user_id)}")
-    await bot.send_message(ADMIN_CHAT_ID, message_thread_id=topic_id, text=user_info)
-    dbUtils.set_tracking(msg, False)
+    await bot.send_message(ADMIN_CHAT_ID, message_thread_id=topic_id, text=user_info, parse_mode="HTML")
+    dbUtils.set_tracking(dbUtils.get_user_id(msg.message_thread_id), False)
 
 
 @dp.message(CommandStart(deep_link=True))
@@ -110,15 +113,16 @@ async def _admin_handler(msg: Message) -> None:
     await bot.send_message(ADMIN_CHAT_ID, message_thread_id=dbUtils.get_topic_id(msg.from_user.id), text="Юзверь просит помощи админа @n0rmal_user")
     await bot.forward_message(ADMIN_CHAT_ID, from_chat_id=msg.chat.id, message_id=msg.message_id,
                               message_thread_id=dbUtils.get_topic_id(msg.from_user.id))
-    dbUtils.set_tracking(msg, True)
+    dbUtils.set_tracking(dbUtils.get_user_id(msg.message_thread_id), True)
 
 
-@dp.message(Command("schedule_update"), ChatTypeFilter(chat_type="private"))
+@dp.message(Command("schedule_update"), ChatTypeFilter(chat_type="private"), flags={"long_operation": "playing"})
 async def _schedule_update_handler(msg: Message) -> None:
     """
     /schedule_update command handler. Update schedule json file.
     """
     wait_msg = await bot.send_message(msg.from_user.id, "Сейчас обновиться, подождите")
+    await asyncio.sleep(1)
     dbUtils.open_schedule_file()
     await wait_msg.delete()
     await bot.send_message(msg.from_user.id, "Ура! Обновили расписание")
@@ -249,24 +253,26 @@ async def _handler(msg: Message) -> None:
 
 
 @dp.message(Command("track"), ChatTypeFilter(chat_type=["group", "supergroup"]))
-async def _handle_topic_command(msg: Message, command: CommandObject) -> None:
+async def _handle_topic_command_track(msg: Message, command: CommandObject) -> None:
     """
-    /track [start,stop] command handler. Set tracking for user topic.
+    /track [start,stop,status] command handler. Set tracking for user topic.
     """
-    if command.args is None:
-        await msg.answer(
-            "Ошибка: не переданы аргументы"
-        )
-        return
     if msg.chat.id == ADMIN_CHAT_ID:
+        if command.args is None:
+            await msg.answer(
+                "Ошибка: не переданы аргументы"
+            )
+            return
+        command = str(command.args).lower()
         if msg.message_thread_id:
+            user_id = dbUtils.get_user_id(msg.message_thread_id)
             if command == "start":
-                dbUtils.set_tracking(msg, True)
+                dbUtils.set_tracking(user_id, True)
             elif command == "stop":
-                dbUtils.set_tracking(msg, False)
+                dbUtils.set_tracking(user_id, False)
             elif command == "status":
                 pass
-            await msg.answer(f"Трекинг {'включен' if bool(dbUtils.get_tracking(msg.from_user.id)) else 'выключен'}")
+            await msg.answer(f"Трекинг {'включен' if dbUtils.get_tracking(user_id) else 'выключен'}")
         else:
             if command == "start":
                 await dbUtils.tracking_manage(True)
@@ -280,7 +286,7 @@ async def _handle_topic_command(msg: Message, command: CommandObject) -> None:
 
 
 @dp.message(Command("info"), ChatTypeFilter(chat_type=["group", "supergroup"]))
-async def _handle_topic_command(msg: Message) -> None:
+async def _handle_topic_command_info(msg: Message) -> None:
     """
     """
     if msg.chat.id == ADMIN_CHAT_ID and not msg.from_user.is_bot:
@@ -299,6 +305,18 @@ async def _handle_topic_message(msg: Message) -> None:
             await bot.send_message(dbUtils.get_user_id(msg.message_thread_id), text=msg.text)
         else:
             await dbUtils.broadcast_message(bot, msg.text)
+
+
+@dp.my_chat_member(ChatMemberUpdatedFilter(member_status_changed=KICKED), ChatTypeFilter(chat_type="private"))
+async def user_blocked_bot(event: ChatMemberUpdated):
+    dbUtils.set_blocked(event.from_user.id, True)
+    await bot.send_message(ADMIN_CHAT_ID, f"Пользователь @{event.from_user.username} заблокировал бота", message_thread_id=dbUtils.get_topic_id(event.from_user.id))
+
+
+@dp.my_chat_member(ChatMemberUpdatedFilter(member_status_changed=MEMBER), ChatTypeFilter(chat_type="private"))
+async def user_unblocked_bot(event: ChatMemberUpdated):
+    dbUtils.set_blocked(event.from_user.id, False)
+    await bot.send_message(ADMIN_CHAT_ID, f"Пользователь @{event.from_user.username} разблокировал бота", message_thread_id=dbUtils.get_topic_id(event.from_user.id))
 
 
 if __name__ == "__main__":

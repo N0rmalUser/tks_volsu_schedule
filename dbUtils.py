@@ -52,6 +52,7 @@ def init_db(_cursor):
             start_date TEXT,
             last_date TEXT,
             inviter_id INTEGER,
+            blocked BOOLEAN DEFAULT false,
             FOREIGN KEY (inviter_id) REFERENCES User_Info(user_id)
         )
     """)
@@ -59,7 +60,7 @@ def init_db(_cursor):
     _cursor.execute("""
         CREATE TABLE IF NOT EXISTS Temp_Data (
             user_id INTEGER PRIMARY KEY,
-            tracking BOOLEAN DEFAULT true,
+            tracking BOOLEAN DEFAULT false,
             week INTEGER,
             day INTEGER,
             teacher_name TEXT,
@@ -71,10 +72,28 @@ def init_db(_cursor):
 
 
 @sql_kit(DB_PATH)
-def set_tracking(msg: Message, tracking: bool, _cursor=None):
+def set_blocked(user_id: int, block: bool, _cursor=None):
+    _cursor.execute("""
+            INSERT INTO User_Info(user_id, blocked)
+            VALUES(?, ?) ON CONFLICT(user_id) DO UPDATE 
+            SET blocked=excluded.blocked;
+            """, (user_id, block))
+
+
+@sql_kit(DB_PATH)
+def get_blocked(user_id: int, _cursor=None) -> bool:
+    _cursor.execute("""
+        SELECT blocked FROM User_Info
+        WHERE user_id = ?
+        """, (user_id,))
+    return bool(_cursor.fetchone())
+
+
+@sql_kit(DB_PATH)
+def set_tracking(user_id: int, tracking: bool, _cursor=None):
     """
     Set tracking param for user
-    :param msg:  :class:`aiogram.types.Message`
+    :param user_id:  :class:`aiogram.types.Message`
     :param tracking:  :class:`bool` tracking True or False
     :param _cursor:  :class:`sqlite3.Cursor` Internal cursor for working with database
     :return:  None
@@ -83,7 +102,7 @@ def set_tracking(msg: Message, tracking: bool, _cursor=None):
             INSERT INTO Temp_Data(user_id, tracking)
             VALUES(?, ?) ON CONFLICT(user_id) DO UPDATE 
             SET tracking=excluded.tracking;
-            """, (msg.from_user.id, tracking))
+            """, (user_id, tracking))
 
 
 @sql_kit(DB_PATH)
@@ -98,7 +117,10 @@ def get_tracking(user_id: int, _cursor=None) -> bool:
         SELECT tracking FROM Temp_Data
         WHERE user_id = ?
         """, (user_id,))
-    return bool(_cursor.fetchone())
+    try:
+        return bool(_cursor.fetchone()[0])
+    except Exception as e:
+        return False
 
 
 @sql_kit(DB_PATH)
@@ -459,10 +481,11 @@ async def broadcast_message(bot, text) -> None:
     """
     user_ids = get_all_user_ids()
     for user_id in user_ids:
-        try:
-            await bot.send_message(user_id, text)
-        except Exception as e:
-            print(f"Не удалось отправить сообщение пользователю {user_id}: {e}")
+        if not get_blocked(user_id):
+            try:
+                await bot.send_message(user_id, text)
+            except Exception as e:
+                print(f"Не удалось отправить сообщение пользователю {user_id}: {e}")
 
 
 async def tracking_manage(tracking: bool) -> None:
