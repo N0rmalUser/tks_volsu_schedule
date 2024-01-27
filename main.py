@@ -1,5 +1,5 @@
 from aiogram import Bot, Dispatcher
-from aiogram.filters import Command
+from aiogram.filters import Command, CommandStart, CommandObject
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.types import CallbackQuery, Message
 from aioUtils import ChatTypeFilter, AntiSpamMessageMiddleware, AntiSpamCallbackMiddleware, IgnoreMessageNotModifiedMiddleware
@@ -55,34 +55,50 @@ async def topic_create(msg: Message) -> None:
     dbUtils.set_tracking(msg, False)
 
 
-@dp.message(Command("start"), ChatTypeFilter(chat_type="private"))
-async def _start_handler(msg: Message) -> None:
+@dp.message(CommandStart(deep_link=True))
+async def _start_deep_handler(msg: Message, command: CommandObject) -> None:
     """
     /Start command handler in private chat. Create topic for user tracking. Send invite link and menu. Set inviter id and user type.
     """
+    args = command.args.split("=")
+    user_id = int(msg.from_user.id)
+    if args[1] == TEACHER_KEY:
+        user_type = "teacher"
+        dbUtils.set_inviter(user_id, args[0])
+        dbUtils.set_last_date(msg)
+        dbUtils.set_today_date(user_id)
+        dbUtils.set_week(user_id, 1)
+        dbUtils.set_user_type(msg, user_type)
+        menu, keyboard = kb.teacher_menu, kb.teachers
+        await msg.answer(f"Привет, {msg.from_user.full_name}\n"
+                         f"Вот ссылка для приглашения преподавателей: https://t.me/tks_schedule_bot?start={user_id}={TEACHER_KEY}",
+                         reply_markup=menu)
+        await msg.answer("Выбери себя в списке", reply_markup=keyboard)
+        await topic_create(msg)
+
+
+@dp.message(CommandStart())
+async def _start_handler(msg: Message) -> None:
     user_id = int(msg.from_user.id)
     dbUtils.set_last_date(msg)
     dbUtils.set_today_date(user_id)
     dbUtils.set_week(user_id, 1)
     user_type = dbUtils.get_user_type(user_id)
-    args = msg.text.split()
-    if len(args) > 1 and len(args[1].split('=')) > 1 and args[1].split('=')[1] == TEACHER_KEY:
-        user_type = "teacher"
-    dbUtils.set_user_type(msg, user_type)
-    menu, keyboard = (kb.teacher_menu, kb.teachers) if user_type == "teacher" else (kb.student_menu, kb.groups)
+    if user_type is None:
+        dbUtils.set_user_type(msg, "student")
+    menu, keyboard = (kb.teacher_menu, kb.teachers) if user_type == "teacher" else (
+        kb.student_menu, kb.groups)
     if user_type == "teacher":
         await msg.answer(f"Привет, {msg.from_user.full_name}\n"
-                         f"Вот ссылка для приглашения преподавателей: https://t.me/tks_schedule_bot?start={user_id}={TEACHER_KEY}", reply_markup=menu)
+                         f"Вот ссылка для приглашения преподавателей: https://t.me/tks_schedule_bot?start={user_id}={TEACHER_KEY}",
+                         reply_markup=menu)
         await msg.answer("Выбери себя в списке", reply_markup=keyboard)
     else:
-        dbUtils.set_user_type(msg, "student")
         await msg.answer(f'Привет, {msg.from_user.full_name}\n'
-                         f'Вот ссылка для приглашения: https://t.me/tks_schedule_bot?start={user_id}', reply_markup=menu)
+                         f'Вот ссылка для приглашения: https://t.me/tks_schedule_bot?start={user_id}',
+                         reply_markup=menu)
         await msg.answer("Выбери свою группу", reply_markup=keyboard)
-    dbUtils.set_inviter(user_id, int(args[1].split('=')[0]) if len(args) > 1 else None)
     await topic_create(msg)
-    await bot.forward_message(ADMIN_CHAT_ID, from_chat_id=msg.chat.id, message_id=msg.message_id,
-                              message_thread_id=dbUtils.get_topic_id(msg.from_user.id))
 
 
 @dp.message(Command("admin"), ChatTypeFilter(chat_type="private"))
@@ -229,39 +245,34 @@ async def _handler(msg: Message) -> None:
                                       message_thread_id=dbUtils.get_topic_id(msg.from_user.id))
     else:
         await bot.send_message(user_id, text="Я тебя не понимаю, буковы пиши!")
-        if dbUtils.get_tracking(user_id):
-            await bot.send_message(ADMIN_CHAT_ID, message_thread_id=dbUtils.get_topic_id(msg.from_user.id), text="Пытался отправить не тектовое сообщение")
     dbUtils.set_last_date(msg)
 
 
 @dp.message(Command("track"), ChatTypeFilter(chat_type=["group", "supergroup"]))
-async def _handle_topic_command(msg: Message) -> None:
+async def _handle_topic_command(msg: Message, command: CommandObject) -> None:
     """
     /track [start,stop] command handler. Set tracking for user topic.
     """
-    data = msg.text.split(' ')[1]
-    if msg.chat.id == ADMIN_CHAT_ID and not msg.from_user.is_bot:
+    if command.args is None:
+        await msg.answer(
+            "Ошибка: не переданы аргументы"
+        )
+        return
+    if msg.chat.id == ADMIN_CHAT_ID:
         if msg.message_thread_id:
-            if data == "start":
+            if command == "start":
                 dbUtils.set_tracking(msg, True)
-                await bot.send_message(ADMIN_CHAT_ID,
-                                       f"Трекинг {'включен' if dbUtils.get_tracking(msg.from_user.id) else 'выключен'}",
-                                       message_thread_id=msg.message_thread_id)
-            elif data == "stop":
+            elif command == "stop":
                 dbUtils.set_tracking(msg, False)
-                await bot.send_message(ADMIN_CHAT_ID,
-                                       f"Трекинг {'включен' if dbUtils.get_tracking(msg.from_user.id) else 'выключен'}",
-                                       message_thread_id=msg.message_thread_id)
-            elif data == "status":
-                await bot.send_message(ADMIN_CHAT_ID,
-                                       f"Трекинг {'включен' if dbUtils.get_tracking(msg.from_user.id) else 'выключен'}",
-                                       message_thread_id=msg.message_thread_id)
+            elif command == "status":
+                pass
+            await msg.answer(f"Трекинг {'включен' if bool(dbUtils.get_tracking(msg.from_user.id)) else 'выключен'}")
         else:
-            if data == "start":
+            if command == "start":
                 await dbUtils.tracking_manage(True)
-            elif data == "stop":
+            elif command == "stop":
                 await dbUtils.tracking_manage(False)
-            elif data == "status":
+            elif command == "status":
                 users = await dbUtils.get_tracked_users()
                 tracked = '\n'.join([str(user) for user in users])
                 await bot.send_message(ADMIN_CHAT_ID,
@@ -271,7 +282,6 @@ async def _handle_topic_command(msg: Message) -> None:
 @dp.message(Command("info"), ChatTypeFilter(chat_type=["group", "supergroup"]))
 async def _handle_topic_command(msg: Message) -> None:
     """
-    /track [start,stop] command handler. Set tracking for user topic.
     """
     if msg.chat.id == ADMIN_CHAT_ID and not msg.from_user.is_bot:
         if msg.message_thread_id:

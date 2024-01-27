@@ -98,7 +98,7 @@ def get_tracking(user_id: int, _cursor=None) -> bool:
         SELECT tracking FROM Temp_Data
         WHERE user_id = ?
         """, (user_id,))
-    return bool(_cursor.fetchone()[0])
+    return bool(_cursor.fetchone())
 
 
 @sql_kit(DB_PATH)
@@ -189,7 +189,7 @@ def set_inviter(user_id: int, inviter_id: int, _cursor=None):
         WHERE user_id = ?
         """, (user_id,))
     result = _cursor.fetchone()
-    if result[0] is None:
+    if result is None:
         _cursor.execute("""
             INSERT INTO User_Info(user_id, inviter_id) 
             VALUES(?, ?) ON CONFLICT(user_id) DO UPDATE 
