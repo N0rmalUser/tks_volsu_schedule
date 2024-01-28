@@ -3,11 +3,12 @@ from aiogram.filters import Command, CommandStart, CommandObject
 from aiogram.filters.chat_member_updated import ChatMemberUpdatedFilter, MEMBER, KICKED
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.types import CallbackQuery, Message, ChatMemberUpdated
+from aiogram.utils.deep_linking import create_start_link, decode_payload
 from aioUtils import ChatTypeFilter, AntiSpamMessageMiddleware, AntiSpamCallbackMiddleware, IgnoreMessageNotModifiedMiddleware
 
 import asyncio
 
-from data.config import BOT_TOKEN, ADMIN_CHAT_ID, TEACHER_KEY
+from data.config import BOT_TOKEN, ADMIN_CHAT_ID
 
 import dbUtils
 
@@ -55,7 +56,7 @@ async def topic_create(msg: Message) -> None:
                  f"Пригласил: <code>{dbUtils.get_inviter(user_id) if dbUtils.get_inviter(user_id) else 'Никто'}</code>\n"
                  f"Тип пользователя: {dbUtils.get_user_type(user_id)}")
     await bot.send_message(ADMIN_CHAT_ID, message_thread_id=topic_id, text=user_info, parse_mode="HTML")
-    dbUtils.set_tracking(dbUtils.get_user_id(msg.message_thread_id), False)
+    dbUtils.set_tracking(msg.from_user.id, False)
 
 
 @dp.message(CommandStart(deep_link=True))
@@ -63,44 +64,50 @@ async def _start_deep_handler(msg: Message, command: CommandObject) -> None:
     """
     /Start command handler in private chat. Create topic for user tracking. Send invite link and menu. Set inviter id and user type.
     """
-    args = command.args.split("=")
-    user_id = int(msg.from_user.id)
-    if args[1] == TEACHER_KEY:
-        user_type = "teacher"
+    try:
+        payload = decode_payload(command.args)
+        args = payload.split("=")
+        user_id = int(msg.from_user.id)
         dbUtils.set_inviter(user_id, args[0])
+        print(args)
+        print(user_id)
+        if args[1] == "teacher":
+            print("тичер")
+            user_type = "teacher"
+            menu, keyboard = kb.teacher_menu, kb.teachers
+        else:
+            user_type = "student"
+            menu, keyboard = kb.student_menu, kb.groups
         dbUtils.set_last_date(msg)
         dbUtils.set_today_date(user_id)
         dbUtils.set_week(user_id, 1)
         dbUtils.set_user_type(msg, user_type)
-        menu, keyboard = kb.teacher_menu, kb.teachers
+        link = await create_start_link(bot, f"{user_id}={dbUtils.get_user_type(user_id)}", encode=True)
         await msg.answer(f"Привет, {msg.from_user.full_name}\n"
-                         f"Вот ссылка для приглашения преподавателей: https://t.me/tks_schedule_bot?start={user_id}={TEACHER_KEY}",
+                         f"Вот ссылка для приглашения: {link}",
                          reply_markup=menu)
         await msg.answer("Выбери себя в списке", reply_markup=keyboard)
         await topic_create(msg)
+    except Exception:
+        await msg.answer("Неверная ссылка")
 
 
 @dp.message(CommandStart())
 async def _start_handler(msg: Message) -> None:
     user_id = int(msg.from_user.id)
+    print(user_id)
     dbUtils.set_last_date(msg)
     dbUtils.set_today_date(user_id)
     dbUtils.set_week(user_id, 1)
     user_type = dbUtils.get_user_type(user_id)
-    if user_type is None:
-        dbUtils.set_user_type(msg, "student")
+    dbUtils.set_user_type(msg, user_type)
     menu, keyboard = (kb.teacher_menu, kb.teachers) if user_type == "teacher" else (
         kb.student_menu, kb.groups)
-    if user_type == "teacher":
-        await msg.answer(f"Привет, {msg.from_user.full_name}\n"
-                         f"Вот ссылка для приглашения преподавателей: https://t.me/tks_schedule_bot?start={user_id}={TEACHER_KEY}",
-                         reply_markup=menu)
-        await msg.answer("Выбери себя в списке", reply_markup=keyboard)
-    else:
-        await msg.answer(f'Привет, {msg.from_user.full_name}\n'
-                         f'Вот ссылка для приглашения: https://t.me/tks_schedule_bot?start={user_id}',
-                         reply_markup=menu)
-        await msg.answer("Выбери свою группу", reply_markup=keyboard)
+    link = await create_start_link(bot, f"{user_id}={dbUtils.get_user_type(user_id)}", encode=True)
+    await msg.answer(f"Привет, {msg.from_user.full_name}\n"
+                     f"Вот ссылка для приглашения: {link}",
+                     reply_markup=menu)
+    await msg.answer("Выбери себя в списке", reply_markup=keyboard)
     await topic_create(msg)
 
 
@@ -321,5 +328,5 @@ async def user_unblocked_bot(event: ChatMemberUpdated):
 
 if __name__ == "__main__":
     dbUtils.init_db()
-    logging.basicConfig(level=logging.ERROR)
+    logging.basicConfig(level=logging.DEBUG)
     asyncio.run(main())

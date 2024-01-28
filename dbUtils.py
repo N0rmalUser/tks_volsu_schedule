@@ -526,5 +526,11 @@ def set_today_date(user_id: int) -> None:
     :param user_id:  :class:`int` user id
     :return:  None
     """
-    set_day(user_id, int(f"{datetime.now().weekday() + 1}"))
-    set_week(user_id, 2 if datetime.now().isocalendar()[1] % 2 == 0 else 1)
+    day = int(f"{datetime.now().weekday() + 1}")
+    week = 2 if datetime.now().isocalendar()[1] % 2 == 0 else 1
+    if day == 7:
+        set_day(user_id, 1)
+        set_week(user_id, week+1 if week == 1 else week-1)
+    else:
+        set_day(user_id, day)
+        set_week(user_id, week)
