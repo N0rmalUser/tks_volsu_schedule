@@ -68,11 +68,8 @@ async def _start_deep_handler(msg: Message, command: CommandObject) -> None:
         payload = decode_payload(command.args)
         args = payload.split("=")
         user_id = int(msg.from_user.id)
-        dbUtils.set_inviter(user_id, args[0])
-        print(args)
-        print(user_id)
+        dbUtils.set_inviter(user_id, int(args[0]))
         if args[1] == "teacher":
-            print("тичер")
             user_type = "teacher"
             menu, keyboard = kb.teacher_menu, kb.teachers
         else:
@@ -95,7 +92,6 @@ async def _start_deep_handler(msg: Message, command: CommandObject) -> None:
 @dp.message(CommandStart())
 async def _start_handler(msg: Message) -> None:
     user_id = int(msg.from_user.id)
-    print(user_id)
     dbUtils.set_last_date(msg)
     dbUtils.set_today_date(user_id)
     dbUtils.set_week(user_id, 1)
@@ -132,7 +128,7 @@ async def _schedule_update_handler(msg: Message) -> None:
     await asyncio.sleep(1)
     dbUtils.open_schedule_file()
     await wait_msg.delete()
-    await bot.send_message(msg.from_user.id, "Ура! Обновили расписание")
+    await bot.send_message(msg.from_user.id, "Ура! Обновили schedules")
 
 
 @dp.callback_query(lambda c: c.data.startswith("ignore"))

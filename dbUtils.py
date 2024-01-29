@@ -119,7 +119,7 @@ def get_tracking(user_id: int, _cursor=None) -> bool:
         """, (user_id,))
     try:
         return bool(_cursor.fetchone()[0])
-    except Exception as e:
+    except Exception:
         return False
 
 
@@ -481,7 +481,7 @@ async def broadcast_message(bot, text) -> None:
     """
     user_ids = get_all_user_ids()
     for user_id in user_ids:
-        if not get_blocked(user_id):
+        if get_blocked(user_id):
             try:
                 await bot.send_message(user_id, text)
             except Exception as e:

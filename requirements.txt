@@ -3,3 +3,4 @@ asyncio~=3.4.3
 openpyxl~=3.1.2
 pandas~=2.1.4
 python-docx~=1.1.0
+progress~=1.6

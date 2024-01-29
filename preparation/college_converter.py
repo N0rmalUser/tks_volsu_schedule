@@ -6,6 +6,10 @@ import pandas as pd
 
 import data.config
 
+import re
+
+from progress.bar import Bar
+
 
 def convert_day_name(day_short):
     days = {
@@ -22,18 +26,22 @@ def convert_day_name(day_short):
 def split_subject_info(subject_info):
     if pd.isna(subject_info):
         return None, None, None
+    substitution = re.split(r'\.', subject_info)
+    return (
+        re.sub(r'\s*,*\s*преп.*$', '', re.sub(r'^\s*', '', substitution[1])),
+        re.sub(r'(\s*|,*|ауд)', '', substitution[-1]) if substitution[-1] != '' else re.sub(r'(\s*|,*|ауд)', '', substitution[-2]),
+        substitution[0]
+    )
 
-    return (subject_info.split('. ')[1].replace('преп', '').replace(', ', ''),
-            subject_info.split(' ')[-1].replace('ауд.', '').replace('Ауд.', '').replace('.', ''),
-            subject_info.split('.')[0])
 
-
-directory_path = data.config.ORIGINAL_SCHEDULES_PATH
+directory_path = data.config.ORIGINAL_SCHEDULES_PATH + 'schedules\\'
 files = [f for f in os.listdir(directory_path) if f.endswith('.xlsx')]
 teachers_schedule = {"teachers": []}
 rooms_schedule = {"rooms": []}
+bar = Bar('Формирование расписания для колледжа', max=len(files))
 
 for file in files:
+    bar.next()
     file_path = os.path.join(directory_path, file)
     df = pd.read_excel(file_path)
     excel = openpyxl.load_workbook(filename=file_path)
@@ -46,8 +54,7 @@ for file in files:
         cl -= 1
         base_value = df.iloc[rl, cl]
         df.iloc[rl:rr, cl:cr] = base_value
-
-    teacher_name = file.replace('teacher_', '').replace('xlsx', '')
+    teacher_name = re.search(r'_(.*)xlsx', file).group(1)
     teacher_schedule = {
         "teacher": teacher_name,
         "weeks": {"Числитель": {}, "Знаменатель": {}}
@@ -60,9 +67,13 @@ for file in files:
         qq = row['время']
         isNumerator = True if row['время'] != last_time else False
         last_time = row['время']
-        subject, room, group = split_subject_info(row[teacher_name])
-        if subject is None:
+
+        if pd.isna(row[teacher_name]):
             continue
+        substitution = re.split(r'\.', row[teacher_name])
+        group = substitution[0]
+        subject = re.sub(r'\s*,*\s*преп.*$', '', re.sub(r'^\s*', '', substitution[1]))
+        room = re.sub(r'(\s*|,*|ауд)', '', substitution[-1]) if substitution[-1] != '' else re.sub(r'(\s*|,*|ауд)', '', substitution[-2])
         if isNumerator:
             if day not in teacher_schedule['weeks']['Числитель']:
                 teacher_schedule['weeks']['Числитель'][day] = []
@@ -85,6 +96,8 @@ for file in files:
     teachers_schedule['teachers'].append(teacher_schedule)
     rooms_schedule['rooms'].append(teacher_schedule)
 
-with open(directory_path+'college.json', 'w', encoding='utf-8') as json_file:
+output_file_path = data.config.ORIGINAL_SCHEDULES_PATH + 'college.json'
+
+with open(output_file_path, 'w', encoding='utf-8') as json_file:
     json.dump(teachers_schedule, json_file, ensure_ascii=False, indent=4)
-    print(f"Общий JSON-файл для преподавателей сохранен по пути: {directory_path + 'college.json'}")
+    print(f"\nОбщий JSON-файл для преподавателей сохранен по пути: {output_file_path}")
