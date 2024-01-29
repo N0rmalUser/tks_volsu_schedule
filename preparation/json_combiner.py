@@ -1,7 +1,6 @@
 import json
 from typing import Any
-
-import data.config
+from data.config import ORIGINAL_SCHEDULES_PATH
 
 
 def transform_schedule(input_schedule: dict) -> dict[str, list[Any] | dict[Any, Any] | list[dict[str, Any]]]:
@@ -118,17 +117,17 @@ def transform_to_room_schedule(input_schedule: dict) -> list[dict[str, Any]]:
     return room_schedule_list
 
 
-directory_path = data.config.ORIGINAL_SCHEDULES_PATH
+directory_path = ORIGINAL_SCHEDULES_PATH
 
-with open(directory_path + 'schedule.json', 'r', encoding='utf-8') as file:
+with open(directory_path + 'university.json', 'r', encoding='utf-8') as file:
     input_data = json.load(file)
 
 transformed_schedule = transform_schedule(input_data)
 
-with open(directory_path + 'college.json', 'r', encoding='utf-8') as file:
-    additional_data = json.load(file)
+# with open(directory_path + 'college.json', 'r', encoding='utf-8') as file:
+#     additional_data = json.load(file)
 
-transformed_schedule['teachers'] = merge_schedules(transformed_schedule['teachers'], additional_data)
+# transformed_schedule['teachers'] = merge_schedules(transformed_schedule['teachers'], additional_data)
 transformed_schedule['rooms'] = transform_to_room_schedule(transformed_schedule)
 
 with open(directory_path + 'combined_schedule.json', 'w', encoding='utf-8') as file:
