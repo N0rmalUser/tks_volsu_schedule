@@ -41,10 +41,8 @@ for filename in files:
             if subject != '':
                 if len(parts) > 1 and parts[1].strip():
                     auditorium_match = re.search(r'Ауд\.*.*', parts[1])
-                    print(auditorium_match)
                     if auditorium_match:
                         auditorium = auditorium_match.group()
-                        print(auditorium_match.group())
                         teachers_text = parts[1].replace(auditorium, '')
                     else:
                         auditorium = ''
@@ -56,7 +54,6 @@ for filename in files:
                     teacher = ', '.join(teachers)
                     classroom = re.sub(r'СпортивныйзалК', 'Спортзал К',
                                        re.sub(r'\s*', '', re.sub(r'Ауд\.', '', auditorium)))
-                    # classroom = auditorium.replace('Ауд.', '').replace(" ", "").replace("Спортивныйзал", "Спортзал ")
                 else:
                     teacher = ''
                     classroom = ''
