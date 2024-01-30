@@ -507,7 +507,7 @@ async def get_tracked_users() -> list:
     tracked_users = []
     for user_id in user_ids:
         if get_tracking(user_id):
-            tracked_users.append(user_id)
+            tracked_users.append(f'`{user_id}`')
     return tracked_users
 
 
