@@ -124,10 +124,10 @@ with open(directory_path + 'university.json', 'r', encoding='utf-8') as file:
 
 transformed_schedule = transform_schedule(input_data)
 
-# with open(directory_path + 'college.json', 'r', encoding='utf-8') as file:
-#     additional_data = json.load(file)
+with open(directory_path + 'college.json', 'r', encoding='utf-8') as file:
+    additional_data = json.load(file)
 
-# transformed_schedule['teachers'] = merge_schedules(transformed_schedule['teachers'], additional_data)
+transformed_schedule['teachers'] = merge_schedules(transformed_schedule['teachers'], additional_data)
 transformed_schedule['rooms'] = transform_to_room_schedule(transformed_schedule)
 
 with open(directory_path + 'combined_schedule.json', 'w', encoding='utf-8') as file:
