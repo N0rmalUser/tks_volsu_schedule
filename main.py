@@ -9,7 +9,7 @@ from aioUtils import ChatTypeFilter, AntiSpamMessageMiddleware, AntiSpamCallback
 
 import asyncio
 
-from data.config import BOT_TOKEN, ADMIN_CHAT_ID, LOG_FILE
+from data.config import BOT_TOKEN, ADMIN_CHAT_ID, LOG_FILE, DB_PATH
 
 import dbUtils
 
@@ -52,7 +52,7 @@ async def topic_create(msg: Message) -> None:
                  f"Номер телефона: {msg.contact}\n"
                  f"Пригласил: <code>{dbUtils.get_inviter(user_id) if dbUtils.get_inviter(user_id) else 'Никто'}</code>\n"
                  f"Тип пользователя: {dbUtils.get_user_type(user_id)}")
-    await bot.send_message(ADMIN_CHAT_ID, message_thread_id=topic_id, text=user_info, parse_mode="HTML")
+    await bot.send_message(ADMIN_CHAT_ID, message_thread_id=topic_id, text=user_info, reply_markup=kb.admin_menu, parse_mode="HTML")
     dbUtils.set_tracking(msg.from_user.id, False)
 
 
@@ -111,16 +111,6 @@ async def _admin_handler(msg: Message) -> None:
     await bot.forward_message(ADMIN_CHAT_ID, from_chat_id=msg.chat.id, message_id=msg.message_id,
                               message_thread_id=dbUtils.get_topic_id(msg.from_user.id))
     dbUtils.set_tracking(dbUtils.get_user_id(msg.message_thread_id), True)
-
-
-@dp.message(Command("schedule_update"), ChatTypeFilter(chat_type="private"), flags={"long_operation": "playing"})
-async def _schedule_update_handler(msg: Message) -> None:
-    """/schedule_update command handler. Update schedule json file."""
-    wait_msg = await bot.send_message(msg.from_user.id, "Сейчас обновиться, подождите")
-    await asyncio.sleep(1)
-    dbUtils.open_schedule_file()
-    await wait_msg.delete()
-    await bot.send_message(msg.from_user.id, "Ура! Обновили schedules")
 
 
 @dp.callback_query(lambda c: c.data.startswith("ignore"))
@@ -242,20 +232,42 @@ async def _handler(msg: Message) -> None:
     dbUtils.set_last_date(msg)
 
 
+@dp.message(Command("menu"), ChatTypeFilter(chat_type=["group", "supergroup"]))
+async def _handle_topic_command_track(msg: Message) -> None:
+    if msg.chat.id == ADMIN_CHAT_ID:
+        await msg.answer("Меню админа", reply_markup=kb.admin_menu)
+
+
 @dp.message(Command("log"), ChatTypeFilter(chat_type=["group", "supergroup"]))
 async def _handle_topic_command_track(msg: Message, command: CommandObject) -> None:
+    if msg.chat.id == ADMIN_CHAT_ID and not msg.from_user.is_bot:
+        if command.args == 'send' or command.args == 'show':
+            try:
+                await msg.answer_document(FSInputFile(LOG_FILE), caption="Вот ваш лог")
+            except:
+                await msg.answer("В лог файле ничего нет(")
+        elif command.args == 'clear' or command.args == 'del':
+            open(LOG_FILE, 'w').write('')
+            await msg.answer("Логи очищены")
+        else:
+            await msg.answer("Такой команды нету (аргумент не правильный)")
+
+
+@dp.message(Command("send_db"), ChatTypeFilter(chat_type=["group", "supergroup"]))
+async def _handle_topic_command_track(msg: Message) -> None:
     if msg.chat.id == ADMIN_CHAT_ID:
-        if not msg.message_thread_id:
-            if command.args is None:
-                try:
-                    await msg.answer_document(FSInputFile(LOG_FILE), caption="Вот ваш лог")
-                except:
-                    await msg.answer("В лог файле ничего нет(")
-            elif command.args == 'clear' or command.args == 'del':
-                open(LOG_FILE, 'w').write('')
-                await msg.answer("Логи очищены")
-            else:
-                await msg.answer("Такой команды нету (аргумент не правильный)")
+        if msg.message_thread_id:
+            await msg.answer_document(FSInputFile(DB_PATH), caption="Вот ваша база данных")
+
+
+@dp.message(Command("schedule_update"), ChatTypeFilter(chat_type=["group", "supergroup"]))
+async def _schedule_update_handler(msg: Message) -> None:
+    """/schedule_update command handler. Update schedule json file."""
+    wait_msg = await bot.send_message(msg.from_user.id, "Сейчас обновиться, подождите")
+    await asyncio.sleep(1)
+    dbUtils.open_schedule_file()
+    await wait_msg.delete()
+    await msg.answer("Ура! Обновили schedules")
 
 
 @dp.message(Command("track"), ChatTypeFilter(chat_type=["group", "supergroup"]))
@@ -292,9 +304,8 @@ async def _handle_topic_command_track(msg: Message, command: CommandObject) -> N
 @dp.message(Command("info"), ChatTypeFilter(chat_type=["group", "supergroup"]))
 async def _handle_topic_command_info(msg: Message) -> None:
     if msg.chat.id == ADMIN_CHAT_ID and not msg.from_user.is_bot:
-        if msg.message_thread_id:
-            await msg.answer(dbUtils.get_user_info(dbUtils.get_user_id(msg.message_thread_id)),
-                             message_thread_id=msg.message_thread_id, parse_mode="MarkdownV2")
+        await msg.answer(dbUtils.get_user_info(dbUtils.get_user_id(msg.message_thread_id)),
+                         parse_mode="MarkdownV2")
 
 
 @dp.message(ChatTypeFilter(chat_type=["group", "supergroup"]))
@@ -327,5 +338,6 @@ async def user_unblocked_bot(event: ChatMemberUpdated):
 if __name__ == "__main__":
     dbUtils.init_db()
     logging.basicConfig(level=logging.INFO, filename=LOG_FILE, format="%(asctime)s %(levelname)s %(message)s",
-                        encoding="utf-8")
+                        datefmt='%H:%M:%S %d-%m-%Y', encoding="utf-8")
+    logging.getLogger('aiogram.event').setLevel(logging.WARNING)
     asyncio.run(main())
