@@ -3,7 +3,7 @@ from aiogram.types import Message
 from data.config import DB_PATH
 from data import config
 
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from functools import wraps
 
@@ -442,7 +442,7 @@ def set_room(user_id: int, room: str, _cursor=None):
 
 
 @sql_kit(DB_PATH)
-def get_user_info(user_id, _cursor):
+def get_user_info(user_id, _cursor=None):
     _cursor.execute("""
         SELECT * FROM User_Info
         WHERE user_id = ?
@@ -458,27 +458,37 @@ def get_user_info(user_id, _cursor):
 `start_date:`` ``{data[5]}`
 `last_date:``  ``{data[6]}`
 `inviter_id:`` ``{data[7]}`
+`blocked``     ``{data[8]}
 """
 
 
 @sql_kit(DB_PATH)
-def get_all_user_ids(_cursor) -> list:
-    """
-    Get all user ids
-    :param _cursor:  :class:`sqlite3.Cursor` Internal cursor for working with database
-    :return:  :class:`list` user id`s
-    """
+def get_all_user_ids(_cursor=None) -> list:
     _cursor.execute("SELECT user_id FROM User_Info")
     return [row[0] for row in _cursor.fetchall()]
 
 
+@sql_kit(DB_PATH)
+def get_all_users_info(_cursor=None):
+    # Подсчёт количества пользователей, когда-либо заходивших в бота
+    _cursor.execute("SELECT COUNT(*) FROM User_Info")
+    users_count = _cursor.fetchone()[0]
+
+    # Подсчет количества заблокированных пользователей
+    _cursor.execute("SELECT COUNT(*) FROM User_Info WHERE blocked = 'true'")
+    blocked_count = _cursor.fetchone()[0]
+
+    # Подсчет количества пользователей с last_date не старше одной недели
+    one_week_ago = datetime.now() - timedelta(weeks=1)
+    _cursor.execute("SELECT COUNT(*) FROM User_Info WHERE last_date >= ?", (one_week_ago,))
+    recent_users_count = _cursor.fetchone()[0]
+    result = (f"Пользователей: {users_count}\n"
+              f"Активных: {recent_users_count}\n"
+              f"Заблокировали бота: {blocked_count}")
+    return result
+
+
 async def broadcast_message(bot, text) -> None:
-    """
-    Send message to all users
-    :param bot:  :class:`aiogram.Bot`
-    :param text:  :class:`str` message text
-    :return:  None
-    """
     user_ids = get_all_user_ids()
     for user_id in user_ids:
         if get_blocked(user_id):
@@ -489,20 +499,11 @@ async def broadcast_message(bot, text) -> None:
 
 
 async def tracking_manage(tracking: bool) -> None:
-    """
-    Manage tracking param
-    :param tracking:  :class:`bool` tracking True or False
-    :return:  None
-    """
     for user_id in get_all_user_ids():
         set_tracking(user_id, tracking)
 
 
 async def get_tracked_users() -> list:
-    """
-    Get tracked users
-    :return:  :class:`list` user id`s
-    """
     user_ids = get_all_user_ids()
     tracked_users = []
     for user_id in user_ids:
@@ -512,20 +513,11 @@ async def get_tracked_users() -> list:
 
 
 def open_schedule_file():
-    """
-    Open files with schedule
-    :return:  None
-    """
     with open(config.SCHEDULE_PATH, 'r', encoding='utf-8') as file:
         config.schedule = json.load(file)
 
 
 def set_today_date(user_id: int) -> None:
-    """
-    Set today date
-    :param user_id:  :class:`int` user id
-    :return:  None
-    """
     day = int(f"{datetime.now().weekday() + 1}")
     week = 2 if datetime.now().isocalendar()[1] % 2 == 0 else 1
     if day == 7:

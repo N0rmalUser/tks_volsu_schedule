@@ -304,8 +304,11 @@ async def _handle_topic_command_track(msg: Message, command: CommandObject) -> N
 @dp.message(Command("info"), ChatTypeFilter(chat_type=["group", "supergroup"]))
 async def _handle_topic_command_info(msg: Message) -> None:
     if msg.chat.id == ADMIN_CHAT_ID and not msg.from_user.is_bot:
-        await msg.answer(dbUtils.get_user_info(dbUtils.get_user_id(msg.message_thread_id)),
-                         parse_mode="MarkdownV2")
+        if msg.message_thread_id:
+            await msg.answer(dbUtils.get_user_info(dbUtils.get_user_id(msg.message_thread_id)),
+                             parse_mode="MarkdownV2")
+        else:
+            await msg.answer(dbUtils.get_all_users_info())
 
 
 @dp.message(ChatTypeFilter(chat_type=["group", "supergroup"]))
@@ -337,7 +340,8 @@ async def user_unblocked_bot(event: ChatMemberUpdated):
 
 if __name__ == "__main__":
     dbUtils.init_db()
-    logging.basicConfig(level=logging.INFO, filename=LOG_FILE, format="%(asctime)s %(levelname)s %(message)s",
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s",
                         datefmt='%H:%M:%S %d-%m-%Y', encoding="utf-8")
     logging.getLogger('aiogram.event').setLevel(logging.WARNING)
     asyncio.run(main())
+# , filename=LOG_FILE
