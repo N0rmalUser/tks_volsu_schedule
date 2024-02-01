@@ -1,16 +1,12 @@
-from data import config
-import dbUtils
+from bot import database as db
+
+import config
 
 import re
 
 
 def get_group_schedule(user_id: int) -> str:
-    """
-    Method for getting schedule for group by user_id from schedule in json format
-    :param user_id:  :type: int
-    :return:  :rtype: str
-    """
-    week, day, group_name = weeks[dbUtils.get_week(user_id)], days[dbUtils.get_day(user_id)], dbUtils.get_group(user_id)
+    week, day, group_name = weeks[db.get_week(user_id)], days[db.get_day(user_id)], db.get_group(user_id)
     data = config.schedule
 
     text = header = f'{day}       {week}\n{group_name}\n'
@@ -32,16 +28,12 @@ def get_group_schedule(user_id: int) -> str:
 
 
 def get_teacher_schedule(user_id: int) -> str:
-    """
-    Method for getting schedule for teacher by user_id from schedule in json format
-    :param user_id:  :type: int
-    :return:  :rtype: str
-    """
-    week, day, teacher_name = weeks[dbUtils.get_week(user_id)], days[dbUtils.get_day(user_id)], dbUtils.get_teacher(
-        user_id)
+    week, day, teacher_name = weeks[db.get_week(user_id)], days[db.get_day(user_id)], db.get_teacher(user_id)
     data = config.schedule
 
     text = header = f'{day}       {week}\n{teacher_name}\n'
+    lesson_dict = {}
+
     for teacher in data['teachers']:
         if teacher['teacher'] == teacher_name:
             schedule = teacher['weeks'].get(week, {}).get(day)
@@ -49,24 +41,28 @@ def get_teacher_schedule(user_id: int) -> str:
                 status = 'На этой неделе пар нет!' if week not in teacher['weeks'] else 'Сегодня пар нет!'
                 return f'{header}\n\n{status}'
 
-            sorted_lessons = sorted(schedule, key=lambda x: time_to_minutes(x['time']))
+            for lesson in schedule:
+                lesson_key = (lesson['time'], lesson['subject'], lesson['room'])
+                if lesson_key not in lesson_dict:
+                    lesson_dict[lesson_key] = lesson
+                    lesson_dict[lesson_key]['groups'] = [lesson['group']]
+                else:
+                    lesson_dict[lesson_key]['groups'].append(lesson['group'])
+
+            sorted_lessons = sorted(lesson_dict.values(), key=lambda x: time_to_minutes(x['time']))
 
             for lesson in sorted_lessons:
                 subject = re.sub(r'\([^)]*\)', '', lesson['subject'])
                 label = get_lesson_label(str(re.search(r'\(([^)]*)\)', lesson['subject'])))
-                text += f"\n{get_time_symbol(lesson['time'])}{lesson['time']}       {label}\n📖 {subject}\n👫{lesson['group']}\n🏠Ауд. {lesson['room']}\n"
+                group_list = ', '.join(lesson['groups'])
+                text += f"\n{get_time_symbol(lesson['time'])}{lesson['time']}       {label}\n📖 {subject}\n👫 {group_list}\n🏠Ауд. {lesson['room']}\n"
             return text
     return f'{header}\n\nИнформация о преподавателе не найдена!'
 
 
 def get_room_schedule(user_id: int) -> str:
-    """
-    Method for getting schedule for room by user_id from schedule in json format
-    :param user_id:  :type: int
-    :return:  :rtype: str
-    """
-    week, day, room_name = weeks[dbUtils.get_week(user_id)], days[dbUtils.get_day(user_id)], rooms[
-        dbUtils.get_room(user_id)]
+    week, day, room_name = weeks[db.get_week(user_id)], days[db.get_day(user_id)], rooms[
+        db.get_room(user_id)]
     data = config.schedule
     room_variants = [room_name + variant for variant in ['М', 'аМ', 'бМ']] if room_name == '2-13' else [
         room_name + variant for variant in ['К', 'аК', 'бК']] if room_name == '3-15' else [room_name]

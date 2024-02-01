@@ -1,14 +1,9 @@
 import json
 from typing import Any
-from data.config import ORIGINAL_SCHEDULES_PATH
+from config import ORIGINAL_SCHEDULES_PATH
 
 
 def transform_schedule(input_schedule: dict) -> dict[str, list[Any] | dict[Any, Any] | list[dict[str, Any]]]:
-    """
-    Extracts the teachers schedule from the groups schedule and adds it to the end of the schedule    
-    :param input_schedule: :dict: schedule in the json format
-    :return:  transformed schedule
-    """
     transformed = {
         "groups": [],
         "teachers": {}
@@ -56,12 +51,6 @@ def transform_schedule(input_schedule: dict) -> dict[str, list[Any] | dict[Any, 
 
 
 def merge_schedules(university_schedule: dict, college_schedule: dict) -> list[dict[str, Any]]:
-    """
-    Add college teachers schedule into university schedule.
-    :param university_schedule:  university schedule in the json format
-    :param college_schedule:  college schedule in the json format
-    :return:  :list: updated university schedule
-    """
     existing_schedule_dict = {teacher['teacher']: teacher['weeks'] for teacher in university_schedule}
 
     for teacher in college_schedule['teachers']:
@@ -90,11 +79,6 @@ def merge_schedules(university_schedule: dict, college_schedule: dict) -> list[d
 
 
 def transform_to_room_schedule(input_schedule: dict) -> list[dict[str, Any]]:
-    """
-    Add rooms schedule into file with groups and teachers schedule.
-    :param input_schedule:  schedule in the json format
-    :return:  :list: updated schedule with rooms
-    """
     room_schedule = {}
     for teacher_schedule in input_schedule['teachers']:
         for week_type, days in teacher_schedule['weeks'].items():
@@ -124,10 +108,10 @@ with open(directory_path + 'university.json', 'r', encoding='utf-8') as file:
 
 transformed_schedule = transform_schedule(input_data)
 
-# with open(directory_path + 'college.json', 'r', encoding='utf-8') as file:
-#     additional_data = json.load(file)
+with open(directory_path + 'college.json', 'r', encoding='utf-8') as file:
+    additional_data = json.load(file)
 
-# transformed_schedule['teachers'] = merge_schedules(transformed_schedule['teachers'], additional_data)
+transformed_schedule['teachers'] = merge_schedules(transformed_schedule['teachers'], additional_data)
 transformed_schedule['rooms'] = transform_to_room_schedule(transformed_schedule)
 
 with open(directory_path + 'combined_schedule.json', 'w', encoding='utf-8') as file:

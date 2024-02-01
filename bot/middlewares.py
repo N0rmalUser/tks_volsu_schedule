@@ -1,36 +1,16 @@
 from aiogram import BaseMiddleware
-from aiogram.filters import BaseFilter
+from aiogram.exceptions import TelegramBadRequest
 from aiogram.types import Message, Update, CallbackQuery
 
-from data.config import THROTTLE_TIME
+from config import THROTTLE_TIME
 
 from datetime import datetime, timedelta
 
-from typing import Union
 from typing import Callable, Dict, Any, Awaitable
-from aiogram.exceptions import TelegramBadRequest
-
-
-class ChatTypeFilter(BaseFilter):
-    """
-    A filter that accepts the chat type and returns True or False
-    :param chat_type:  The type of chat to be checked
-    :type chat_type:  str or list
-    """
-    def __init__(self, chat_type: Union[str, list]):
-        self.chat_type = chat_type
-
-    async def __call__(self, message: Message) -> bool:
-        if isinstance(self.chat_type, str):
-            return message.chat.type == self.chat_type
-        else:
-            return message.chat.type in self.chat_type
 
 
 class AntiSpamMessageMiddleware(BaseMiddleware):
-    """
-    A middleware that deletes messages that are sent too often
-    """
+    """Мидлварь, удаляющая сообщения, отправленные слишком часто"""
 
     def __init__(self):
         self.users_last_message_time = {}
@@ -43,13 +23,6 @@ class AntiSpamMessageMiddleware(BaseMiddleware):
             event: Update,
             data: Dict[str, Any]
     ) -> Any:
-        """
-        Method that is called when a message is received
-        :param handler:  Wrapped handler in middlewares chain
-        :param event:  Incoming event (Subclass of :class:`aiogram.types.base.TelegramObject`)
-        :param data:  Contextual data. Will be mapped to handler arguments
-        :return:  :class:`Any`
-        """
 
         if isinstance(event, Message):
             user = event.from_user
@@ -65,9 +38,7 @@ class AntiSpamMessageMiddleware(BaseMiddleware):
 
 
 class AntiSpamCallbackMiddleware(BaseMiddleware):
-    """
-    A middleware that deletes messages that are sent too often
-    """
+    """Мидлварь, игнорящая колбеки, отправленные слишком часто"""
 
     def __init__(self):
         self.users_last_message_time = {}
@@ -80,13 +51,6 @@ class AntiSpamCallbackMiddleware(BaseMiddleware):
             event: CallbackQuery,
             data: Dict[str, Any]
     ) -> Any:
-        """
-        Method that is called when a message is received
-        :param handler:  Wrapped handler in middlewares chain
-        :param event:  Incoming event (Subclass of :class:`aiogram.types.base.TelegramObject`)
-        :param data:  Contextual data. Will be mapped to handler arguments
-        :return:  :class:`Any`
-        """
 
         if isinstance(event, CallbackQuery):
             user = event.from_user
@@ -102,9 +66,7 @@ class AntiSpamCallbackMiddleware(BaseMiddleware):
 
 
 class IgnoreMessageNotModifiedMiddleware(BaseMiddleware):
-    """
-    Middleware that ignores the "message is not modified" error from Telegram.
-    """
+    """Мидлварь, игнорирующая ошибку "message is not modified" при попытке изменить сообщение"""
 
     async def __call__(
             self,
@@ -112,13 +74,7 @@ class IgnoreMessageNotModifiedMiddleware(BaseMiddleware):
             event: CallbackQuery,
             data: Dict[str, Any]
     ) -> Any:
-        """
-        Method that is called when an update is received.
-        :param handler: Wrapped handler in middlewares chain.
-        :param event: Incoming event (Subclass of :class:`aiogram.types.base.TelegramObject`).
-        :param data: Contextual data. Will be mapped to handler arguments.
-        :return: :class:`Any`
-        """
+
         try:
             return await handler(event, data)
         except TelegramBadRequest as e:

@@ -4,7 +4,7 @@ import os
 import openpyxl
 import pandas as pd
 
-import data.config
+import config
 
 import re
 
@@ -34,7 +34,7 @@ def split_subject_info(subject_info):
     )
 
 
-directory_path = data.config.ORIGINAL_SCHEDULES_PATH + 'schedules\\'
+directory_path = config.ORIGINAL_SCHEDULES_PATH + 'schedules\\'
 files = [f for f in os.listdir(directory_path) if f.endswith('.xlsx')]
 teachers_schedule = {"teachers": []}
 rooms_schedule = {"rooms": []}
@@ -96,7 +96,7 @@ for file in files:
     teachers_schedule['teachers'].append(teacher_schedule)
     rooms_schedule['rooms'].append(teacher_schedule)
 
-output_file_path = data.config.ORIGINAL_SCHEDULES_PATH + 'college.json'
+output_file_path = config.ORIGINAL_SCHEDULES_PATH + 'college.json'
 
 with open(output_file_path, 'w', encoding='utf-8') as json_file:
     json.dump(teachers_schedule, json_file, ensure_ascii=False, indent=4)

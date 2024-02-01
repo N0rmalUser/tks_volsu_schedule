@@ -1,5 +1,5 @@
 from docx import Document
-from data.config import ORIGINAL_SCHEDULES_PATH
+from config import ORIGINAL_SCHEDULES_PATH
 import json
 import os
 import re
