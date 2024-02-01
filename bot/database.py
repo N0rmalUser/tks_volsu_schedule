@@ -1,7 +1,7 @@
 from aiogram.types import Message
 
-from data.config import DB_PATH
-from data import config
+from config import DB_PATH
+import config
 
 from datetime import datetime, timedelta
 
@@ -14,9 +14,9 @@ import sqlite3
 
 def sql_kit(db=":memory:"):
     """
-    Decorator for working with database
-    :param db:  path to database
-    :return:  function result
+    Декоратор для работы с базой данных. Он открывает соединение с базой данных, выполняет функцию и закрывает соединение.
+    :param db:  путь к базе данных
+    :return:  результат выполнения функции
     """
 
     def decorator(func):
@@ -36,12 +36,9 @@ def sql_kit(db=":memory:"):
 
 
 @sql_kit(DB_PATH)
-def init_db(_cursor):
-    """
-    Create tables if not exists
-    :param _cursor:  :class:`sqlite3.Cursor` Internal cursor for working with database
-    :return:  None
-    """
+def init_db(_cursor: sqlite3.Cursor):
+    """Создаёт бд, если её нет"""
+
     _cursor.execute("""
         CREATE TABLE IF NOT EXISTS User_Info (
             user_id INTEGER PRIMARY KEY,
@@ -72,7 +69,13 @@ def init_db(_cursor):
 
 
 @sql_kit(DB_PATH)
-def set_blocked(user_id: int, block: bool, _cursor=None):
+def set_blocked(user_id: int, block: bool, _cursor: sqlite3.Cursor) -> None:
+    """
+    Устанавливает значение для поля blocked - заблокировал пользователь бота или нет
+    :param user_id:  :class:`int` user id
+    :param block:  :class:`bool` block True или False
+    :param _cursor:  :class:`sqlite3.Cursor` Не нужно передавать
+    """
     _cursor.execute("""
             INSERT INTO User_Info(user_id, blocked)
             VALUES(?, ?) ON CONFLICT(user_id) DO UPDATE 
@@ -81,7 +84,13 @@ def set_blocked(user_id: int, block: bool, _cursor=None):
 
 
 @sql_kit(DB_PATH)
-def get_blocked(user_id: int, _cursor=None) -> bool:
+def get_blocked(user_id: int, _cursor: sqlite3.Cursor) -> bool:
+    """
+    Возвращает значение поля blocked - заблокировал пользователь бота или нет
+    :param user_id:  :class:`int` user id
+    :param _cursor:  :class:`sqlite3.Cursor` Не нужно передавать
+    :return:  :class:`bool` block True или False
+    """
     _cursor.execute("""
         SELECT blocked FROM User_Info
         WHERE user_id = ?
@@ -90,13 +99,12 @@ def get_blocked(user_id: int, _cursor=None) -> bool:
 
 
 @sql_kit(DB_PATH)
-def set_tracking(user_id: int, tracking: bool, _cursor=None):
+def set_tracking(user_id: int, tracking: bool, _cursor: sqlite3.Cursor) -> None:
     """
-    Set tracking param for user
-    :param user_id:  :class:`aiogram.types.Message`
-    :param tracking:  :class:`bool` tracking True or False
-    :param _cursor:  :class:`sqlite3.Cursor` Internal cursor for working with database
-    :return:  None
+    Устанавливает значение для поля tracking - отслеживание пользователя
+    :param user_id:  :class:`int` user id
+    :param tracking:  :class:`bool` tracking True или False
+    :param _cursor:  :class:`sqlite3.Cursor` Не нужно передавать
     """
     _cursor.execute("""
             INSERT INTO Temp_Data(user_id, tracking)
@@ -106,12 +114,12 @@ def set_tracking(user_id: int, tracking: bool, _cursor=None):
 
 
 @sql_kit(DB_PATH)
-def get_tracking(user_id: int, _cursor=None) -> bool:
+def get_tracking(user_id: int, _cursor: sqlite3.Cursor) -> bool:
     """
-    Get tracking param for user
+    Возвращает значение поля tracking - отслеживание пользователя
     :param user_id:  :class:`int` user id
-    :param _cursor:  :class:`sqlite3.Cursor` Internal cursor for working with database
-    :return:  :class:`bool` tracking - True or False
+    :param _cursor:  :class:`sqlite3.Cursor` Не нужно передавать
+    :return:  :class:`bool` tracking True или False
     """
     _cursor.execute("""
         SELECT tracking FROM Temp_Data
@@ -124,12 +132,12 @@ def get_tracking(user_id: int, _cursor=None) -> bool:
 
 
 @sql_kit(DB_PATH)
-def get_user_type(user_id: int, _cursor=None) -> str:
+def get_user_type(user_id: int, _cursor: sqlite3.Cursor) -> str:
     """
-    Get user type - student or teacher
+    Возвращает значение поля user_type - student или teacher
     :param user_id:  :class:`int` user id
-    :param _cursor:  :class:`sqlite3.Cursor` Internal cursor for working with database
-    :return:  :class:`str` user type - student or teacher
+    :param _cursor:  :class:`sqlite3.Cursor` Не нужно передавать
+    :return:  :class:`str` user type - student или teacher
     """
     _cursor.execute("""
         SELECT user_type FROM User_Info
@@ -139,13 +147,12 @@ def get_user_type(user_id: int, _cursor=None) -> str:
 
 
 @sql_kit(DB_PATH)
-def set_user_type(msg: Message, user_type: str, _cursor=None):
+def set_user_type(msg: Message, user_type: str, _cursor: sqlite3.Cursor) -> None:
     """
-    Set user type, username, fullname, start_date for user
-    :param msg:  :class:`aiogram.types.Message`
-    :param user_type:  :class:`str` user type - student or teacher
-    :param _cursor:  :class:`sqlite3.Cursor` Internal cursor for working with database
-    :return:  :class:`str` user type - student or teacher
+    Устанавливает значение для поля user_type, username, fullname, start_date, если они не установлены
+    :param msg:  :class:`aiogram.types.Message` Полученное сообщение
+    :param user_type:  :class:`str` user type - student или teacher
+    :param _cursor:  :class:`sqlite3.Cursor` Не нужно передавать
     """
     _cursor.execute("""
         SELECT start_date FROM User_Info 
@@ -182,12 +189,11 @@ def set_user_type(msg: Message, user_type: str, _cursor=None):
 
 
 @sql_kit(DB_PATH)
-def set_last_date(msg: Message, _cursor=None):
+def set_last_date(msg: Message, _cursor: sqlite3.Cursor) -> None:
     """
-    Set last_date when user used bot
-    :param msg:  :class:`aiogram.types.Message`
-    :param _cursor:  :class:`sqlite3.Cursor` Internal cursor for working with database
-    :return:  None
+    Устанавливает значение для поля last_date - дата последнего сообщения от пользователя
+    :param msg:  :class:`aiogram.types.Message` Полученное сообщение
+    :param _cursor:  :class:`sqlite3.Cursor` Не нужно передавать
     """
     _cursor.execute("""
         INSERT INTO User_Info(user_id, last_date)
@@ -198,13 +204,12 @@ def set_last_date(msg: Message, _cursor=None):
 
 
 @sql_kit(DB_PATH)
-def set_inviter(user_id: int, inviter_id: int, _cursor=None):
+def set_inviter(user_id: int, inviter_id: int, _cursor: sqlite3.Cursor):
     """
-    Set user`s inviter_id
+    Устанавливает значение для поля inviter_id - id пригласившего пользователя
     :param user_id:  :class:`int` user id
-    :param inviter_id:  :class:`int` inviter id
-    :param _cursor:  :class:`sqlite3.Cursor` Internal cursor for working with database
-    :return:  None
+    :param inviter_id:  :class:`int` id пригласившего пользователя
+    :param _cursor:  :class:`sqlite3.Cursor` Не нужно передавать
     """
     _cursor.execute("""
         SELECT inviter_id FROM User_Info
@@ -220,12 +225,12 @@ def set_inviter(user_id: int, inviter_id: int, _cursor=None):
 
 
 @sql_kit(DB_PATH)
-def get_inviter(user_id: int, _cursor=None) -> int:
+def get_inviter(user_id: int, _cursor: sqlite3.Cursor) -> int:
     """
-    Get user`s inviter_id
+    Возвращает значение поля inviter_id - id пригласившего пользователя
     :param user_id:  :class:`int` user id
-    :param _cursor:  :class:`sqlite3.Cursor` Internal cursor for working with database
-    :return:  :class:`int` inviter id
+    :param _cursor:  :class:`sqlite3.Cursor` Не нужно передавать
+    :return:  :class:`int` id пригласившего пользователя
     """
     _cursor.execute("""
         SELECT inviter_id FROM User_Info
@@ -235,12 +240,12 @@ def get_inviter(user_id: int, _cursor=None) -> int:
 
 
 @sql_kit(DB_PATH)
-def get_teacher(user_id: int, _cursor=None) -> str:
+def get_teacher(user_id: int, _cursor: sqlite3.Cursor) -> str:
     """
-    Get teacher name
+    Возвращает значение поля teacher_name - имя преподавателя
     :param user_id:  :class:`int` user id
-    :param _cursor:  :class:`sqlite3.Cursor` Internal cursor for working with database
-    :return:  :class:`str` teacher name
+    :param _cursor:  :class:`sqlite3.Cursor` Не нужно передавать
+    :return:  :class:`str` Имя преподавателя
     """
     _cursor.execute("""
         SELECT teacher_name FROM Temp_Data
@@ -251,13 +256,12 @@ def get_teacher(user_id: int, _cursor=None) -> str:
 
 
 @sql_kit(DB_PATH)
-def set_teacher(user_id: int, teacher_name: str, _cursor=None) -> None:
+def set_teacher(user_id: int, teacher_name: str, _cursor: sqlite3.Cursor) -> None:
     """
-    Set teacher name
+    Устанавливает значение для поля teacher_name - имя преподавателя
     :param user_id:  :class:`int` user id
-    :param teacher_name:  :class:`str` teacher name
-    :param _cursor:  :class:`sqlite3.Cursor` Internal cursor for working with database
-    :return:  None
+    :param teacher_name:  :class:`str` Имя преподавателя
+    :param _cursor:  :class:`sqlite3.Cursor` Не нужно передавать
     """
     _cursor.execute("""
         INSERT INTO Temp_Data(user_id, teacher_name)
@@ -267,12 +271,12 @@ def set_teacher(user_id: int, teacher_name: str, _cursor=None) -> None:
 
 
 @sql_kit(DB_PATH)
-def get_group(user_id: int, _cursor=None) -> str:
+def get_group(user_id: int, _cursor: sqlite3.Cursor) -> str:
     """
-    Get group name
+    Возвращает значение поля group_name - название группы
     :param user_id:  :class:`int` user id
-    :param _cursor:  :class:`sqlite3.Cursor` Internal cursor for working with database
-    :return:  :class:`str` group name
+    :param _cursor:  :class:`sqlite3.Cursor` Не нужно передавать
+    :return:  :class:`str` Название группы
     """
     _cursor.execute("""
         SELECT group_name FROM Temp_Data
@@ -283,13 +287,12 @@ def get_group(user_id: int, _cursor=None) -> str:
 
 
 @sql_kit(DB_PATH)
-def set_group(user_id: int, group_name: str, _cursor=None):
+def set_group(user_id: int, group_name: str, _cursor: sqlite3.Cursor) -> None:
     """
-    Set group name
+    Устанавливает значение для поля group_name - название группы
     :param user_id:  :class:`int` user id
-    :param group_name:  :class:`str` group name
-    :param _cursor:  :class:`sqlite3.Cursor` Internal cursor for working with database
-    :return:  None
+    :param group_name:  :class:`str` Название группы
+    :param _cursor:  :class:`sqlite3.Cursor` Не нужно передавать
     """
     _cursor.execute("""
         INSERT INTO Temp_Data(user_id, group_name)
@@ -299,12 +302,12 @@ def set_group(user_id: int, group_name: str, _cursor=None):
 
 
 @sql_kit(DB_PATH)
-def get_topic_id(user_id: int, _cursor=None) -> int:
+def get_topic_id(user_id: int, _cursor: sqlite3.Cursor) -> int:
     """
-    Get topic id
+    Возвращает значение поля topic_id - id топика пользователя
     :param user_id:  :class:`int` user id
-    :param _cursor:  :class:`sqlite3.Cursor` Internal cursor for working with database
-    :return:  :class:`int` topic id
+    :param _cursor:  :class:`sqlite3.Cursor` Не нужно передавать
+    :return:  :class:`int` topic id - id топика пользователя
     """
     _cursor.execute("""
         SELECT topic_id FROM User_Info
@@ -315,12 +318,12 @@ def get_topic_id(user_id: int, _cursor=None) -> int:
 
 
 @sql_kit(DB_PATH)
-def get_user_id(topic_id: int, _cursor=None) -> int:
+def get_user_id(topic_id: int, _cursor: sqlite3.Cursor) -> int:
     """
-    Get user id
+    Возвращает значение поля user_id - id пользователя
     :param topic_id:  :class:`int` topic id
-    :param _cursor:  :class:`sqlite3.Cursor` Internal cursor for working with database
-    :return:  :class:`int` user id
+    :param _cursor:  :class:`sqlite3.Cursor` Не нужно передавать
+    :return:  :class:`int` user id - id пользователя в telegram
     """
     _cursor.execute("""
         SELECT user_id FROM User_Info
@@ -331,13 +334,12 @@ def get_user_id(topic_id: int, _cursor=None) -> int:
 
 
 @sql_kit(DB_PATH)
-def set_topic_id(user_id: int, topic_id: int, _cursor=None):
+def set_topic_id(user_id: int, topic_id: int, _cursor: sqlite3.Cursor) -> None:
     """
-    Set topic id
-    :param user_id:  :class:`int` user id
-    :param topic_id:  :class:`int` topic id
-    :param _cursor:  :class:`sqlite3.Cursor` Internal cursor for working with database
-    :return:  None
+    Устанавливает значение для поля topic_id - id топика пользователя
+    :param user_id:  :class:`int` user id - id пользователя в telegram
+    :param topic_id:  :class:`int` topic id - id топика пользователя
+    :param _cursor:  :class:`sqlite3.Cursor` Не нужно передавать
     """
     _cursor.execute("""
         INSERT INTO User_Info(user_id, topic_id)
@@ -347,12 +349,12 @@ def set_topic_id(user_id: int, topic_id: int, _cursor=None):
 
 
 @sql_kit(DB_PATH)
-def get_week(user_id: int, _cursor=None) -> int:
+def get_week(user_id: int, _cursor: sqlite3.Cursor) -> int:
     """
-    Get week. 1 - "Числитель", 2 - "Знаменатель"
+    Возвращает значение поля week - недели. 1 - "Числитель", 2 - "Знаменатель"
     :param user_id:  :class:`int` user id
-    :param _cursor:  :class:`sqlite3.Cursor` Internal cursor for working with database
-    :return:  :class:`int` week
+    :param _cursor:  :class:`sqlite3.Cursor` Не нужно передавать
+    :return:  :class:`int` Неделя. 1 - "Числитель", 2 - "Знаменатель"
     """
     _cursor.execute("""
         SELECT week FROM Temp_Data
@@ -363,13 +365,12 @@ def get_week(user_id: int, _cursor=None) -> int:
 
 
 @sql_kit(DB_PATH)
-def set_week(user_id: int, week: int, _cursor=None) -> None:
+def set_week(user_id: int, week: int, _cursor: sqlite3.Cursor) -> None:
     """
-    Set week. 1 - "Числитель", 2 - "Знаменатель"
+    Устанавливает значение поля week. 1 - "Числитель", 2 - "Знаменатель"
     :param user_id:  :class:`int` user id
-    :param week:  :class:`int` week
-    :param _cursor:  :class:`sqlite3.Cursor` Internal cursor for working with database
-    :return:  None
+    :param week:  :class:`int` Неделя. 1 - "Числитель", 2 - "Знаменатель"
+    :param _cursor:  :class:`sqlite3.Cursor` Не нужно передавать
     """
     _cursor.execute("""
         INSERT INTO Temp_Data(user_id, week)
@@ -379,12 +380,12 @@ def set_week(user_id: int, week: int, _cursor=None) -> None:
 
 
 @sql_kit(DB_PATH)
-def get_day(user_id: int, _cursor=None) -> int:
+def get_day(user_id: int, _cursor: sqlite3.Cursor) -> int:
     """
-    Get day. 1 - "Понедельник", 2 - "Вторник" ... 6 - "Суббота"
+    Возвращает значение поля day. 1 - "Понедельник", 2 - "Вторник" ... 6 - "Суббота"
     :param user_id:  :class:`int` user id
-    :param _cursor:  :class:`sqlite3.Cursor` Internal cursor for working with database
-    :return:  :class:`int` day
+    :param _cursor:  :class:`sqlite3.Cursor` Не нужно передавать
+    :return:  :class:`int` День. 1 - "Понедельник", 2 - "Вторник" ... 6 - "Суббота"
     """
     _cursor.execute("""
         SELECT day FROM Temp_Data
@@ -395,13 +396,12 @@ def get_day(user_id: int, _cursor=None) -> int:
 
 
 @sql_kit(DB_PATH)
-def set_day(user_id: int, day: int, _cursor=None) -> None:
+def set_day(user_id: int, day: int, _cursor: sqlite3.Cursor) -> None:
     """
-    Set day. 1 - "Понедельник", 2 - "Вторник" ... 6 - "Суббота"
+    Возвращает значение поля day. 1 - "Понедельник", 2 - "Вторник" ... 6 - "Суббота"
     :param user_id:  :class:`int` user id
-    :param day:  :class:`int` day
-    :param _cursor:  :class:`sqlite3.Cursor` Internal cursor for working with database
-    :return:  None
+    :param day:  :class:`int` День. 1 - "Понедельник", 2 - "Вторник" ... 6 - "Суббота"
+    :param _cursor:  :class:`sqlite3.Cursor` Не нужно передавать
     """
     _cursor.execute("""
         INSERT INTO Temp_Data(user_id, day)
@@ -411,12 +411,12 @@ def set_day(user_id: int, day: int, _cursor=None) -> None:
 
 
 @sql_kit(DB_PATH)
-def get_room(user_id: int, _cursor=None) -> str:
+def get_room(user_id: int, _cursor: sqlite3.Cursor) -> str:
     """
-    Get room
+    Возвращает значение поля room - аудитория
     :param user_id:  :class:`int` user id
-    :param _cursor:  :class:`sqlite3.Cursor` Internal cursor for working with database
-    :return:  :class:`str` room
+    :param _cursor:  :class:`sqlite3.Cursor` Не нужно передавать
+    :return:  :class:`str` Аудитория
     """
     _cursor.execute("""SELECT room FROM Temp_Data
         WHERE user_id = ?
@@ -426,13 +426,12 @@ def get_room(user_id: int, _cursor=None) -> str:
 
 
 @sql_kit(DB_PATH)
-def set_room(user_id: int, room: str, _cursor=None):
+def set_room(user_id: int, room: str, _cursor: sqlite3.Cursor):
     """
-    Set room
+    Устанавливает значение для поля room - аудитория
     :param user_id:  :class:`int` user id
-    :param room:  :class:`str` room
-    :param _cursor:  :class:`sqlite3.Cursor` Internal cursor for working with database
-    :return: None
+    :param room:  :class:`str` Аудитория
+    :param _cursor:  :class:`sqlite3.Cursor` Не нужно передавать
     """
     _cursor.execute("""
         INSERT INTO Temp_Data(user_id, room)
@@ -442,7 +441,13 @@ def set_room(user_id: int, room: str, _cursor=None):
 
 
 @sql_kit(DB_PATH)
-def get_user_info(user_id, _cursor=None):
+def get_user_info(user_id, _cursor: sqlite3.Cursor):
+    """
+    Возвращает информацию о пользователе, подготовленную к отправке админу
+    :param user_id:  :class:`int` user id
+    :param _cursor:  :class:`sqlite3.Cursor` Не нужно передавать
+    :return:  :class:`str` Информация о пользователе
+    """
     _cursor.execute("""
         SELECT * FROM User_Info
         WHERE user_id = ?
@@ -463,13 +468,23 @@ def get_user_info(user_id, _cursor=None):
 
 
 @sql_kit(DB_PATH)
-def get_all_user_ids(_cursor=None) -> list:
+def get_all_user_ids(_cursor: sqlite3.Cursor) -> list:
+    """
+    Возвращает список всех user_id
+    :param _cursor:  :class:`sqlite3.Cursor` Не нужно передавать
+    :return:  :class:`list` Список всех user_id
+    """
     _cursor.execute("SELECT user_id FROM User_Info")
     return [row[0] for row in _cursor.fetchall()]
 
 
 @sql_kit(DB_PATH)
-def get_all_users_info(_cursor=None):
+def get_all_users_info(_cursor: sqlite3.Cursor) -> str:
+    """
+    Возвращает информацию о всех пользователях, подготовленную к отправке админу
+    :param _cursor:  :class:`sqlite3.Cursor` Не нужно передавать
+    :return:  :class:`str` Информация о всех пользователях
+    """
     # Подсчёт количества пользователей, когда-либо заходивших в бота
     _cursor.execute("SELECT COUNT(*) FROM User_Info")
     users_count = _cursor.fetchone()[0]
@@ -488,7 +503,12 @@ def get_all_users_info(_cursor=None):
     return result
 
 
-async def broadcast_message(bot, text) -> None:
+async def broadcast_message(bot, text: str) -> None:
+    """
+    Отправляет сообщение всем пользователям, которые не заблокировали бота
+    :param bot:  :class:`aiogram.Bot` Бот
+    :param text:  :class:`str` Текст сообщения
+    """
     user_ids = get_all_user_ids()
     for user_id in user_ids:
         if get_blocked(user_id):
@@ -499,11 +519,19 @@ async def broadcast_message(bot, text) -> None:
 
 
 async def tracking_manage(tracking: bool) -> None:
+    """
+    Включает или выключает отслеживание для всех пользователей
+    :param tracking:  :class:`bool` True или False
+    """
     for user_id in get_all_user_ids():
         set_tracking(user_id, tracking)
 
 
 async def get_tracked_users() -> list:
+    """
+    Возвращает список отслеживаемых пользователей
+    :return:  :class:`list` Список отслеживаемых пользователей
+    """
     user_ids = get_all_user_ids()
     tracked_users = []
     for user_id in user_ids:
@@ -513,11 +541,13 @@ async def get_tracked_users() -> list:
 
 
 def open_schedule_file():
+    """Открывает файл с расписанием"""
     with open(config.SCHEDULE_PATH, 'r', encoding='utf-8') as file:
         config.schedule = json.load(file)
 
 
 def set_today_date(user_id: int) -> None:
+    """Устанавливает день и неделю в зависимости от текущей даты"""
     day = int(f"{datetime.now().weekday() + 1}")
     week = 2 if datetime.now().isocalendar()[1] % 2 == 0 else 1
     if day == 7:

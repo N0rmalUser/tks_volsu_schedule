@@ -1,22 +1,5 @@
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton, ReplyKeyboardMarkup
 
-admin_menu = [
-    [
-        KeyboardButton(text="/log clear"),
-        KeyboardButton(text="/log send"),
-        KeyboardButton(text="/send_db")
-     ],
-    [
-        KeyboardButton(text="/track start"),
-        KeyboardButton(text="/track stop"),
-        KeyboardButton(text="/track status")
-    ],
-    [
-        KeyboardButton(text="/schedule_update"),
-        KeyboardButton(text="/заглушка"),
-        KeyboardButton(text="/info")
-     ]
-]
 
 student_menu = [
     [
@@ -222,6 +205,5 @@ teachers = InlineKeyboardMarkup(inline_keyboard=teachers)
 
 view = InlineKeyboardMarkup(inline_keyboard=view)
 
-admin_menu = ReplyKeyboardMarkup(keyboard=admin_menu, resize_keyboard=True)
 student_menu = ReplyKeyboardMarkup(keyboard=student_menu, resize_keyboard=True)
 teacher_menu = ReplyKeyboardMarkup(keyboard=teacher_menu, resize_keyboard=True)

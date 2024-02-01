@@ -1,6 +1,5 @@
-from data import config
-import dbUtils
-
+import config
+from bot import database as db
 import re
 
 
@@ -10,7 +9,7 @@ def get_group_schedule(user_id: int) -> str:
     :param user_id:  :type: int
     :return:  :rtype: str
     """
-    week, day, group_name = weeks[dbUtils.get_week(user_id)], days[dbUtils.get_day(user_id)], dbUtils.get_group(user_id)
+    week, day, group_name = weeks[db.get_week(user_id)], days[db.get_day(user_id)], db.get_group(user_id)
     data = config.schedule
 
     text = header = f'{day}       {week}\n{group_name}\n'
@@ -37,7 +36,7 @@ def get_teacher_schedule(user_id: int) -> str:
     :param user_id:  :type: int
     :return:  :rtype: str
     """
-    week, day, teacher_name = weeks[dbUtils.get_week(user_id)], days[dbUtils.get_day(user_id)], dbUtils.get_teacher(
+    week, day, teacher_name = weeks[db.get_week(user_id)], days[db.get_day(user_id)], db.get_teacher(
         user_id)
     data = config.schedule
 
@@ -65,8 +64,8 @@ def get_room_schedule(user_id: int) -> str:
     :param user_id:  :type: int
     :return:  :rtype: str
     """
-    week, day, room_name = weeks[dbUtils.get_week(user_id)], days[dbUtils.get_day(user_id)], rooms[
-        dbUtils.get_room(user_id)]
+    week, day, room_name = weeks[db.get_week(user_id)], days[db.get_day(user_id)], rooms[
+        db.get_room(user_id)]
     data = config.schedule
     room_variants = [room_name + variant for variant in ['М', 'аМ', 'бМ']] if room_name == '2-13' else [
         room_name + variant for variant in ['К', 'аК', 'бК']] if room_name == '3-15' else [room_name]
