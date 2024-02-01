@@ -8,6 +8,12 @@ from datetime import datetime, timedelta
 
 from typing import Callable, Dict, Any, Awaitable
 
+from bot import database as db
+
+import importlib
+
+import logging
+
 
 class AntiSpamMessageMiddleware(BaseMiddleware):
     """Мидлварь, удаляющая сообщения, отправленные слишком часто"""
@@ -80,4 +86,23 @@ class IgnoreMessageNotModifiedMiddleware(BaseMiddleware):
         except TelegramBadRequest as e:
             if 'message is not modified' in str(e):
                 await event.answer("Ты уже тут")
+                return
+
+
+class TelegramBadRequestMiddleware(BaseMiddleware):
+    async def __call__(
+            self,
+            handler: Callable[[Message, Dict[str, Any]], Awaitable[Any]],
+            event: Message,
+            data: Dict[str, Any]
+    ) -> Any:
+        try:
+            await handler(event, data)
+        except TelegramBadRequest as e:
+            if "message thread not found" in str(e):
+                logging.warning(f"Не удалось найти топик юзера {event.from_user.id}")
+                db.delete_topic_id(event.from_user.id)
+                await getattr(importlib.import_module("bot.bot"), "topic_create")(event)
+                await handler(event, data)
+            else:
                 return

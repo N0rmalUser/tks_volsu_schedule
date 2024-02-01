@@ -349,6 +349,11 @@ def set_topic_id(user_id: int, topic_id: int, _cursor: sqlite3.Cursor) -> None:
 
 
 @sql_kit(DB_PATH)
+def delete_topic_id(user_id, _cursor: sqlite3.Cursor):
+    _cursor.execute("UPDATE User_info SET topic_id = NULL WHERE user_id = ?;", (user_id,))
+
+
+@sql_kit(DB_PATH)
 def get_week(user_id: int, _cursor: sqlite3.Cursor) -> int:
     """
     Возвращает значение поля week - недели. 1 - "Числитель", 2 - "Знаменатель"
@@ -489,14 +494,21 @@ def get_all_users_info(_cursor: sqlite3.Cursor) -> str:
     _cursor.execute("SELECT COUNT(*) FROM User_Info")
     users_count = _cursor.fetchone()[0]
 
+    # Подсчет количества пользователей с last_date не старше одной недели
+    one_week_ago = datetime.now() - timedelta(days=7)
+    _cursor.execute("SELECT last_date FROM User_Info")
+    users = _cursor.fetchall()
+    recent_users_count = 0
+    for (last_date_str,) in users:
+        # Преобразуем строку в datetime
+        last_date = datetime.strptime(last_date_str, '%d-%m-%Y %H:%M:%S')
+        # Проверяем, активен ли пользователь
+        if last_date > one_week_ago:
+            recent_users_count += 1
     # Подсчет количества заблокированных пользователей
-    _cursor.execute("SELECT COUNT(*) FROM User_Info WHERE blocked = 'true'")
+    _cursor.execute("SELECT COUNT(*) FROM User_Info WHERE blocked = 1")
     blocked_count = _cursor.fetchone()[0]
 
-    # Подсчет количества пользователей с last_date не старше одной недели
-    one_week_ago = datetime.now() - timedelta(weeks=1)
-    _cursor.execute("SELECT COUNT(*) FROM User_Info WHERE last_date >= ?", (one_week_ago,))
-    recent_users_count = _cursor.fetchone()[0]
     result = (f"Пользователей: {users_count}\n"
               f"Активных: {recent_users_count}\n"
               f"Заблокировали бота: {blocked_count}")
