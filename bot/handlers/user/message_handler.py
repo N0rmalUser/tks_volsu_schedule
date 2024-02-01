@@ -55,10 +55,9 @@ async def _start_handler(msg: Message) -> None:
 
 @router.message(Command("admin"), ChatTypeFilter(chat_type="private"))
 async def _admin_handler(msg: Message) -> None:
-    await msg.answer("Модератор скоро напишет вам, ожидайте")
     await getattr(importlib.import_module("bot.bot"), "admin_sender")(msg)
-    await msg.forward(ADMIN_CHAT_ID, from_chat_id=msg.chat.id, message_id=msg.message_id,
-                      message_thread_id=db.get_topic_id(msg.from_user.id))
+    await msg.forward(chat_id=ADMIN_CHAT_ID, message_thread_id=db.get_topic_id(msg.from_user.id))
+    await msg.answer("Модератор скоро напишет вам, ожидайте")
     db.set_tracking(db.get_user_id(msg.message_thread_id), True)
 
 
@@ -90,8 +89,7 @@ async def _handler(msg: Message) -> None:
         elif msg.text == "Преподаватели":
             await msg.answer(f"Выберите преподавателя", reply_markup=kb.teachers)
         if db.get_tracking(user_id):
-            await msg.forward(ADMIN_CHAT_ID, from_chat_id=msg.chat.id, message_id=msg.message_id,
-                              message_thread_id=db.get_topic_id(msg.from_user.id))
+            await msg.forward(ADMIN_CHAT_ID, message_thread_id=db.get_topic_id(msg.from_user.id))
     else:
         await msg.answer("Я тебя не понимаю, буковы пиши!")
     db.set_last_date(msg)

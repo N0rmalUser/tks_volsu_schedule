@@ -85,20 +85,24 @@ async def _handle_topic_command_track(msg: Message, command: CommandObject) -> N
 @router.message(Command("info"), ChatTypeFilter(chat_type=["group", "supergroup"]))
 async def _handle_topic_command_info(msg: Message) -> None:
     if msg.chat.id == ADMIN_CHAT_ID and not msg.from_user.is_bot:
-        if msg.message_thread_id:
-            await msg.answer(db.get_user_info(db.get_user_id(msg.message_thread_id)),
-                             parse_mode="MarkdownV2")
+        start = await msg.answer("Собираю статистику")
+        if start.message_thread_id:
+            await start.edit_text(db.get_user_info(db.get_user_id(msg.message_thread_id)),
+                                  parse_mode="MarkdownV2")
         else:
-            await msg.answer(db.get_all_users_info())
+            await start.edit_text(db.get_all_users_info())
 
 
 @router.message(ChatTypeFilter(chat_type=["group", "supergroup"]))
 async def _handle_topic_message(msg: Message) -> None:
-    if msg.text[0] != '/':
-        if msg.chat.id == ADMIN_CHAT_ID and not msg.from_user.is_bot:
-            if msg.message_thread_id is not None:
-                await getattr(importlib.import_module("bot.bot"), "send_to_user")(msg)
-            else:
-                await getattr(importlib.import_module("bot.bot"), "broadcast")(msg)
-    else:
-        await msg.answer("Нет такой команды, но я тебя спас, не бойся")
+    try:
+        if msg.text[0] != '/':
+            if msg.chat.id == ADMIN_CHAT_ID and not msg.from_user.is_bot:
+                if msg.message_thread_id is not None:
+                    await getattr(importlib.import_module("bot.bot"), "send_to_user")(msg)
+                else:
+                    await getattr(importlib.import_module("bot.bot"), "broadcast")(msg)
+        else:
+            await msg.answer("Нет такой команды, но я тебя спас, не бойся")
+    except TypeError:
+        pass
