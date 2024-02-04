@@ -6,12 +6,15 @@ import asyncio
 
 from bot import database as db
 from bot.filters import ChatTypeFilter
+from bot.markups import admin_markups as kb
 
 from config import ADMIN_CHAT_ID, LOG_FILE, DB_PATH
 
-from bot.markups import admin_markups as kb
+from datetime import datetime
 
 import importlib
+
+import logging
 
 router = Router()
 
@@ -28,8 +31,12 @@ async def _handle_topic_command_track(msg: Message, command: CommandObject) -> N
         if command.args == 'send' or command.args == 'show':
             await msg.answer_document(FSInputFile(LOG_FILE), caption="Вот ваш лог")
         elif command.args == 'clear' or command.args == 'del':
-            open(LOG_FILE, 'w').write('')
-            await msg.answer("Логи очищены")
+            open(LOG_FILE, 'w').write('Log cleared')
+            await msg.answer(f"{datetime.now().strftime('%H:%M:%S %d-%m-%Y')} Логи очищены")
+        elif command.args == 'start':
+            await getattr(importlib.import_module("bot.bot"), "enable_logging")(msg)
+        elif command.args == 'stop':
+            await getattr(importlib.import_module("bot.bot"), "disable_logging")(msg)
         else:
             await msg.answer("Такой команды нету (аргумент не правильный)")
 
@@ -93,6 +100,16 @@ async def _handle_topic_command_info(msg: Message) -> None:
             await start.edit_text(db.get_all_users_info())
 
 
+@router.message(Command("ban"), ChatTypeFilter(chat_type=["group", "supergroup"]))
+async def _ban_handler(msg: Message) -> None:
+    await msg.answer("Пока не работает")
+
+
+@router.message(Command("unban"), ChatTypeFilter(chat_type=["group", "supergroup"]))
+async def _unban_handler(msg: Message) -> None:
+    await msg.answer("Пока не работает")
+
+
 @router.message(ChatTypeFilter(chat_type=["group", "supergroup"]))
 async def _handle_topic_message(msg: Message) -> None:
     try:
@@ -105,4 +122,4 @@ async def _handle_topic_message(msg: Message) -> None:
         else:
             await msg.answer("Нет такой команды, но я тебя спас, не бойся")
     except TypeError:
-        pass
+        logging.warning("TypeError в _handle_topic_message")

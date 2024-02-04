@@ -8,15 +8,28 @@ from bot.handlers import admin, user
 from bot.markups import admin_markups as kb
 from config import BOT_TOKEN, ADMIN_CHAT_ID
 
+import logging
+
 bot: Bot
+logger: logging.Logger
+stream_handler: logging.StreamHandler
 
 
 async def main() -> None:
     """Функция запуска бота,. Удаляет вебхуки и стартует поллинг."""
-    global bot
+    global bot, logger, stream_handler
+    logger = logging.getLogger(__name__)
+    stream_handler = logging.StreamHandler()
+    stream_handler.setLevel(logging.INFO)
+    stream_handler.setFormatter(logging.Formatter(
+        '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        datefmt='%H:%M:%S %d-%m-%Y')
+    )
+    logger.addHandler(stream_handler)
     bot = Bot(token=BOT_TOKEN)
     dp = Dispatcher(storage=MemoryStorage())
-    dp.include_routers(user.callback_handler.router, user.message_handler.router, user.status_handler.router, admin.message_handler.router)
+    dp.include_routers(user.callback_handler.router, user.message_handler.router, user.status_handler.router,
+                       admin.message_handler.router)
     dp.message.middleware(middlewares.AntiSpamMessageMiddleware())
     dp.callback_query.middleware(middlewares.AntiSpamCallbackMiddleware())
     dp.callback_query.middleware(middlewares.IgnoreMessageNotModifiedMiddleware())
@@ -26,6 +39,21 @@ async def main() -> None:
 
 
 # Функции-обработчики команд из importlib (нельзя использовать в других файлах из-за зацикливания)
+
+async def enable_logging(msg: Message):
+    if stream_handler not in logger.handlers:
+        logger.addHandler(stream_handler)
+        await msg.reply("Логирование в терминал включено.")
+    else:
+        await msg.reply("Логирование в терминал уже включено.")
+
+
+async def disable_logging(msg: Message):
+    if stream_handler in logger.handlers:
+        logger.removeHandler(stream_handler)
+        await msg.reply("Логирование в терминал выключено.")
+    else:
+        await msg.reply("Логирование в терминал уже выключено.")
 
 
 async def topic_create(msg: Message) -> None:
@@ -48,7 +76,8 @@ async def topic_create(msg: Message) -> None:
                  f"Номер телефона: {msg.contact}\n"
                  f"Пригласил: <code>{db.get_inviter(user_id) if db.get_inviter(user_id) else 'Никто'}</code>\n"
                  f"Тип пользователя: {db.get_user_type(user_id)}")
-    await bot.send_message(ADMIN_CHAT_ID, message_thread_id=topic_id, text=user_info, reply_markup=kb.admin_menu, parse_mode="HTML")
+    await bot.send_message(ADMIN_CHAT_ID, message_thread_id=topic_id, text=user_info, reply_markup=kb.admin_menu,
+                           parse_mode="HTML")
     db.set_tracking(msg.from_user.id, False)
 
 
