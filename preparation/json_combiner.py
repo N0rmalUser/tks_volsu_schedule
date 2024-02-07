@@ -112,7 +112,6 @@ with open(directory_path + 'college.json', 'r', encoding='utf-8') as file:
     additional_data = json.load(file)
 
 transformed_schedule['teachers'] = merge_schedules(transformed_schedule['teachers'], additional_data)
-transformed_schedule['rooms'] = transform_to_room_schedule(transformed_schedule)
 
 with open(directory_path + 'combined_schedule.json', 'w', encoding='utf-8') as file:
     json.dump(transformed_schedule, file, ensure_ascii=False, indent=4)

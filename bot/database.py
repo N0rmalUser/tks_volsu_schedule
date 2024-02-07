@@ -137,7 +137,7 @@ def get_user_type(user_id: int, _cursor: sqlite3.Cursor) -> str:
     Возвращает значение поля user_type - student или teacher
     :param user_id:  :class:`int` user id
     :param _cursor:  :class:`sqlite3.Cursor` Не нужно передавать
-    :return:  :class:`str` user type - student или teacher
+    :return:  :class:`str` user call_type - student или teacher
     """
     _cursor.execute("""
         SELECT user_type FROM User_Info
@@ -151,7 +151,7 @@ def set_user_type(msg: Message, user_type: str, _cursor: sqlite3.Cursor) -> None
     """
     Устанавливает значение для поля user_type, username, fullname, start_date, если они не установлены
     :param msg:  :class:`aiogram.types.Message` Полученное сообщение
-    :param user_type:  :class:`str` user type - student или teacher
+    :param user_type:  :class:`str` user call_type - student или teacher
     :param _cursor:  :class:`sqlite3.Cursor` Не нужно передавать
     """
     _cursor.execute("""

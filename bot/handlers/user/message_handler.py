@@ -12,6 +12,8 @@ from config import ADMIN_CHAT_ID
 
 import importlib
 
+import logging
+
 router = Router()
 
 
@@ -24,10 +26,10 @@ async def _start_deep_handler(msg: Message, command: CommandObject) -> None:
         db.set_inviter(user_id, int(args[0]))
         if args[1] == "teacher":
             user_type = "teacher"
-            menu, keyboard = kb.teacher_menu, kb.teachers
+            menu, keyboard = kb.teacher_menu, kb.get_teachers
         else:
             user_type = "student"
-            menu, keyboard = kb.student_menu, kb.groups
+            menu, keyboard = kb.student_menu, kb.get_groups
         db.set_last_date(msg)
         db.set_today_date(user_id)
         db.set_week(user_id, 1)
@@ -37,6 +39,7 @@ async def _start_deep_handler(msg: Message, command: CommandObject) -> None:
         another_function = getattr(main, "start_message")
         await another_function(msg, user_id, menu, keyboard)
     except Exception:
+        logging.warning(f"{msg.from_user.id} перешёл по неверной ссылке")
         await msg.answer("Неверная ссылка")
 
 
@@ -48,9 +51,38 @@ async def _start_handler(msg: Message) -> None:
     db.set_week(user_id, 1)
     user_type = db.get_user_type(user_id)
     db.set_user_type(msg, user_type)
-    menu, keyboard = (kb.teacher_menu, kb.teachers) if user_type == "teacher" else (
-        kb.student_menu, kb.groups)
+    menu, keyboard = (kb.teacher_menu, kb.get_teachers()) if user_type == "teacher" else (kb.student_menu, kb.get_groups())
     await getattr(importlib.import_module("bot.bot"), "start_message")(msg, user_id, menu, keyboard)
+
+
+@router.message(Command('help'), ChatTypeFilter(chat_type='private'))
+async def _help_handler(msg: Message) -> None:
+    if db.get_user_type == 'teacher':
+        await msg.answer("""
+Привет, это бот расписания кафедры ТКС!
+
+Кнопка `Расписание на сегодня` показываает расписание на сегодняшний день для выбранного преподавателя.
+Кнопки `Группы`, `Преподаватели`, `Кабинеты` открывают соответствующие меню выбора.
+
+Если у группы номер `ИБТС-231_2` - это 2-я подгруппа, если `_2` отсутствует, то должно придти вся группа, либо первая подгруппа. Отдельно первая подгруппа ни как не обозначается!!!
+
+✅ показывает, что выбрана эта неделя, для изменения недели нужно нажать кнопку с ➡️
+
+Для связи с администратором при возникших ошибках/измнениях в расписании используйте команду /admin и опишите проблему.
+""")
+    else:
+        await msg.answer("""
+Привет, это бот расписания кафедры ТКС!
+
+Кнопка `Расписание на сегодня` показываает расписание на сегодняшний день для выбранной группы.
+Кнопка `Группы` открывает меню выбора групп
+
+Если у группы номер `ИБТС-231_2` - это 2-я подгруппа, если `_2` отсутствует, первая
+
+✅ показывает, что выбрана эта неделя, для изменения недели нужно нажать кнопку с ➡️
+
+Для связи с администратором при возникших ошибках/измнениях в расписании используйте команду /admin и опишите проблему.
+""")
 
 
 @router.message(Command("admin"), ChatTypeFilter(chat_type="private"))
@@ -58,6 +90,7 @@ async def _admin_handler(msg: Message) -> None:
     await getattr(importlib.import_module("bot.bot"), "admin_sender")(msg)
     await msg.forward(chat_id=ADMIN_CHAT_ID, message_thread_id=db.get_topic_id(msg.from_user.id))
     await msg.answer("Модератор скоро напишет вам, ожидайте")
+    logging.info(f"{msg.from_user.id} написал админу")
     db.set_tracking(db.get_user_id(msg.message_thread_id), True)
 
 
@@ -71,23 +104,26 @@ async def _handler(msg: Message) -> None:
             entity_id = db.get_teacher(user_id) if user_type == "teacher" else db.get_group(user_id)
 
             if not entity_id:
-                await msg.answer(
-                    f"Сначала выберите {'ФИО преподавателя' if user_type == 'teacher' else 'группу'}, нажав на соответствующую кнопку.")
+                await msg.answer(f"Сначала выберите {'ФИО преподавателя' if user_type == 'teacher' else 'группу'}, нажав на соответствующую кнопку.")
                 return
             if user_type == "teacher":
-                week_kb = kb.teacher_week1 if db.get_week(user_id) == 1 else kb.teacher_week2
+                week_kb = kb.get_days('teacher', db.get_week(user_id))
                 await msg.answer(text_maker.get_teacher_schedule(user_id), reply_markup=week_kb)
             elif user_type == "student":
-                week_kb = kb.group_week1 if db.get_week(user_id) == 1 else kb.group_week2
+                week_kb = kb.get_days('teacher', db.get_week(user_id))
                 await msg.answer(text_maker.get_group_schedule(user_id), reply_markup=week_kb)
             else:
+                logging.info(f"{msg.from_user.id} неправильный тип пользователя")
                 await msg.answer("Ошибка! Напишите админу /admin")
         elif msg.text == "Кабинеты":
-            await msg.answer(f"Выберите кабинет", reply_markup=kb.rooms)
+            await msg.answer(f"Выберите кабинет", reply_markup=kb.get_rooms())
         elif msg.text == "Группы":
-            await msg.answer(f"Выберите группу", reply_markup=kb.groups)
+            await msg.answer(f"Выберите группу", reply_markup=kb.get_groups())
         elif msg.text == "Преподаватели":
-            await msg.answer(f"Выберите преподавателя", reply_markup=kb.teachers)
+            await msg.answer(f"Выберите преподавателя", reply_markup=kb.get_teachers())
+        else:
+            logging.info(f"{msg.from_user.id} написал неправильную команду")
+            await msg.answer("Я не знаю такой команды")
         if db.get_tracking(user_id):
             await msg.forward(ADMIN_CHAT_ID, message_thread_id=db.get_topic_id(msg.from_user.id))
     else:

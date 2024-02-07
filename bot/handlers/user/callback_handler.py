@@ -1,12 +1,14 @@
-from aiogram import Router
-
-from bot import database as db
-from bot.misc import text_maker
-from bot.markups import user_markups as kb
-
+from aiogram import Router, F
 from aiogram.types import CallbackQuery
 
+from bot import database as db
+from bot.markups import user_markups as kb
+from bot.markups.keyboard_factory import ChangeCallbackFactory, DayCallbackFactory
+from bot.misc import text_maker
+
 import importlib
+
+import logging
 
 router = Router()
 
@@ -17,74 +19,103 @@ async def _ignore_handler(callback: CallbackQuery) -> None:
     await callback.answer("Сейчас эта неделя")
 
 
-@router.callback_query(lambda c: c.data.startswith("week-") or c.data.startswith("day/"))
-async def _week_day_handler(callback: CallbackQuery) -> None:
-    """Ловит коллбеки с неделями и днями. И отсылает юзеру расписание на эту неделю и день."""
-    data = callback.data
+@router.callback_query(DayCallbackFactory.filter(F.action == "day"))
+async def day_handler(callback: CallbackQuery, callback_data: DayCallbackFactory) -> None:
+    callback_type = callback_data.call_type
     user_id = int(callback.from_user.id)
-    if data.startswith("week-"):
-        _, callback_type, week = data.split('-')
-        day = db.get_day(user_id)
-        db.set_week(user_id, week)
-    elif data.startswith("day/"):
-        _, callback_type, week, day = data.split('/')
-        if day == db.get_day(user_id):
-            await callback.answer()
-            return
-    else:
-        await callback.answer("Неизвестный тип запроса.")
+
+    if callback_data.value == str(db.get_day(user_id)):
+        await callback.answer()
         return
-    db.set_day(user_id, day)
-    db.set_week(user_id, week)
+    db.set_day(user_id, callback_data.value)
 
     if callback_type == "teacher":
         text = text_maker.get_teacher_schedule(user_id)
-        kb1, kb2 = kb.teacher_week1, kb.teacher_week2
+        week_kb = kb.get_days(type='teacher', week=db.get_week(user_id))
     elif callback_type == "group":
         text = text_maker.get_group_schedule(user_id)
-        kb1, kb2 = kb.group_week1, kb.group_week2
+        week_kb = kb.get_days(type='group', week=db.get_week(user_id))
     elif callback_type == "room":
         text = text_maker.get_room_schedule(user_id)
-        kb1, kb2 = kb.room_week1, kb.room_week2
+        week_kb = kb.get_days(type='room', week=db.get_week(user_id))
     else:
-        await callback.answer("Неизвестный тип запроса.")
+        logging.error(f"{user_id} сделал неизвестный callback (teacher, group, room): {callback.data} в _week_day_handler")
+        await callback.answer("Неизвестный тип запроса. Напишите админу /admin")
         return
 
-    if db.get_week(user_id) == 1:
-        await callback.message.edit_text(text, reply_markup=kb1)
-    elif db.get_week(user_id) == 2:
-        await callback.message.edit_text(text, reply_markup=kb2)
+    await callback.message.edit_text(text, reply_markup=week_kb)
+
     await getattr(importlib.import_module("bot.bot"), "send_callback")(callback)
     await callback.answer()
 
 
-@router.callback_query(lambda c: c.data.startswith("room-") or c.data.startswith("teacher-") or c.data.startswith("group-"))
-async def _room_teacher_group_handler(callback: CallbackQuery) -> None:
-    """Ловит коллбеки с аудиториями, преподавателями и группами. И отсылает юзеру расписание этого препода, группы или аудитории."""
+@router.callback_query(DayCallbackFactory.filter(F.action == "week"))
+async def week_handler(callback: CallbackQuery, callback_data: DayCallbackFactory) -> None:
+    callback_type = callback_data.call_type
     user_id = int(callback.from_user.id)
-    db.set_today_date(user_id)
-    data_parts = callback.data.split('-')
-    callback_type = data_parts[0]
-    entity_id = "-".join(data_parts[1:])
-    if callback_type == "room":
-        db.set_room(user_id, entity_id)
-        text = text_maker.get_room_schedule(user_id)
-        week_kb1, week_kb2 = kb.room_week1, kb.room_week2
-    elif callback_type == "teacher":
-        db.set_teacher(user_id, entity_id)
+
+    if callback_data.value == str(db.get_day(user_id)):
+        await callback.answer()
+        return
+    db.set_week(user_id, callback_data.value)
+
+    if callback_type == "teacher":
         text = text_maker.get_teacher_schedule(user_id)
-        week_kb1, week_kb2 = kb.teacher_week1, kb.teacher_week2
+        week_kb = kb.get_days(type='teacher', week=db.get_week(user_id))
     elif callback_type == "group":
-        db.set_group(user_id, entity_id)
         text = text_maker.get_group_schedule(user_id)
-        week_kb1, week_kb2 = kb.group_week1, kb.group_week2
+        week_kb = kb.get_days(type='group', week=db.get_week(user_id))
+    elif callback_type == "room":
+        text = text_maker.get_room_schedule(user_id)
+        week_kb = kb.get_days(type='room', week=db.get_week(user_id))
     else:
-        await callback.answer("Неизвестный тип запроса.")
+        logging.error(f"{user_id} сделал неизвестный callback (teacher, group, room): {callback.data} в _week_day_handler")
+        await callback.answer("Неизвестный тип запроса. Напишите админу /admin")
         return
 
-    if db.get_week(user_id) == 1:
-        await callback.message.edit_text(text, reply_markup=week_kb1)
-    elif db.get_week(user_id) == 2:
-        await callback.message.edit_text(text, reply_markup=week_kb2)
+    await callback.message.edit_text(text, reply_markup=week_kb)
+
+    await getattr(importlib.import_module("bot.bot"), "send_callback")(callback)
+    await callback.answer()
+
+
+@router.callback_query(ChangeCallbackFactory.filter(F.action == "room"))
+async def room_handler(callback: CallbackQuery, callback_data: ChangeCallbackFactory) -> None:
+    user_id = int(callback.from_user.id)
+    db.set_today_date(user_id)
+
+    db.set_room(user_id, callback_data.value)
+
+    await callback.message.edit_text(text_maker.get_teacher_schedule(user_id),
+                                     reply_markup=kb.get_days(type='room', week=db.get_week(user_id)))
+
+    await getattr(importlib.import_module("bot.bot"), "send_callback")(callback)
+    await callback.answer()
+
+
+@router.callback_query(ChangeCallbackFactory.filter(F.action == 'teacher'))
+async def teacher_handler(callback: CallbackQuery, callback_data: ChangeCallbackFactory) -> None:
+    user_id = int(callback.from_user.id)
+    db.set_today_date(user_id)
+
+    db.set_teacher(user_id, callback_data.value)
+
+    await callback.message.edit_text(text_maker.get_teacher_schedule(user_id),
+                                     reply_markup=kb.get_days(type='teacher', week=db.get_week(user_id)))
+
+    await getattr(importlib.import_module("bot.bot"), "send_callback")(callback)
+    await callback.answer()
+
+
+@router.callback_query(ChangeCallbackFactory.filter(F.action == 'group'))
+async def teacher_handler(callback: CallbackQuery, callback_data: ChangeCallbackFactory) -> None:
+    user_id = int(callback.from_user.id)
+    db.set_today_date(user_id)
+
+    db.set_group(user_id, callback_data.value)
+
+    await callback.message.edit_text(text_maker.get_teacher_schedule(user_id),
+                                     reply_markup=kb.get_days(type='group', week=db.get_week(user_id)))
+
     await getattr(importlib.import_module("bot.bot"), "send_callback")(callback)
     await callback.answer()

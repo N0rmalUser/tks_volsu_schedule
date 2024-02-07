@@ -61,8 +61,7 @@ def get_teacher_schedule(user_id: int) -> str:
 
 
 def get_room_schedule(user_id: int) -> str:
-    week, day, room_name = weeks[db.get_week(user_id)], days[db.get_day(user_id)], rooms[
-        db.get_room(user_id)]
+    week, day, room_name = weeks[db.get_week(user_id)], days[db.get_day(user_id)], db.get_room(user_id)
     data = config.schedule
     room_variants = [room_name + variant for variant in ['М', 'аМ', 'бМ']] if room_name == '2-13' else [
         room_name + variant for variant in ['К', 'аК', 'бК']] if room_name == '3-15' else [room_name]
@@ -118,7 +117,7 @@ def get_room_schedule(user_id: int) -> str:
 def get_lesson_label(subject: str) -> str:
     """
     Method for getting lesson label by bad label from schedule
-    :param subject:  :type: str
+    :param subject:  :call_type: str
     :return:  :rtype: str
     """
     if 'Пр' in subject:
@@ -156,7 +155,7 @@ def get_lesson_label(subject: str) -> str:
 def time_to_minutes(time_str: str) -> int:
     """
     Method for converting time from string to minutes
-    :param time_str:  :type: str
+    :param time_str:  :call_type: str
     :return:  :rtype: int
     """
     hours, minutes = map(int, time_str.split(':'))
@@ -166,7 +165,7 @@ def time_to_minutes(time_str: str) -> int:
 def get_time_symbol(start_time: str) -> str:
     """
     Method for getting time symbol by start time
-    :param start_time:  :type: str
+    :param start_time:  :call_type: str
     :return:  :rtype: str
     """
     hour = int(start_time.split(':')[0])
@@ -200,13 +199,4 @@ days = {
 weeks = {
     1: "Числитель",
     2: "Знаменатель"
-}
-rooms = {
-    "1-19m": "1-19М",
-    "2-01k": "2-01К",
-    "2-06m": "2-06М",
-    "2-13m": "2-13М",
-    "2-17m": "2-17М",
-    "3-15k": "3-15К",
-    "3-16k": "3-16К",
 }
