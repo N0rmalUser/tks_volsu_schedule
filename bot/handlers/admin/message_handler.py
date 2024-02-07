@@ -31,8 +31,8 @@ async def _handle_topic_command_track(msg: Message, command: CommandObject) -> N
         if command.args == 'send' or command.args == 'show':
             await msg.answer_document(FSInputFile(LOG_FILE), caption="Вот ваш лог")
         elif command.args == 'clear' or command.args == 'del':
-            open(LOG_FILE, 'w').write('Log cleared')
-            await msg.answer(f"{datetime.now().strftime('%H:%M:%S %d-%m-%Y')} Логи очищены")
+            open(LOG_FILE, 'w').write(f"{datetime.now().strftime('%H:%M:%S %d-%m-%Y')} Log cleared")
+            await msg.answer("Логи очищены")
         elif command.args == 'start':
             await getattr(importlib.import_module("bot.bot"), "enable_logging")(msg)
         elif command.args == 'stop':
@@ -63,34 +63,34 @@ async def _handle_topic_command_track(msg: Message, command: CommandObject) -> N
     """/track [start,stop,status] command handler. Set tracking for user topic."""
     if msg.chat.id == ADMIN_CHAT_ID:
         if command.args is None:
-            await msg.answer(
-                "Ошибка: не переданы аргументы"
-            )
+            await msg.answer("Ошибка: не переданы аргументы")
             return
+        ans = await msg.answer('Собираю информацию...')
         command = str(command.args).lower()
-        if msg.message_thread_id:
-            user_id = db.get_user_id(msg.message_thread_id)
+        if ans.message_thread_id:
+            user_id = db.get_user_id(ans.message_thread_id)
             if command == "start":
                 db.set_tracking(user_id, True)
             elif command == "stop":
                 db.set_tracking(user_id, False)
             elif command == "status":
                 pass
-            await msg.answer(f"Трекинг {'включен' if db.get_tracking(user_id) else 'выключен'}")
+            await ans.edit_text(f"Трекинг {'включен' if db.get_tracking(user_id) else 'выключен'}")
         else:
             if command == "start":
                 await db.tracking_manage(True)
             elif command == "stop":
                 await db.tracking_manage(False)
             elif command == "status":
-                users = await db.get_tracked_users()
-                tracked = '\n'.join([str(user) for user in users])
-                await msg.answer(f"Трекаются: \n" + tracked if users else "Никто не трекается",
-                                 parse_mode='MarkdownV2')
+                pass
+            users = await db.get_tracked_users()
+            tracked = '\n'.join([str(user) for user in users])
+            await ans.edit_text(f"Трекаются: \n" + tracked if users else "Никто не трекается",
+                                parse_mode='MarkdownV2')
 
 
 @router.message(Command("info"), ChatTypeFilter(chat_type=["group", "supergroup"]))
-async def _handle_topic_command_info(msg: Message) -> None:
+async def handle_topic_command_info(msg: Message) -> None:
     if msg.chat.id == ADMIN_CHAT_ID and not msg.from_user.is_bot:
         start = await msg.answer("Собираю статистику")
         if start.message_thread_id:
@@ -101,17 +101,17 @@ async def _handle_topic_command_info(msg: Message) -> None:
 
 
 @router.message(Command("ban"), ChatTypeFilter(chat_type=["group", "supergroup"]))
-async def _ban_handler(msg: Message) -> None:
+async def ban_handler(msg: Message) -> None:
     await msg.answer("Пока не работает")
 
 
 @router.message(Command("unban"), ChatTypeFilter(chat_type=["group", "supergroup"]))
-async def _unban_handler(msg: Message) -> None:
+async def unban_handler(msg: Message) -> None:
     await msg.answer("Пока не работает")
 
 
 @router.message(ChatTypeFilter(chat_type=["group", "supergroup"]))
-async def _handle_topic_message(msg: Message) -> None:
+async def handle_topic_message(msg: Message) -> None:
     try:
         if msg.text[0] != '/':
             if msg.chat.id == ADMIN_CHAT_ID and not msg.from_user.is_bot:
