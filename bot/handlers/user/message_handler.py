@@ -26,10 +26,10 @@ async def _start_deep_handler(msg: Message, command: CommandObject) -> None:
         db.set_inviter(user_id, int(args[0]))
         if args[1] == "teacher":
             user_type = "teacher"
-            menu, keyboard = kb.teacher_menu, kb.get_teachers
+            menu, keyboard = kb.teacher_menu, kb.get_teachers()
         else:
             user_type = "student"
-            menu, keyboard = kb.student_menu, kb.get_groups
+            menu, keyboard = kb.student_menu, kb.get_groups()
         db.set_last_date(msg)
         db.set_today_date(user_id)
         db.set_week(user_id, 1)
