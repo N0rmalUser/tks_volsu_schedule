@@ -1,8 +1,7 @@
 from aiogram.types import KeyboardButton, ReplyKeyboardMarkup
-
-import config
-from bot.markups import keyboard_factory
 from aiogram.utils.keyboard import InlineKeyboardBuilder
+from bot.markups import keyboard_factory
+import config
 
 
 student_menu = [
