@@ -8,7 +8,7 @@ class ChatTypeFilter(BaseFilter):
     """
     Фильтр, проверяющий тип чата и возвращающий True или False
     :param chat_type:  Тип чата, который хотите проверить (private, group, supergroup, channel)
-    :type chat_type:  str или list
+    :call_type chat_type:  str или list
     """
     def __init__(self, chat_type: Union[str, list]):
         self.chat_type = chat_type
