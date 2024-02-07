@@ -18,6 +18,8 @@ SCHEDULE_PATH = "data\\combined_schedule.json"
 ORIGINAL_SCHEDULES_PATH = "C:\\Users\\normal\\Desktop\\tks\\preparation\\"
 
 
+# Служебные переменные. НЕ ТРОГАТЬ! (если не поменялся состав кафедры или кабинеты)
+
 # Список групп
 groups = []
 
