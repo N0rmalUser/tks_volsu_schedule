@@ -13,7 +13,7 @@ import logging
 router = Router()
 
 
-@router.callback_query(lambda c: c.data.startswith("ignore"))
+@router.callback_query(DayCallbackFactory.filter(F.action == "ignore"))
 async def _ignore_handler(callback: CallbackQuery) -> None:
     """Функция, сбрасывающая нажатия кнопки без функционала."""
     await callback.answer("Сейчас эта неделя")
