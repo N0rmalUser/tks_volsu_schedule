@@ -1,5 +1,5 @@
 from aiogram import BaseMiddleware
-from aiogram.exceptions import TelegramBadRequest, TelegramNetworkError, ClientConnectorError, TelegramRetryAfter
+from aiogram.exceptions import TelegramBadRequest, TelegramNetworkError, TelegramRetryAfter
 from aiogram.types import Message, Update, CallbackQuery
 
 from config import THROTTLE_TIME
@@ -105,10 +105,10 @@ class MessageTelegramErrorsMiddleware(BaseMiddleware):
                 await getattr(importlib.import_module("bot.bot"), "topic_create")(event)
                 await handler(event, data)
             else:
-                return
-        except TelegramNetworkError as e:
+                logging.error("TelegramBadRequest")
+        except TelegramNetworkError:
             logging.error("TelegramNetworkError")
-        except TelegramRetryAfter as e:
+        except TelegramRetryAfter:
             logging.error("TelegramRetryAfter 25 секунд")
 
 
