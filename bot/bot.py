@@ -33,7 +33,8 @@ async def main() -> None:
     dp.message.middleware(middlewares.AntiSpamMessageMiddleware())
     dp.callback_query.middleware(middlewares.AntiSpamCallbackMiddleware())
     dp.callback_query.middleware(middlewares.IgnoreMessageNotModifiedMiddleware())
-    dp.message.middleware(middlewares.TelegramBadRequestMiddleware())
+    dp.callback_query.middleware(middlewares.CallbackTelegramErrorsMiddleware())
+    dp.message.middleware(middlewares.MessageTelegramErrorsMiddleware())
     await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
 

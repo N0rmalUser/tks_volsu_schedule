@@ -18,7 +18,7 @@ router = Router()
 
 
 @router.message(CommandStart(deep_link=True))
-async def _start_deep_handler(msg: Message, command: CommandObject) -> None:
+async def start_deep_handler(msg: Message, command: CommandObject) -> None:
     try:
         payload = decode_payload(command.args)
         args = payload.split("=")
@@ -44,7 +44,7 @@ async def _start_deep_handler(msg: Message, command: CommandObject) -> None:
 
 
 @router.message(CommandStart())
-async def _start_handler(msg: Message) -> None:
+async def start_handler(msg: Message) -> None:
     user_id = int(msg.from_user.id)
     db.set_last_date(msg)
     db.set_today_date(user_id)
@@ -56,7 +56,7 @@ async def _start_handler(msg: Message) -> None:
 
 
 @router.message(Command('help'), ChatTypeFilter(chat_type='private'))
-async def _help_handler(msg: Message) -> None:
+async def help_handler(msg: Message) -> None:
     if db.get_user_type == 'teacher':
         await msg.answer("""
 Привет, это бот расписания кафедры ТКС!
@@ -86,7 +86,7 @@ async def _help_handler(msg: Message) -> None:
 
 
 @router.message(Command("admin"), ChatTypeFilter(chat_type="private"))
-async def _admin_handler(msg: Message) -> None:
+async def admin_handler(msg: Message) -> None:
     await getattr(importlib.import_module("bot.bot"), "admin_sender")(msg)
     await msg.forward(chat_id=ADMIN_CHAT_ID, message_thread_id=db.get_topic_id(msg.from_user.id))
     await msg.answer("Модератор скоро напишет вам, ожидайте")
@@ -95,7 +95,7 @@ async def _admin_handler(msg: Message) -> None:
 
 
 @router.message(ChatTypeFilter(chat_type="private"))
-async def _handler(msg: Message) -> None:
+async def handler(msg: Message) -> None:
     user_id = msg.from_user.id
     user_type = db.get_user_type(user_id)
     if msg.content_type == "text":

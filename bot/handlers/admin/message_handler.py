@@ -20,13 +20,13 @@ router = Router()
 
 
 @router.message(Command("menu"), ChatTypeFilter(chat_type=["group", "supergroup"]))
-async def _handle_topic_command_track(msg: Message) -> None:
+async def handle_topic_command_track(msg: Message) -> None:
     if msg.chat.id == ADMIN_CHAT_ID:
         await msg.answer("Меню админа", reply_markup=kb.admin_menu)
 
 
 @router.message(Command("log"), ChatTypeFilter(chat_type=["group", "supergroup"]))
-async def _handle_topic_command_track(msg: Message, command: CommandObject) -> None:
+async def handle_topic_command_track(msg: Message, command: CommandObject) -> None:
     if msg.chat.id == ADMIN_CHAT_ID and not msg.from_user.is_bot:
         if command.args == 'send' or command.args == 'show':
             await msg.answer_document(FSInputFile(LOG_FILE), caption="Вот ваш лог")
@@ -42,14 +42,14 @@ async def _handle_topic_command_track(msg: Message, command: CommandObject) -> N
 
 
 @router.message(Command("send_db"), ChatTypeFilter(chat_type=["group", "supergroup"]))
-async def _handle_topic_command_track(msg: Message) -> None:
+async def handle_topic_command_track(msg: Message) -> None:
     if msg.chat.id == ADMIN_CHAT_ID:
         if msg.message_thread_id:
             await msg.answer_document(FSInputFile(DB_PATH), caption="Вот ваша база данных")
 
 
 @router.message(Command("schedule_update"), ChatTypeFilter(chat_type=["group", "supergroup"]))
-async def _schedule_update_handler(msg: Message) -> None:
+async def schedule_update_handler(msg: Message) -> None:
     """/schedule_update command handler. Update schedule json file."""
     wait_msg = await msg.answer("Сейчас обновиться, подождите")
     await asyncio.sleep(1)
