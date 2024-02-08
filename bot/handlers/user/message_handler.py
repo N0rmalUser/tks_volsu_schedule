@@ -91,7 +91,7 @@ async def admin_handler(msg: Message) -> None:
     await msg.forward(chat_id=ADMIN_CHAT_ID, message_thread_id=db.get_topic_id(msg.from_user.id))
     await msg.answer("Модератор скоро напишет вам, ожидайте")
     logging.info(f"{msg.from_user.id} написал админу")
-    db.set_tracking(db.get_user_id(msg.message_thread_id), True)
+    db.set_tracking(msg.from_user.id, True)
 
 
 @router.message(ChatTypeFilter(chat_type="private"))
