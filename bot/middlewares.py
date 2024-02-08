@@ -1,5 +1,5 @@
 from aiogram import BaseMiddleware
-from aiogram.exceptions import TelegramBadRequest
+from aiogram.exceptions import TelegramBadRequest, TelegramNetworkError, ClientConnectorError, TelegramRetryAfter
 from aiogram.types import Message, Update, CallbackQuery
 
 from config import THROTTLE_TIME
@@ -49,7 +49,7 @@ class AntiSpamCallbackMiddleware(BaseMiddleware):
     def __init__(self):
         self.users_last_message_time = {}
         self.users_warned = set()
-        self.spam_threshold = timedelta(seconds=0.5)
+        self.spam_threshold = timedelta(seconds=0.8)
 
     async def __call__(
             self,
@@ -89,7 +89,7 @@ class IgnoreMessageNotModifiedMiddleware(BaseMiddleware):
                 return
 
 
-class TelegramBadRequestMiddleware(BaseMiddleware):
+class MessageTelegramErrorsMiddleware(BaseMiddleware):
     async def __call__(
             self,
             handler: Callable[[Message, Dict[str, Any]], Awaitable[Any]],
@@ -100,9 +100,30 @@ class TelegramBadRequestMiddleware(BaseMiddleware):
             await handler(event, data)
         except TelegramBadRequest as e:
             if "message thread not found" in str(e):
-                logging.warning(f"Не удалось найти топик юзера {event.from_user.id}")
+                logging.error(f"Не удалось найти топик юзера {event.from_user.id}")
                 db.delete_topic_id(event.from_user.id)
                 await getattr(importlib.import_module("bot.bot"), "topic_create")(event)
                 await handler(event, data)
             else:
                 return
+        except TelegramNetworkError as e:
+            logging.error("TelegramNetworkError")
+        except TelegramRetryAfter as e:
+            logging.error("TelegramRetryAfter 25 секунд")
+
+
+class CallbackTelegramErrorsMiddleware(BaseMiddleware):
+    async def __call__(
+            self,
+            handler: Callable[[Message, Dict[str, Any]], Awaitable[Any]],
+            event: Message,
+            data: Dict[str, Any]
+    ) -> Any:
+        try:
+            await handler(event, data)
+        except TelegramBadRequest as e:
+            logging.error("TelegramBadRequest")
+        except TelegramNetworkError as e:
+            logging.error("TelegramNetworkError")
+        except TelegramRetryAfter as e:
+            logging.error("TelegramRetryAfter 25 секунд")

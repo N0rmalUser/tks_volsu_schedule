@@ -14,7 +14,7 @@ router = Router()
 
 
 @router.callback_query(lambda c: c.data.startswith("ignore"))
-async def _ignore_handler(callback: CallbackQuery) -> None:
+async def ignore_handler(callback: CallbackQuery) -> None:
     """Функция, сбрасывающая нажатия кнопки без функционала."""
     await callback.answer("Сейчас эта неделя")
 
