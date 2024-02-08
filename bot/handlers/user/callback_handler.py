@@ -86,7 +86,7 @@ async def room_handler(callback: CallbackQuery, callback_data: ChangeCallbackFac
 
     db.set_room(user_id, callback_data.value)
 
-    await callback.message.edit_text(text_maker.get_teacher_schedule(user_id),
+    await callback.message.edit_text(text_maker.get_room_schedule(user_id),
                                      reply_markup=kb.get_days(type='room', week=db.get_week(user_id)))
 
     await getattr(importlib.import_module("bot.bot"), "send_callback")(callback)
@@ -114,7 +114,7 @@ async def teacher_handler(callback: CallbackQuery, callback_data: ChangeCallback
 
     db.set_group(user_id, callback_data.value)
 
-    await callback.message.edit_text(text_maker.get_teacher_schedule(user_id),
+    await callback.message.edit_text(text_maker.get_group_schedule(user_id),
                                      reply_markup=kb.get_days(type='group', week=db.get_week(user_id)))
 
     await getattr(importlib.import_module("bot.bot"), "send_callback")(callback)
