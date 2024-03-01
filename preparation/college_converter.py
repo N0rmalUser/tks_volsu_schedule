@@ -1,103 +1,83 @@
-import json
-import os
-
-import openpyxl
-import pandas as pd
-
-import config
-
+import sqlite3
 import re
 
-from progress.bar import Bar
+
+def get_or_insert_group(group_name):
+    cursor.execute('SELECT GroupID FROM Groups WHERE GroupName = ?', (group_name,))
+    row = cursor.fetchone()
+    if row:
+        return row[0]
+    else:
+        cursor.execute('INSERT INTO Groups (GroupName) VALUES (?)', (group_name,))
+        return cursor.lastrowid
 
 
-def convert_day_name(day_short):
-    days = {
-        "ПН": "Понедельник",
-        "ВТ": "Вторник",
-        "СР": "Среда",
-        "ЧТ": "Четверг",
-        "ПТ": "Пятница",
-        "СБ": "Суббота"
-    }
-    return days.get(day_short, day_short)
+def get_or_insert_teacher(teacher_name):
+    cursor.execute('SELECT TeacherID FROM Teachers WHERE TeacherName = ?', (teacher_name,))
+    row = cursor.fetchone()
+    if row:
+        return row[0]
+    else:
+        cursor.execute('INSERT INTO Teachers (TeacherName) VALUES (?)', (teacher_name,))
+        return cursor.lastrowid
 
 
-def split_subject_info(subject_info):
-    if pd.isna(subject_info):
-        return None, None, None
-    substitution = re.split(r'\.', subject_info)
-    return (
-        re.sub(r'\s*,*\s*преп.*$', '', re.sub(r'^\s*', '', substitution[1])),
-        re.sub(r'(\s*|,*|ауд)', '', substitution[-1]) if substitution[-1] != '' else re.sub(r'(\s*|,*|ауд)', '', substitution[-2]),
-        substitution[0]
-    )
+def get_or_insert_subject(subject_name):
+    cursor.execute('SELECT SubjectID FROM Subjects WHERE SubjectName = ?', (subject_name,))
+    row = cursor.fetchone()
+    if row:
+        return row[0]
+    else:
+        cursor.execute('INSERT INTO Subjects (SubjectName) VALUES (?)', (subject_name,))
+        return cursor.lastrowid
 
 
-directory_path = config.ORIGINAL_SCHEDULES_PATH + 'schedules\\'
-files = [f for f in os.listdir(directory_path) if f.endswith('.xlsx')]
-teachers_schedule = {"teachers": []}
-rooms_schedule = {"rooms": []}
-bar = Bar('Формирование расписания для колледжа', max=len(files))
+def get_or_insert_room(room_name):
+    cursor.execute('SELECT RoomID FROM Rooms WHERE RoomNumber = ?', (room_name,))
+    row = cursor.fetchone()
+    if row:
+        return row[0]
+    else:
+        cursor.execute('INSERT INTO Rooms (RoomNumber) VALUES (?)', (room_name,))
+        return cursor.lastrowid
 
-for file in files:
-    bar.next()
-    file_path = os.path.join(directory_path, file)
-    df = pd.read_excel(file_path)
-    excel = openpyxl.load_workbook(filename=file_path)
-    sheet = excel.worksheets[0]
 
-    for r in sheet.merged_cells.ranges:
-        cl, rl, cr, rr = r.bounds
-        rl -= 2
-        rr -= 1
-        cl -= 1
-        base_value = df.iloc[rl, cl]
-        df.iloc[rl:rr, cl:cr] = base_value
-    teacher_name = re.search(r'_(.*)xlsx', file).group(1)
-    teacher_schedule = {
-        "teacher": teacher_name,
-        "weeks": {"Числитель": {}, "Знаменатель": {}}
-    }
+def main(day_n, week_n, para, lesson, group):
+    times = ['08:30', '10:10', '12:00', '13:40', '15:20', '17:00', '18:40']
+    days = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота']
+    day = days[day_n - 1]
+    time = times[para - 1]
+    week = 'Числитель' if week_n == 1 else 'Знаменатель'
 
-    last_time = 'None'
-    for index, row in df.iterrows():
-        day = convert_day_name(row['Unnamed: 0'])
-        time = row['время'].split('-')[0]
-        qq = row['время']
-        isNumerator = True if row['время'] != last_time else False
-        last_time = row['время']
+    teacher = re.search(r'преп.\s*(\w*\s*[А-Я]*\.\s*[А-Я]*\.)', lesson).group(1)
+    substitution = re.split(r'\.', lesson)
+    subject = re.search(r'(.*)преп', lesson).group(1)
+    room = re.sub(r'(\s*|,*|ауд)', '', substitution[-1]) if substitution[-1] != '' else re.sub(r'(\s*|,*|ауд)', '', substitution[-2])
 
-        if pd.isna(row[teacher_name]):
-            continue
-        substitution = re.split(r'\.', row[teacher_name])
-        group = substitution[0]
-        subject = re.sub(r'\s*,*\s*преп.*$', '', re.sub(r'^\s*', '', substitution[1]))
-        room = re.sub(r'(\s*|,*|ауд)', '', substitution[-1]) if substitution[-1] != '' else re.sub(r'(\s*|,*|ауд)', '', substitution[-2])
-        if isNumerator:
-            if day not in teacher_schedule['weeks']['Числитель']:
-                teacher_schedule['weeks']['Числитель'][day] = []
-            teacher_schedule['weeks']['Числитель'][day].append({
-                "time": time,
-                "subject": subject,
-                "room": room,
-                "group": group
-            })
-        else:
-            if day not in teacher_schedule['weeks']['Знаменатель']:
-                teacher_schedule['weeks']['Знаменатель'][day] = []
-            teacher_schedule['weeks']['Знаменатель'][day].append({
-                "time": time,
-                "subject": subject,
-                "room": room,
-                "group": group
-            })
+    print(time, day, week)
+    print(f'{teacher}\n{room}\n{subject}')
 
-    teachers_schedule['teachers'].append(teacher_schedule)
-    rooms_schedule['rooms'].append(teacher_schedule)
+    group_id = get_or_insert_group(group)
+    teacher_id = get_or_insert_teacher(teacher)
+    subject_id = get_or_insert_subject(subject)
+    room_id = get_or_insert_room(room)
 
-output_file_path = config.ORIGINAL_SCHEDULES_PATH + 'college.json'
+    cursor.execute('''INSERT INTO schedule (Time, DayOfWeek, WeekType, GroupID, TeacherID, RoomID, SubjectID)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)''',
+                   (time, day, week, group_id, teacher_id, room_id, subject_id))
 
-with open(output_file_path, 'w', encoding='utf-8') as json_file:
-    json.dump(teachers_schedule, json_file, ensure_ascii=False, indent=4)
-    print(f"\nОбщий JSON-файл для преподавателей сохранен по пути: {output_file_path}")
+
+connection = sqlite3.connect('schedule.db')
+cursor = connection.cursor()
+
+day_n = 6
+week_n = 1
+para = 4
+lesson = 'Технология выполнения работ по рабочей профессии Монтажник оборудования связи (л.) преп. Семенова О.В. Ауд. 2-06М'
+group = 'ИССк-191'
+
+main(day_n, week_n, para, lesson, group)
+
+
+connection.commit()
+connection.close()

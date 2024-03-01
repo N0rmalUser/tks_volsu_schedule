@@ -78,7 +78,7 @@ def get_lesson_label(subject: str) -> str:
         return ''
 
 
-def get_group_schedule(day, week, group_name):
+def get_group_schedule(day: int, week: int, group_name: str):
     conn = sqlite3.connect(config.SCHEDULE_PATH)
     cursor = conn.cursor()
 
@@ -123,35 +123,36 @@ def get_group_schedule(day, week, group_name):
         return f'{header}\n\n{status}'
 
 
-def get_teacher_schedule(day, week, teacher_name):
+def get_teacher_schedule(day: int, week: int, teacher_name: str):
     conn = sqlite3.connect(config.SCHEDULE_PATH)
     cursor = conn.cursor()
 
     week_type = "Числитель" if week == 1 else "Знаменатель"
     days_of_week = ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота"]
 
+    schedule = []
     query = """
-    SELECT s.Time, sub.SubjectName, g.GroupName, r.RoomNumber
+    SELECT s.Time, sub.SubjectName, GROUP_CONCAT(g.GroupName, ', ') AS GroupNames, r.RoomNumber
     FROM Schedule s
     JOIN Subjects sub ON s.SubjectID = sub.SubjectID
     JOIN Groups g ON s.GroupID = g.GroupID
     JOIN Rooms r ON s.RoomID = r.RoomID
     JOIN Teachers t ON s.TeacherID = t.TeacherID
     WHERE t.TeacherName = ? AND s.DayOfWeek = ? AND s.WeekType = ?
+    GROUP BY s.Time, sub.SubjectName, r.RoomNumber
     ORDER BY s.Time
     """
 
     cursor.execute(query, (teacher_name, days_of_week[day - 1], week_type))
     rows = cursor.fetchall()
 
-    schedule = []
     for row in rows:
-        time, subject, group, teacher_name = row
+        time, subject, group, room_name = row
         schedule.append({
             "time": time,
             "subject": subject,
             "group": group,
-            "room": teacher_name
+            "room": room_name
         })
 
     conn.close()
