@@ -107,11 +107,11 @@ async def handler(msg: Message) -> None:
                 await msg.answer(f"Сначала выберите {'ФИО преподавателя' if user_type == 'teacher' else 'группу'}, нажав на соответствующую кнопку.")
                 return
             if user_type == "teacher":
-                week_kb = kb.get_days('teacher', db.get_week(user_id))
-                await msg.answer(text_maker.get_teacher_schedule(user_id), reply_markup=week_kb)
+                week_kb = kb.get_days(user_id, 'teacher', db.get_week(user_id), value=entity_id)
+                await msg.answer(text_maker.get_teacher_schedule(day=db.get_day(user_id), week=db.get_week(user_id), teacher_name=entity_id), reply_markup=week_kb)
             elif user_type == "student":
-                week_kb = kb.get_days('teacher', db.get_week(user_id))
-                await msg.answer(text_maker.get_group_schedule(user_id), reply_markup=week_kb)
+                week_kb = kb.get_days(user_id, 'group', db.get_week(user_id), value=entity_id)
+                await msg.answer(text_maker.get_group_schedule(day=db.get_day(user_id), week=db.get_week(user_id), group_name=entity_id), reply_markup=week_kb)
             else:
                 logging.info(f"{msg.from_user.id} неправильный тип пользователя")
                 await msg.answer("Ошибка! Напишите админу /admin")

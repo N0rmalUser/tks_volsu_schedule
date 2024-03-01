@@ -10,5 +10,7 @@ class ChangeCallbackFactory(CallbackData, prefix='start_change'):
 
 class DayCallbackFactory(CallbackData, prefix='day_change'):
     action: Optional[str] = None
-    call_type: Optional[str] = None
+    keyboard_type: Optional[str] = None
     value: Optional[str] = None
+    day: Optional[int] = None
+    week: Optional[int] = None

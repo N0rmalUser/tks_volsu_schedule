@@ -1,13 +1,10 @@
 from aiogram.types import Message
 
 from config import DB_PATH
-import config
 
 from datetime import datetime, timedelta
 
 from functools import wraps
-
-import json
 
 import sqlite3
 
@@ -550,12 +547,6 @@ async def get_tracked_users() -> list:
         if get_tracking(user_id):
             tracked_users.append(f'`{user_id}`')
     return tracked_users
-
-
-def open_schedule_file():
-    """Открывает файл с расписанием"""
-    with open(config.SCHEDULE_PATH, 'r', encoding='utf-8') as file:
-        config.schedule = json.load(file)
 
 
 def set_today_date(user_id: int) -> None:
