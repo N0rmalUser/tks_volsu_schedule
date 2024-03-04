@@ -26,10 +26,10 @@ async def start_deep_handler(msg: Message, command: CommandObject) -> None:
         db.set_inviter(user_id, int(args[0]))
         if args[1] == "teacher":
             user_type = "teacher"
-            menu, keyboard = kb.teacher_menu, kb.get_teachers()
+            menu, keyboard = kb.teacher_menu, kb.get_teachers
         else:
             user_type = "student"
-            menu, keyboard = kb.student_menu, kb.get_groups()
+            menu, keyboard = kb.student_menu, kb.get_groups
         db.set_last_date(msg)
         db.set_today_date(user_id)
         db.set_week(user_id, 1)
@@ -90,8 +90,8 @@ async def admin_handler(msg: Message) -> None:
     await getattr(importlib.import_module("bot.bot"), "admin_sender")(msg)
     await msg.forward(chat_id=ADMIN_CHAT_ID, message_thread_id=db.get_topic_id(msg.from_user.id))
     await msg.answer("Модератор скоро напишет вам, ожидайте")
-    logging.info(f"{msg.from_user.id} написал админу")
     db.set_tracking(msg.from_user.id, True)
+    logging.info(f"{msg.from_user.id} написал админу")
 
 
 @router.message(ChatTypeFilter(chat_type="private"))
@@ -123,7 +123,8 @@ async def handler(msg: Message) -> None:
             await msg.answer(f"Выберите преподавателя", reply_markup=kb.get_teachers())
         else:
             logging.info(f"{msg.from_user.id} написал неправильную команду")
-            await msg.answer("Я не знаю такой команды")
+            if not db.get_tracking(user_id):
+                await msg.answer("Я не знаю такой команды")
         if db.get_tracking(user_id):
             await msg.forward(ADMIN_CHAT_ID, message_thread_id=db.get_topic_id(msg.from_user.id))
     else:
