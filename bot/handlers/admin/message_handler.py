@@ -1,16 +1,13 @@
 from aiogram import Router
-from aiogram.types import Message, FSInputFile
+from aiogram.types import Message, FSInputFile, Document
 from aiogram.filters import Command, CommandObject
-
-import asyncio
 
 from bot import database as db
 from bot.filters import ChatTypeFilter
-from bot.markups import admin_markups as kb
 
 from config import ADMIN_CHAT_ID, LOG_FILE, DB_PATH
 
-from datetime import datetime
+from bot.markups import admin_markups as kb
 
 import importlib
 
@@ -25,18 +22,34 @@ async def handle_topic_command_track(msg: Message) -> None:
         await msg.answer("Меню админа", reply_markup=kb.admin_menu)
 
 
+@router.message(Command('ban'), ChatTypeFilter(chat_type=['group', 'supergroup']))
+async def ban_command_handler(msg: Message) -> None:
+    if msg.chat.id == ADMIN_CHAT_ID:
+        user_id = db.get_user_id(msg.message_thread_id)
+        db.set_banned(user_id, True)
+        await msg.answer("Мы его забанили!!!")
+        await getattr(importlib.import_module("bot.bot"), "send_custom_message")(user_id, "За нарушение правил, тебя забанили")
+        logging.info(f'Забанен юзверь {user_id}')
+
+
+@router.message(Command('unban'), ChatTypeFilter(chat_type=['group', 'supergroup']))
+async def ban_command_handler(msg: Message) -> None:
+    if msg.chat.id == ADMIN_CHAT_ID:
+        user_id = db.get_user_id(msg.message_thread_id)
+        db.set_banned(user_id, False)
+        await msg.answer("Мы его разбанили!!!")
+        await getattr(importlib.import_module("bot.bot"), "send_custom_message")(user_id, "Амнистия! Тебя разбанили")
+        logging.info(f'Разбанен юзверь {user_id}')
+
+
 @router.message(Command("log"), ChatTypeFilter(chat_type=["group", "supergroup"]))
 async def handle_topic_command_track(msg: Message, command: CommandObject) -> None:
     if msg.chat.id == ADMIN_CHAT_ID and not msg.from_user.is_bot:
         if command.args == 'send' or command.args == 'show':
             await msg.answer_document(FSInputFile(LOG_FILE), caption="Вот ваш лог")
         elif command.args == 'clear' or command.args == 'del':
-            open(LOG_FILE, 'w').write(f"{datetime.now().strftime('%H:%M:%S %d-%m-%Y')} Log cleared")
+            open(LOG_FILE, 'w').write('')
             await msg.answer("Логи очищены")
-        elif command.args == 'start':
-            await getattr(importlib.import_module("bot.bot"), "enable_logging")(msg)
-        elif command.args == 'stop':
-            await getattr(importlib.import_module("bot.bot"), "disable_logging")(msg)
         else:
             await msg.answer("Такой команды нету (аргумент не правильный)")
 
@@ -48,45 +61,41 @@ async def handle_topic_command_track(msg: Message) -> None:
             await msg.answer_document(FSInputFile(DB_PATH), caption="Вот ваша база данных")
 
 
-@router.message(Command("schedule_update"), ChatTypeFilter(chat_type=["group", "supergroup"]))
+@router.message(Command("send_schedule"), ChatTypeFilter(chat_type=["group", "supergroup"]))
 async def schedule_update_handler(msg: Message) -> None:
     """/schedule_update command handler. Update schedule json file."""
-    wait_msg = await msg.answer("Сейчас обновиться, подождите")
-    await asyncio.sleep(1)
-    db.open_schedule_file()
-    await wait_msg.delete()
-    await msg.answer("Ура! Обновили schedules")
+    await msg.answer_document('data/schedule.db', caption='Отправьте исправленную бд для обновления расписания')
 
 
 @router.message(Command("track"), ChatTypeFilter(chat_type=["group", "supergroup"]))
-async def _handle_topic_command_track(msg: Message, command: CommandObject) -> None:
+async def handle_topic_command_track(msg: Message, command: CommandObject) -> None:
     """/track [start,stop,status] command handler. Set tracking for user topic."""
     if msg.chat.id == ADMIN_CHAT_ID:
         if command.args is None:
-            await msg.answer("Ошибка: не переданы аргументы")
+            await msg.answer(
+                "Ошибка: не переданы аргументы"
+            )
             return
-        ans = await msg.answer('Собираю информацию...')
         command = str(command.args).lower()
-        if ans.message_thread_id:
-            user_id = db.get_user_id(ans.message_thread_id)
+        if msg.message_thread_id:
+            user_id = db.get_user_id(msg.message_thread_id)
             if command == "start":
                 db.set_tracking(user_id, True)
             elif command == "stop":
                 db.set_tracking(user_id, False)
             elif command == "status":
                 pass
-            await ans.edit_text(f"Трекинг {'включен' if db.get_tracking(user_id) else 'выключен'}")
+            await msg.answer(f"Трекинг {'включен' if db.get_tracking(user_id) else 'выключен'}")
         else:
             if command == "start":
                 await db.tracking_manage(True)
             elif command == "stop":
                 await db.tracking_manage(False)
             elif command == "status":
-                pass
-            users = await db.get_tracked_users()
-            tracked = '\n'.join([str(user) for user in users])
-            await ans.edit_text(f"Трекаются: \n" + tracked if users else "Никто не трекается",
-                                parse_mode='MarkdownV2')
+                users = await db.get_tracked_users()
+                tracked = '\n'.join([str(user) for user in users])
+                await msg.answer(f"Трекаются: \n" + tracked if users else "Никто не трекается",
+                                 parse_mode='MarkdownV2')
 
 
 @router.message(Command("info"), ChatTypeFilter(chat_type=["group", "supergroup"]))
@@ -98,16 +107,6 @@ async def handle_topic_command_info(msg: Message) -> None:
                                   parse_mode="MarkdownV2")
         else:
             await start.edit_text(db.get_all_users_info())
-
-
-@router.message(Command("ban"), ChatTypeFilter(chat_type=["group", "supergroup"]))
-async def ban_handler(msg: Message) -> None:
-    await msg.answer("Пока не работает")
-
-
-@router.message(Command("unban"), ChatTypeFilter(chat_type=["group", "supergroup"]))
-async def unban_handler(msg: Message) -> None:
-    await msg.answer("Пока не работает")
 
 
 @router.message(ChatTypeFilter(chat_type=["group", "supergroup"]))
@@ -122,4 +121,11 @@ async def handle_topic_message(msg: Message) -> None:
         else:
             await msg.answer("Нет такой команды, но я тебя спас, не бойся")
     except TypeError:
-        logging.warning("TypeError в _handle_topic_message")
+        pass
+
+
+@router.message(ChatTypeFilter(chat_type=["group", "supergroup"]))
+async def schedule_handler(msg: Document):
+    """Ловит документы и заменяет файл schedule.db на полученный"""
+    if msg.chat.id == ADMIN_CHAT_ID:
+        await getattr(importlib.import_module("bot.bot"), "get_file")(msg)
