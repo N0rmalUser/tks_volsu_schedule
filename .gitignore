@@ -1,9 +1,6 @@
 .db
 .json
 
-preparation/
-venv/
-env/
 .idea/
 __pycache__/
 

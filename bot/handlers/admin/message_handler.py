@@ -43,7 +43,8 @@ async def ban_command_handler(msg: Message) -> None:
 
 
 @router.message(Command("log"), ChatTypeFilter(chat_type=["group", "supergroup"]))
-async def handle_topic_command_track(msg: Message, command: CommandObject) -> None:
+async def log_handler(msg: Message, command: CommandObject) -> None:
+    print(command)
     if msg.chat.id == ADMIN_CHAT_ID and not msg.from_user.is_bot:
         if command.args == 'send' or command.args == 'show':
             await msg.answer_document(FSInputFile(LOG_FILE), caption="Вот ваш лог")
@@ -55,10 +56,17 @@ async def handle_topic_command_track(msg: Message, command: CommandObject) -> No
 
 
 @router.message(Command("send_db"), ChatTypeFilter(chat_type=["group", "supergroup"]))
-async def handle_topic_command_track(msg: Message) -> None:
+async def send_db_handler(msg: Message) -> None:
     if msg.chat.id == ADMIN_CHAT_ID:
         if msg.message_thread_id:
             await msg.answer_document(FSInputFile(DB_PATH), caption="Вот ваша база данных")
+
+
+@router.message(Command("dump"), ChatTypeFilter(chat_type=["group", "supergroup"]))
+async def dump_handler(msg: Message) -> None:
+    if msg.chat.id == ADMIN_CHAT_ID:
+        await msg.answer_document(FSInputFile(LOG_FILE), caption="Вот ваш лог")
+        await msg.answer_document(FSInputFile(DB_PATH), caption="Вот ваша база данных")
 
 
 @router.message(Command("send_schedule"), ChatTypeFilter(chat_type=["group", "supergroup"]))

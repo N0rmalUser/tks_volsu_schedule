@@ -13,7 +13,7 @@ admin_menu = [
     ],
     [
         KeyboardButton(text="/send_schedule"),
-        KeyboardButton(text="/заглушка"),
+        KeyboardButton(text="/dump"),
         KeyboardButton(text="/info")
      ]
 ]

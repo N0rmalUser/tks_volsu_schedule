@@ -1,3 +1,5 @@
+import os
+
 BOT_TOKEN = "6857740783:AAF2JsAWEkLra0u9PdWHBUFySonglckn_Vk"
 # ID админской группы в которую будут приходить сообщения о юзеров
 ADMIN_CHAT_ID = -1001991471871
@@ -7,12 +9,13 @@ LOG_FILE = 'logs/bot.log'
 THROTTLE_TIME = 1.5
 
 # Путь до базы данных
-DB_PATH = "data\\users.db"
-# Путь до файла с расписанием в формате json
-SCHEDULE_PATH = "data\\schedule.db"
-# Путь до папки с исходниками расписаний
-ORIGINAL_SCHEDULES_PATH = "C:\\Users\\normal\\Desktop\\tks\\preparation\\"
+DB_PATH = os.getenv("DB_PATH", "data/users.db")
 
+# Путь до файла с расписанием в формате json
+SCHEDULE_PATH = os.getenv("SCHEDULE_PATH", "data/schedule.db")
+
+# Путь до папки с исходниками расписаний
+ORIGINAL_SCHEDULES_PATH = os.getenv("ORIGINAL_SCHEDULES_PATH", "/path/to/original/schedules/")
 
 # Список групп (не подгружается автоматом при запуске скрипта или изменения расписания)
 groups = ['ИБТС-211', 'ИБТС-221', 'ИБТС-231', 'ИБТС-231_2',
