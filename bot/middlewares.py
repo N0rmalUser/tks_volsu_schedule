@@ -71,6 +71,22 @@ class AntiSpamCallbackMiddleware(BaseMiddleware):
         return await handler(event, data)
 
 
+class BanUsersMiddleware(BaseMiddleware):
+    async def __call__(
+        self,
+        handler: Callable[[Update, Dict[str, Any]], Awaitable[Any]],
+        event: Update,
+        data: Dict[str, Any]
+    ) -> Any:
+        user = data['event_from_user']
+
+        if db.user_exists(user.id):
+            if not db.get_banned(user.id):
+                return await handler(event, data)
+        else:
+            return await handler(event, data)
+
+
 class IgnoreMessageNotModifiedMiddleware(BaseMiddleware):
     """Мидлварь, игнорирующая ошибку "message is not modified" при попытке изменить сообщение"""
 
