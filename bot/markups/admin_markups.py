@@ -12,7 +12,7 @@ admin_menu = [
         KeyboardButton(text="/track status")
     ],
     [
-        KeyboardButton(text="/schedule_update"),
+        KeyboardButton(text="/send_schedule"),
         KeyboardButton(text="/заглушка"),
         KeyboardButton(text="/info")
      ]
