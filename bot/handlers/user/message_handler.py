@@ -26,18 +26,16 @@ async def start_deep_handler(msg: Message, command: CommandObject) -> None:
         db.set_inviter(user_id, int(args[0]))
         if args[1] == "teacher":
             user_type = "teacher"
-            menu, keyboard = kb.teacher_menu, kb.get_teachers
+            menu, keyboard = kb.teacher_menu, kb.get_teachers()
         else:
             user_type = "student"
-            menu, keyboard = kb.student_menu, kb.get_groups
+            menu, keyboard = kb.student_menu, kb.get_groups()
         db.set_last_date(msg)
         db.set_today_date(user_id)
         db.set_week(user_id, 1)
         db.set_user_type(msg, user_type)
 
-        main = importlib.import_module("bot.bot")
-        another_function = getattr(main, "start_message")
-        await another_function(msg, user_id, menu, keyboard)
+        await getattr(importlib.import_module("bot.bot"), "start_message")(msg, user_id, menu, keyboard)
     except Exception:
         logging.warning(f"{msg.from_user.id} перешёл по неверной ссылке")
         await msg.answer("Неверная ссылка")
