@@ -11,7 +11,8 @@ student_menu = [
     [
         KeyboardButton(text="Расписание на сегодня")
     ], [
-        KeyboardButton(text="Группы")
+        KeyboardButton(text="Группы"),
+        KeyboardButton(text="Преподаватели")
     ]
 ]
 teacher_menu = [
