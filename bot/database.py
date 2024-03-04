@@ -47,6 +47,7 @@ def init_db(_cursor: sqlite3.Cursor):
             last_date TEXT,
             inviter_id INTEGER,
             blocked BOOLEAN DEFAULT false,
+            banned BOOLEAN DEFAULT false,
             FOREIGN KEY (inviter_id) REFERENCES User_Info(user_id)
         )
     """)
@@ -63,6 +64,59 @@ def init_db(_cursor: sqlite3.Cursor):
             FOREIGN KEY (user_id) REFERENCES User_Info(user_id)
         )
     """)
+
+
+@sql_kit(DB_PATH)
+def set_user_type(msg: Message, user_type: str, _cursor: sqlite3.Cursor) -> None:
+    """
+    Устанавливает значение для поля user_type, username, fullname, start_date, если они не установлены
+    :param msg:  :class:`aiogram.types.Message` Полученное сообщение
+    :param user_type:  :class:`str` user call_type - student или teacher
+    :param _cursor:  :class:`sqlite3.Cursor` Не нужно передавать
+    """
+    user_id = msg.from_user.id
+    _cursor.execute("""
+        SELECT start_date FROM User_Info 
+        WHERE user_id = ?
+        """, (user_id,))
+    result = _cursor.fetchone()
+
+    _cursor.execute("""
+        INSERT INTO User_Info(user_id, user_type)
+        VALUES(?, ?) ON CONFLICT(user_id) DO UPDATE 
+        SET user_type=excluded.user_type;
+        """, (user_id, user_type))
+
+    _cursor.execute("""
+        INSERT INTO User_Info(user_id, username)
+        VALUES(?, ?) 
+        ON CONFLICT(user_id) DO UPDATE 
+        SET username=excluded.username;
+        """, (user_id, f"@{msg.from_user.username}"))
+
+    _cursor.execute("""
+        INSERT INTO User_Info(user_id, fullname)
+        VALUES(?, ?) ON CONFLICT(user_id) DO UPDATE
+        SET fullname=excluded.fullname;
+        """, (user_id, msg.from_user.full_name))
+
+    if result is None or result[0] is None:
+        _cursor.execute("""
+            INSERT INTO User_Info(user_id, start_date)
+            VALUES(?, ?) ON CONFLICT(user_id) DO UPDATE
+            SET start_date=excluded.start_date;
+            """, (user_id, f"{msg.date.strftime('%d-%m-%Y')} "
+                           f"{msg.date.strftime('%H:%M:%S')}"))
+
+
+@sql_kit(DB_PATH)
+def user_exists(user_id: int, _cursor: sqlite3.Cursor) -> bool:
+    _cursor.execute("""
+        SELECT * 
+        FROM User_Info 
+        WHERE user_id = ?
+        """, (user_id,))
+    return True if _cursor.fetchone() is not None else False
 
 
 @sql_kit(DB_PATH)
@@ -93,6 +147,40 @@ def get_blocked(user_id: int, _cursor: sqlite3.Cursor) -> bool:
         WHERE user_id = ?
         """, (user_id,))
     return bool(_cursor.fetchone())
+
+
+@sql_kit(DB_PATH)
+def set_banned(user_id: int, ban: bool, _cursor: sqlite3.Cursor) -> None:
+    """
+    Устанавливает значение для поля blocked - заблокировал пользователь бота или нет
+    :param user_id:  :class:`int` user id
+    :param ban:  :class:`bool` block True или False
+    :param _cursor:  :class:`sqlite3.Cursor` Не нужно передавать
+    """
+    _cursor.execute("""
+            INSERT INTO User_Info(user_id, banned)
+            VALUES(?, ?) ON CONFLICT(user_id) DO UPDATE 
+            SET banned=excluded.banned;
+            """, (user_id, ban))
+
+
+@sql_kit(DB_PATH)
+def get_banned(user_id: int, _cursor: sqlite3.Cursor) -> bool:
+    """
+    Возвращает значение поля blocked - заблокировал пользователь бота или нет
+    :param user_id:  :class:`int` user id
+    :param _cursor:  :class:`sqlite3.Cursor` Не нужно передавать
+    :return:  :class:`bool` ban True или False
+    """
+    try:
+        _cursor.execute("""
+            SELECT banned FROM User_Info
+            WHERE user_id = ?
+            """, (user_id,))
+    except Exception:
+        pass
+    result = _cursor.fetchone()
+    return bool(result[0]) if result is not None else False
 
 
 @sql_kit(DB_PATH)
@@ -141,48 +229,6 @@ def get_user_type(user_id: int, _cursor: sqlite3.Cursor) -> str:
         WHERE user_id = ?
         """, (user_id,))
     return _cursor.fetchone()[0]
-
-
-@sql_kit(DB_PATH)
-def set_user_type(msg: Message, user_type: str, _cursor: sqlite3.Cursor) -> None:
-    """
-    Устанавливает значение для поля user_type, username, fullname, start_date, если они не установлены
-    :param msg:  :class:`aiogram.types.Message` Полученное сообщение
-    :param user_type:  :class:`str` user call_type - student или teacher
-    :param _cursor:  :class:`sqlite3.Cursor` Не нужно передавать
-    """
-    _cursor.execute("""
-        SELECT start_date FROM User_Info 
-        WHERE user_id = ?
-        """, (msg.from_user.id,))
-    result = _cursor.fetchone()
-
-    _cursor.execute("""
-        INSERT INTO User_Info(user_id, user_type)
-        VALUES(?, ?) ON CONFLICT(user_id) DO UPDATE 
-        SET user_type=excluded.user_type;
-        """, (msg.from_user.id, user_type))
-
-    _cursor.execute("""
-        INSERT INTO User_Info(user_id, username)
-        VALUES(?, ?) 
-        ON CONFLICT(user_id) DO UPDATE 
-        SET username=excluded.username;
-        """, (msg.from_user.id, f"@{msg.from_user.username}"))
-
-    _cursor.execute("""
-        INSERT INTO User_Info(user_id, fullname)
-        VALUES(?, ?) ON CONFLICT(user_id) DO UPDATE
-        SET fullname=excluded.fullname;
-        """, (msg.from_user.id, msg.from_user.full_name))
-
-    if result is None or result[0] is None:
-        _cursor.execute("""
-            INSERT INTO User_Info(user_id, start_date)
-            VALUES(?, ?) ON CONFLICT(user_id) DO UPDATE
-            SET start_date=excluded.start_date;
-            """, (msg.from_user.id, f"{msg.date.strftime('%d-%m-%Y')} "
-                                    f"{msg.date.strftime('%H:%M:%S')}"))
 
 
 @sql_kit(DB_PATH)
@@ -465,7 +511,8 @@ def get_user_info(user_id, _cursor: sqlite3.Cursor):
 `start_date:`` ``{data[5]}`
 `last_date:``  ``{data[6]}`
 `inviter_id:`` ``{data[7]}`
-`blocked``     ``{data[8]}
+`blocked``     ``{data[8]}`
+`banned``      ``{data[9]}`
 """
 
 
@@ -492,23 +539,26 @@ def get_all_users_info(_cursor: sqlite3.Cursor) -> str:
     users_count = _cursor.fetchone()[0]
 
     # Подсчет количества пользователей с last_date не старше одной недели
-    one_week_ago = datetime.now() - timedelta(days=7)
     _cursor.execute("SELECT last_date FROM User_Info")
     users = _cursor.fetchall()
     recent_users_count = 0
+    today = datetime.today().date()
     for (last_date_str,) in users:
-        # Преобразуем строку в datetime
-        last_date = datetime.strptime(last_date_str, '%d-%m-%Y %H:%M:%S')
-        # Проверяем, активен ли пользователь
-        if last_date > one_week_ago:
+        last_date = datetime.strptime(last_date_str, '%d-%m-%Y %H:%M:%S').date()
+        days_until = (last_date - today).days
+        if days_until >= 0:
             recent_users_count += 1
-    # Подсчет количества заблокированных пользователей
+
     _cursor.execute("SELECT COUNT(*) FROM User_Info WHERE blocked = 1")
     blocked_count = _cursor.fetchone()[0]
 
+    _cursor.execute("SELECT COUNT(*) FROM User_Info WHERE banned = 1")
+    banned_count = _cursor.fetchone()[0]
+
     result = (f"Пользователей: {users_count}\n"
               f"Активных: {recent_users_count}\n"
-              f"Заблокировали бота: {blocked_count}")
+              f"Заблокировали бота: {blocked_count}\n"
+              f"Забанено: {banned_count}")
     return result
 
 
@@ -555,7 +605,7 @@ def set_today_date(user_id: int) -> None:
     week = 2 if datetime.now().isocalendar()[1] % 2 == 0 else 1
     if day == 7:
         set_day(user_id, 1)
-        set_week(user_id, week+1 if week == 1 else week-1)
+        set_week(user_id, week + 1 if week == 1 else week - 1)
     else:
         set_day(user_id, day)
         set_week(user_id, week)
