@@ -19,6 +19,7 @@ router = Router()
 
 @router.message(CommandStart(deep_link=True))
 async def start_deep_handler(msg: Message, command: CommandObject) -> None:
+    """Обработчик команды /start с deep_link'ом. Назначает тип пользователя в зависимости от ссылки, а также добавляет id пригласившего пользователя в базу данных."""
     try:
         payload = decode_payload(command.args)
         args = payload.split("=")
@@ -43,6 +44,7 @@ async def start_deep_handler(msg: Message, command: CommandObject) -> None:
 
 @router.message(CommandStart())
 async def start_handler(msg: Message) -> None:
+    """Обработчик команды /start без deep_link'а."""
     user_id = int(msg.from_user.id)
     db.set_last_date(msg)
     db.set_today_date(user_id)
@@ -55,6 +57,7 @@ async def start_handler(msg: Message) -> None:
 
 @router.message(Command('help'), ChatTypeFilter(chat_type='private'))
 async def help_handler(msg: Message) -> None:
+    """Обработчик команды /help. Отправляет сообщение с описанием бота."""
     if db.get_user_type == 'teacher':
         await msg.answer("""
 Привет, это бот расписания кафедры ТКС!
@@ -85,6 +88,7 @@ async def help_handler(msg: Message) -> None:
 
 @router.message(Command("admin"), ChatTypeFilter(chat_type="private"))
 async def admin_handler(msg: Message) -> None:
+    """Обработчик команды /admin. Пересылает сообщение админу и включает слежку за действиями пользователя."""
     await getattr(importlib.import_module("bot.bot"), "admin_sender")(msg)
     await msg.forward(chat_id=ADMIN_CHAT_ID, message_thread_id=db.get_topic_id(msg.from_user.id))
     await msg.answer("Модератор скоро напишет вам, ожидайте")
@@ -94,6 +98,7 @@ async def admin_handler(msg: Message) -> None:
 
 @router.message(ChatTypeFilter(chat_type="private"))
 async def handler(msg: Message) -> None:
+    """Обработчик сообщений от пользователя. Отправляет расписание на сегодня, если пользователь выбрал преподавателя, группу или кабинет."""
     user_id = msg.from_user.id
     user_type = db.get_user_type(user_id)
     if msg.content_type == "text":

@@ -20,13 +20,16 @@ async def main() -> None:
     global bot
     bot = Bot(token=BOT_TOKEN)
     dp = Dispatcher(storage=MemoryStorage())
+
     dp.include_routers(user.callback_handler.router, user.message_handler.router, user.status_handler.router, admin.message_handler.router)
+
     dp.update.middleware(middlewares.BanUsersMiddleware())
     dp.message.middleware(middlewares.AntiSpamMessageMiddleware())
     dp.callback_query.middleware(middlewares.AntiSpamCallbackMiddleware())
     dp.callback_query.middleware(middlewares.IgnoreMessageNotModifiedMiddleware())
     dp.callback_query.middleware(middlewares.CallbackTelegramErrorsMiddleware())
     dp.message.middleware(middlewares.MessageTelegramErrorsMiddleware())
+
     await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
 
@@ -48,10 +51,11 @@ async def topic_create(msg: Message) -> None:
     result = await bot.create_forum_topic(ADMIN_CHAT_ID, topic_name)
     topic_id = result.message_thread_id
     db.set_topic_id(user_id, topic_id)
+    inviter = db.get_inviter(user_id)
     user_info = (f"Пользователь: <code>{msg.from_user.full_name}</code>\n"
                  f"ID: <code>{user_id}</code>\n"
                  f"Username: @{msg.from_user.username}\n"
-                 f"Пригласил: <code>{db.get_inviter(user_id) if db.get_inviter(user_id) else 'Никто'}</code>\n"
+                 f"Пригласил: <code>{inviter if inviter else 'Никто'}</code>\n"
                  f"Тип пользователя: {db.get_user_type(user_id)}")
     await bot.send_message(ADMIN_CHAT_ID, message_thread_id=topic_id, text=user_info, reply_markup=kb.admin_menu, parse_mode="HTML")
     db.set_tracking(msg.from_user.id, False)
@@ -80,6 +84,7 @@ async def send_to_user(msg: Message) -> None:
 
 
 async def get_file(msg: Document):
+    """Ловит документы и заменяет файл с расписанием schedule.db на полученный."""
     file_id = msg.document.file_id
     file_info = await bot.get_file(file_id)
     file_path = file_info.file_path
@@ -96,20 +101,24 @@ async def get_file(msg: Document):
 
 
 async def send_custom_message(user_id: int, text: str):
+    """Отправляет пользователю кастомное сообщение."""
     await bot.send_message(user_id, text)
 
 
 async def broadcast(msg: Message) -> None:
+    """Отправляет сообщение всем пользователям, не заблокировавшим бота."""
     await db.broadcast_message(bot, msg.text)
     logging.info('Отправлено сообщение всем пользователям')
 
 
 async def send_callback(callback: Message) -> None:
+    """Отправляет сообщение в личный топик пользователя при нажатии на инлайн кнопку."""
     if db.get_tracking(callback.from_user.id):
         await bot.send_message(ADMIN_CHAT_ID, message_thread_id=db.get_topic_id(callback.from_user.id),
                                text=callback.data)
 
 
 async def send_user_status(event: ChatMemberUpdated, status: str) -> None:
+    """Отправляет сообщение в админский чат о статусе пользователя (заблокировал или разблокировал бота)."""
     await bot.send_message(ADMIN_CHAT_ID, f"Пользователь @{event.from_user.username} {status} бота",
                            message_thread_id=db.get_topic_id(event.from_user.id))

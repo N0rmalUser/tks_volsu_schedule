@@ -72,6 +72,8 @@ class AntiSpamCallbackMiddleware(BaseMiddleware):
 
 
 class BanUsersMiddleware(BaseMiddleware):
+    """Мидлварь, игнорящий все updates для забаненных пользователей"""
+
     async def __call__(
         self,
         handler: Callable[[Update, Dict[str, Any]], Awaitable[Any]],
@@ -106,6 +108,8 @@ class IgnoreMessageNotModifiedMiddleware(BaseMiddleware):
 
 
 class MessageTelegramErrorsMiddleware(BaseMiddleware):
+    """Мидлварь, обрабатывающая ошибки, возникающие при отправке сообщений в телеграме"""
+
     async def __call__(
             self,
             handler: Callable[[Message, Dict[str, Any]], Awaitable[Any]],
@@ -129,6 +133,8 @@ class MessageTelegramErrorsMiddleware(BaseMiddleware):
 
 
 class CallbackTelegramErrorsMiddleware(BaseMiddleware):
+    """Мидлварь, обрабатывающая ошибки, возникающие при отправке колбеков в телеграме"""
+
     async def __call__(
             self,
             handler: Callable[[Message, Dict[str, Any]], Awaitable[Any]],

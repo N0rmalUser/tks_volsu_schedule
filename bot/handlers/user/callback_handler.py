@@ -21,6 +21,7 @@ async def ignore_handler(callback: CallbackQuery) -> None:
 
 @router.callback_query(DayCallbackFactory.filter(F.action == "day"))
 async def day_handler(callback: CallbackQuery, callback_data: DayCallbackFactory) -> None:
+    """Функция, обрабатывающая нажатие кнопки дня недели. Отправляет расписание на этот день для преподов, групп и аудиторий."""
     keyboard_type: str = callback_data.keyboard_type
     value: str = callback_data.value
     week: int = callback_data.week
@@ -55,6 +56,7 @@ async def day_handler(callback: CallbackQuery, callback_data: DayCallbackFactory
 
 @router.callback_query(DayCallbackFactory.filter(F.action == "week"))
 async def week_handler(callback: CallbackQuery, callback_data: DayCallbackFactory) -> None:
+    """Функция, обрабатывающая нажатие кнопки недели. Отправляет расписание на следующую неделю для преподов, групп и аудиторий, сохраняя день."""
     keyboard_type = callback_data.keyboard_type
     value = callback_data.value
     week = 1 if int(callback_data.week) != 2 else 2
@@ -89,10 +91,10 @@ async def week_handler(callback: CallbackQuery, callback_data: DayCallbackFactor
 
 @router.callback_query(ChangeCallbackFactory.filter(F.action == "room"))
 async def room_handler(callback: CallbackQuery, callback_data: ChangeCallbackFactory) -> None:
+    """Функция, обрабатывающая нажатие кнопки аудитории. Отправляет расписание на этот день для аудитории."""
     user_id = int(callback.from_user.id)
 
     db.set_today_date(user_id)
-    db.set_room(user_id, callback_data.value)
 
     await callback.message.edit_text(text_maker.get_room_schedule(day=db.get_day(user_id), week=db.get_week(user_id), room_name=callback_data.value),
                                      reply_markup=kb.get_days(user_id, keyboard_type='room', week=db.get_week(user_id), value=callback_data.value))
@@ -103,13 +105,19 @@ async def room_handler(callback: CallbackQuery, callback_data: ChangeCallbackFac
 
 @router.callback_query(ChangeCallbackFactory.filter(F.action == 'teacher'))
 async def teacher_handler(callback: CallbackQuery, callback_data: ChangeCallbackFactory) -> None:
+    """Функция, обрабатывающая нажатие кнопки преподавателя. Отправляет расписание на этот день для преподавателя.
+    Если преподаватель является учеником (указывается в config.py), отправляет расписание его групп, смешанное с занятиями, которые он сам проводит
+    """
+
     user_id = int(callback.from_user.id)
 
     db.set_today_date(user_id)
     db.set_teacher(user_id, callback_data.value)
 
-    await callback.message.edit_text(text_maker.get_teacher_schedule(day=db.get_day(user_id), week=db.get_week(user_id), teacher_name=callback_data.value),
-                                     reply_markup=kb.get_days(user_id, keyboard_type='teacher', week=db.get_week(user_id), value=callback_data.value))
+    await callback.message.edit_text(text_maker.get_teacher_schedule(day=db.get_day(user_id), week=db.get_week(user_id),
+                                                                     teacher_name=callback_data.value),
+                                     reply_markup=kb.get_days(user_id, keyboard_type='teacher',
+                                                              week=db.get_week(user_id), value=callback_data.value))
 
     await getattr(importlib.import_module("bot.bot"), "send_callback")(callback)
     await callback.answer()
@@ -117,13 +125,16 @@ async def teacher_handler(callback: CallbackQuery, callback_data: ChangeCallback
 
 @router.callback_query(ChangeCallbackFactory.filter(F.action == 'group'))
 async def teacher_handler(callback: CallbackQuery, callback_data: ChangeCallbackFactory) -> None:
+    """Функция, обрабатывающая нажатие кнопки группы. Отправляет расписание на этот день для группы."""
     user_id = int(callback.from_user.id)
 
     db.set_today_date(user_id)
     db.set_group(user_id, callback_data.value)
 
-    await callback.message.edit_text(text_maker.get_group_schedule(day=db.get_day(user_id), week=db.get_week(user_id), group_name=callback_data.value),
-                                     reply_markup=kb.get_days(user_id, keyboard_type='group', week=db.get_week(user_id), value=callback_data.value))
+    await callback.message.edit_text(text_maker.get_group_schedule(day=db.get_day(user_id), week=db.get_week(user_id),
+                                                                   group_name=callback_data.value),
+                                     reply_markup=kb.get_days(user_id, keyboard_type='group', week=db.get_week(user_id),
+                                                              value=callback_data.value))
 
     await getattr(importlib.import_module("bot.bot"), "send_callback")(callback)
     await callback.answer()
