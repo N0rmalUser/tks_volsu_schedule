@@ -31,7 +31,7 @@ async def main() -> None:
     dp.message.middleware(middlewares.MessageTelegramErrorsMiddleware())
 
     await bot.delete_webhook(drop_pending_updates=True)
-    await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
+    await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types(), polling_timeout=60)
 
 
 # Функции-обработчики команд из importlib (нельзя использовать в других файлах из-за зацикливания)
@@ -85,9 +85,7 @@ async def send_to_user(msg: Message) -> None:
 
 async def get_file(msg: Document):
     """Ловит документы и заменяет файл с расписанием schedule.db на полученный."""
-    file_id = msg.document.file_id
-    file_info = await bot.get_file(file_id)
-    file_path = file_info.file_path
+    file_path = (await bot.get_file(msg.document.file_id)).file_path
     downloaded_file = await bot.download_file(file_path)
     if '.db' in os.path.basename(file_path):
         existing_file = 'data/schedule.db'
