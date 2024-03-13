@@ -1,11 +1,11 @@
 from docx import Document
-from config import ORIGINAL_SCHEDULES_PATH
 import sqlite3
 import os
 import re
 from progress.bar import Bar
 
 DATABASE_PATH = 'schedule.db'
+ORIGINAL_SCHEDULES_PATH = ''
 
 
 def initialize_database():
