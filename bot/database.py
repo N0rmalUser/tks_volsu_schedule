@@ -490,13 +490,17 @@ def get_all_users_info(cursor: sqlite3.Cursor) -> str:
     # Подсчет количества пользователей с last_date не старше одной недели
     cursor.execute("SELECT last_date FROM User_Info")
     users = cursor.fetchall()
-    recent_users_count = 0
+    month_users_count, week_users_count, today_users_count = 0, 0, 0
     today = datetime.today().date()
     for (last_date_str,) in users:
         last_date = datetime.strptime(last_date_str, '%d-%m-%Y %H:%M:%S').date()
         days_until = (last_date - today).days
+        if days_until >= -30:
+            month_users_count += 1
+        if days_until >= -7:
+            week_users_count += 1
         if days_until >= 0:
-            recent_users_count += 1
+            today_users_count += 1
 
     cursor.execute("SELECT COUNT(*) FROM User_Info WHERE blocked = 1")
     blocked_count = cursor.fetchone()[0]
@@ -505,7 +509,10 @@ def get_all_users_info(cursor: sqlite3.Cursor) -> str:
     banned_count = cursor.fetchone()[0]
 
     result = (f"Пользователей: {users_count}\n"
-              f"Активных: {recent_users_count}\n"
+              f"Активных:\n"
+              f"За месяц - {month_users_count}\n"
+              f"За неделю - {week_users_count}\n"
+              f"За день - {today_users_count}\n"
               f"Заблокировали бота: {blocked_count}\n"
               f"Забанено: {banned_count}")
     return result
