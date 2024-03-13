@@ -71,9 +71,13 @@ async def send_db_handler(msg: Message) -> None:
 async def dump_handler(msg: Message) -> None:
     """Отправляет базу данных пользователей и логи в админский чат."""
     if msg.chat.id == ADMIN_CHAT_ID:
-        await msg.answer_document(FSInputFile(LOG_FILE), caption="Вот ваш лог")
-        await msg.answer_document(FSInputFile(USERS_DB), caption="Вот ваша база данных")
-    logging.info("Выгружены базы данных и логов")
+        try:
+            await msg.answer_document(FSInputFile(LOG_FILE), caption="Вот ваш лог")
+            open(LOG_FILE, 'w').write('')
+            await msg.answer_document(FSInputFile(USERS_DB), caption="Вот ваша база данных")
+            logging.info("Выгружены базы данных и логов")
+        except Exception:
+            logging.error("Ошибка при выгрузке базы данных и логов")
 
 
 @router.message(Command("send_schedule"), ChatTypeFilter(chat_type=["group", "supergroup"]))
