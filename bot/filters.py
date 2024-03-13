@@ -1,20 +1,19 @@
 from aiogram.filters import BaseFilter
-from aiogram.types import Message
+from aiogram import types
+from config import ADMIN_CHAT_ID
 
-from typing import Union
 
-
-class ChatTypeFilter(BaseFilter):
-    """
-    Фильтр, проверяющий тип чата и возвращающий True или False
-    :param chat_type:  Тип чата, который хотите проверить (private, group, supergroup, channel)
-    :call_type chat_type:  str или list
-    """
-    def __init__(self, chat_type: Union[str, list]):
+class ChatTypeIdFilter(BaseFilter):
+    """Фильтр, проверяющий тип чата и id, если указан, и возвращающий True или False"""
+    def __init__(self, chat_type: list, chat_id: int = None):
+        self.chat_id = chat_id
         self.chat_type = chat_type
 
-    async def __call__(self, message: Message) -> bool:
-        if isinstance(self.chat_type, str):
+    async def __call__(self, message: types.Message) -> bool:
+        if not bool(message.from_user.is_bot):
+            if message.chat.type in self.chat_type and self.chat_id is not None:
+                return str(message.chat.id) == str(ADMIN_CHAT_ID)
             return message.chat.type == self.chat_type
-        else:
-            return message.chat.type in self.chat_type
+
+
+

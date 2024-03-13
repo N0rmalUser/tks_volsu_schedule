@@ -4,7 +4,7 @@ from aiogram.types import Message
 from aiogram.utils.deep_linking import decode_payload
 
 from bot import database as db
-from bot.filters import ChatTypeFilter
+from bot.filters import ChatTypeIdFilter
 from bot.misc import text_maker
 from bot.markups import user_markups as kb
 
@@ -17,7 +17,7 @@ import logging
 router = Router()
 
 
-@router.message(CommandStart(deep_link=True))
+@router.message(CommandStart(deep_link=True), ChatTypeIdFilter(chat_type=['private']))
 async def start_deep_handler(msg: Message, command: CommandObject) -> None:
     """Обработчик команды /start с deep_link'ом. Назначает тип пользователя в зависимости от ссылки, а также добавляет id пригласившего пользователя в базу данных."""
     try:
@@ -42,7 +42,7 @@ async def start_deep_handler(msg: Message, command: CommandObject) -> None:
         await msg.answer("Неверная ссылка")
 
 
-@router.message(CommandStart())
+@router.message(CommandStart(), ChatTypeIdFilter(chat_type=['private']))
 async def start_handler(msg: Message) -> None:
     """Обработчик команды /start без deep_link'а."""
     user_id = int(msg.from_user.id)
@@ -55,7 +55,7 @@ async def start_handler(msg: Message) -> None:
     await getattr(importlib.import_module("bot.bot"), "start_message")(msg, user_id, menu, keyboard)
 
 
-@router.message(Command('help'), ChatTypeFilter(chat_type='private'))
+@router.message(Command('help'), ChatTypeIdFilter(chat_type=['private']))
 async def help_handler(msg: Message) -> None:
     """Обработчик команды /help. Отправляет сообщение с описанием бота."""
     if db.get_user_type == 'teacher':
@@ -87,7 +87,7 @@ async def help_handler(msg: Message) -> None:
 """)
 
 
-@router.message(Command("admin"), ChatTypeFilter(chat_type="private"))
+@router.message(Command("admin"), ChatTypeIdFilter(chat_type=['private']))
 async def admin_handler(msg: Message) -> None:
     """Обработчик команды /admin. Пересылает сообщение админу и включает слежку за действиями пользователя."""
     await getattr(importlib.import_module("bot.bot"), "admin_sender")(msg)
@@ -97,7 +97,7 @@ async def admin_handler(msg: Message) -> None:
     logging.info(f"{msg.from_user.id} написал админу")
 
 
-@router.message(ChatTypeFilter(chat_type="private"))
+@router.message(ChatTypeIdFilter(chat_type=['private']))
 async def handler(msg: Message) -> None:
     """Обработчик сообщений от пользователя. Отправляет расписание на сегодня, если пользователь выбрал преподавателя, группу или кабинет."""
     user_id = msg.from_user.id
