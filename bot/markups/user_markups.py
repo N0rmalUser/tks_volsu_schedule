@@ -44,7 +44,7 @@ def get_groups():
     builder = InlineKeyboardBuilder()
     for group in config.groups:
         builder.button(text=group, callback_data=keyboard_factory.ChangeCallbackFactory(action="group", value=group))
-    builder.adjust(4)
+    builder.adjust(3)
     return builder.as_markup()
 
 
