@@ -13,7 +13,7 @@ class ChatTypeIdFilter(BaseFilter):
         if not bool(message.from_user.is_bot):
             if message.chat.type in self.chat_type and self.chat_id is not None:
                 return str(message.chat.id) == str(ADMIN_CHAT_ID)
-            return message.chat.type == self.chat_type
+            return message.chat.type in self.chat_type
 
 
 

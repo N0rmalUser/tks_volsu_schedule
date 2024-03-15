@@ -450,6 +450,16 @@ def get_user_info(user_id, cursor: sqlite3.Cursor):
         WHERE user_id = ?
         """, (user_id,))
     data = cursor.fetchone()
+
+    cursor.execute("""
+        SELECT last_date
+        FROM User_Info 
+        WHERE user_id = ?
+        """, (user_id,))
+    dates = cursor.fetchall()
+    print(dates)
+    last_date = datetime.strptime(dates[0][0], '%d-%m-%Y %H:%M:%S').date()
+    days_until = (last_date - datetime.today().date()).days
     return f"""
 Информация о пользователе:
 `user_id:``    ``{data[0]}`
@@ -459,6 +469,7 @@ def get_user_info(user_id, cursor: sqlite3.Cursor):
 `topic_id:``   ``{data[4]}`
 `start_date:`` ``{data[5]}`
 `last_date:``  ``{data[6]}`
+{-days_until} дней назад
 `inviter_id:`` ``{data[7]}`
 `blocked``     ``{data[8]}`
 `banned``      ``{data[9]}`
