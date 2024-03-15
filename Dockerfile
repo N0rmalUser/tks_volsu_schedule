@@ -5,6 +5,7 @@ WORKDIR /tks_schedule
 
 COPY requirements.txt requirements.txt
 RUN pip install -r requirements.txt
+RUN rm requirements.txt
 
 COPY config.py config.py
 COPY bot bot
