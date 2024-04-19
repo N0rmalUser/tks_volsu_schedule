@@ -2,7 +2,7 @@ import logging
 
 from aiogram.types import Message
 
-from config import USERS_DB
+from config import USERS_DB, tz
 
 from datetime import datetime
 
@@ -39,6 +39,7 @@ def init_db(cursor: sqlite3.Cursor):
             day INTEGER,
             teacher_name TEXT,
             group_name TEXT,
+            defaulte TEXT,
             FOREIGN KEY (user_id) REFERENCES User_Info(user_id)
         )
     """)
@@ -377,12 +378,7 @@ def delete_topic_id(user_id, cursor: sqlite3.Cursor):
 
 @sql_kit(USERS_DB)
 def get_week(user_id: int, cursor: sqlite3.Cursor) -> int:
-    """
-    Возвращает значение поля week - недели. 1 - "Числитель", 2 - "Знаменатель"
-    :param user_id:  :class:`int` user id
-    :param cursor:  :class:`sqlite3.Cursor` Не нужно передавать
-    :return:  :class:`int` Неделя. 1 - "Числитель", 2 - "Знаменатель"
-    """
+    """Возвращает значение поля week. 1 - 'Числитель', 2 - 'Знаменатель'"""
     cursor.execute("""
         SELECT week FROM Temp_Data
         WHERE user_id = ?
@@ -393,12 +389,7 @@ def get_week(user_id: int, cursor: sqlite3.Cursor) -> int:
 
 @sql_kit(USERS_DB)
 def set_week(user_id: int, week: int, cursor: sqlite3.Cursor) -> None:
-    """
-    Устанавливает значение поля week. 1 - "Числитель", 2 - "Знаменатель"
-    :param user_id:  :class:`int` user id
-    :param week:  :class:`int` Неделя. 1 - "Числитель", 2 - "Знаменатель"
-    :param cursor:  :class:`sqlite3.Cursor` Не нужно передавать
-    """
+    """Устанавливает значение поля week. 1 - 'Числитель', 2 - 'Знаменатель'"""
     cursor.execute("""
         INSERT INTO Temp_Data(user_id, week)
         VALUES(?, ?) ON CONFLICT(user_id) DO UPDATE
@@ -408,12 +399,7 @@ def set_week(user_id: int, week: int, cursor: sqlite3.Cursor) -> None:
 
 @sql_kit(USERS_DB)
 def get_day(user_id: int, cursor: sqlite3.Cursor) -> int:
-    """
-    Возвращает значение поля day. 1 - "Понедельник", 2 - "Вторник" ... 6 - "Суббота"
-    :param user_id:  :class:`int` user id
-    :param cursor:  :class:`sqlite3.Cursor` Не нужно передавать
-    :return:  :class:`int` День. 1 - "Понедельник", 2 - "Вторник" ... 6 - "Суббота"
-    """
+    """Устанавливает значение поля day. 1 - 'Понедельник', 2 - 'Вторник' ... 6 - 'Суббота'"""
     cursor.execute("""
         SELECT day FROM Temp_Data
         WHERE user_id = ?
@@ -424,12 +410,7 @@ def get_day(user_id: int, cursor: sqlite3.Cursor) -> int:
 
 @sql_kit(USERS_DB)
 def set_day(user_id: int, day: int, cursor: sqlite3.Cursor) -> None:
-    """
-    Возвращает значение поля day. 1 - "Понедельник", 2 - "Вторник" ... 6 - "Суббота"
-    :param user_id:  :class:`int` user id
-    :param day:  :class:`int` День. 1 - "Понедельник", 2 - "Вторник" ... 6 - "Суббота"
-    :param cursor:  :class:`sqlite3.Cursor` Не нужно передавать
-    """
+    """Возвращает значение поля day. 1 - 'Понедельник', 2 - 'Вторник' ... 6 - 'Суббота'"""
     cursor.execute("""
         INSERT INTO Temp_Data(user_id, day)
         VALUES(?, ?) ON CONFLICT(user_id) DO UPDATE
@@ -438,41 +419,60 @@ def set_day(user_id: int, day: int, cursor: sqlite3.Cursor) -> None:
 
 
 @sql_kit(USERS_DB)
-def get_user_info(user_id, cursor: sqlite3.Cursor):
-    """
-    Возвращает информацию о пользователе, подготовленную к отправке админу
-    :param user_id:  :class:`int` user id
-    :param cursor:  :class:`sqlite3.Cursor` Не нужно передавать
-    :return:  :class:`str` Информация о пользователе
-    """
+def set_default(user_id: int, default: str, cursor: sqlite3.Cursor):
     cursor.execute("""
-        SELECT * FROM User_Info
+        INSERT INTO User_Info(user_id, defaulte)
+        VALUES(?, ?) ON CONFLICT(user_id) DO UPDATE
+        SET defaulte=excluded.defaulte;
+        """, (user_id, default))
+
+
+@sql_kit(USERS_DB)
+def get_default(user_id: int, cursor: sqlite3.Cursor):
+    cursor.execute("""
+        SELECT defaulte FROM User_Info
+        WHERE user_id = ?
+        """, (user_id,))
+    result = cursor.fetchone()
+    return result[0] if result else None
+
+
+@sql_kit(USERS_DB)
+def get_user_info(user_id: int, cursor: sqlite3.Cursor):
+    """Возвращает информацию о пользователе, подготовленную к отправке админу"""
+    cursor.execute("""
+        SELECT * 
+        FROM User_Info
         WHERE user_id = ?
         """, (user_id,))
     data = cursor.fetchone()
 
     cursor.execute("""
-        SELECT last_date
-        FROM User_Info 
+        SELECT *
+        FROM Temp_Data
         WHERE user_id = ?
         """, (user_id,))
-    dates = cursor.fetchall()
-    print(dates)
-    last_date = datetime.strptime(dates[0][0], '%d-%m-%Y %H:%M:%S').date()
+    temp = cursor.fetchall()[0]
+    print(data)
+    print(temp)
+    print(temp[1])
+    last_date = datetime.strptime(data[6], '%d-%m-%Y %H:%M:%S').date()
     days_until = (last_date - datetime.today().date()).days
     return f"""
 Информация о пользователе:
-`user_id:``    ``{data[0]}`
 `user_type:``  ``{data[1]}`
 `username:``   ``{data[2]}`
 `fullname:``   ``{data[3]}`
-`topic_id:``   ``{data[4]}`
 `start_date:`` ``{data[5]}`
 `last_date:``  ``{data[6]}`
-{-days_until} дней назад
+`            `{-days_until} дней назад
 `inviter_id:`` ``{data[7]}`
-`blocked``     ``{data[8]}`
-`banned``      ``{data[9]}`
+`blocked``     ``{bool(data[8])}`
+`banned``      ``{bool(data[9])}`
+
+`tracking``     ``{bool(temp[1])}`
+`teacher``      ``{temp[4]}`
+`group``        ``{str(temp[5]).replace("-", "")}`
 """
 
 
@@ -510,7 +510,7 @@ def get_all_users_info(cursor: sqlite3.Cursor) -> str:
             month_users_count += 1
         if days_until >= -7:
             week_users_count += 1
-        if days_until >= 0:
+        if days_until >= -1:
             today_users_count += 1
 
     cursor.execute("SELECT COUNT(*) FROM User_Info WHERE blocked = 1")
@@ -519,7 +519,13 @@ def get_all_users_info(cursor: sqlite3.Cursor) -> str:
     cursor.execute("SELECT COUNT(*) FROM User_Info WHERE banned = 1")
     banned_count = cursor.fetchone()[0]
 
-    result = (f"Пользователей: {users_count}\n"
+    cursor.execute("SELECT COUNT(*) FROM User_Info WHERE user_type = 'teacher'")
+    teachers = cursor.fetchone()[0]
+
+    result = (f"Пользователей: {users_count}\n\n"
+              f"Из них:\n"
+              f"Преподов {teachers}\n"
+              f"Студентов {int(users_count) - int(teachers)}\n\n"
               f"Активных:\n"
               f"За месяц - {month_users_count}\n"
               f"За неделю - {week_users_count}\n"
@@ -568,8 +574,8 @@ async def get_tracked_users() -> list:
 
 def set_today_date(user_id: int) -> None:
     """Устанавливает день и неделю в зависимости от текущей даты"""
-    day = int(f"{datetime.now().weekday() + 1}")
-    week = 2 if datetime.now().isocalendar()[1] % 2 == 0 else 1
+    day = int(f"{datetime.now(tz).weekday() + 1}")
+    week = 2 if datetime.now(tz).isocalendar()[1] % 2 == 0 else 1
     if day == 7:
         set_day(user_id, 1)
         set_week(user_id, week + 1 if week == 1 else week - 1)

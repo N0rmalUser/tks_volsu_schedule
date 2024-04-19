@@ -146,12 +146,14 @@ def get_teacher_schedule(day: int, week: int, teacher_name: str, cursor: sqlite3
         rows = cursor.fetchall()
         for row in rows:
             time, subject, room_number, teacher = row
-            schedule.append({
-                "time": time,
-                "subject": subject,
-                "room": room_number,
-                "teacher": teacher
-            })
+            schedule.append(
+                {
+                    "time": time,
+                    "subject": subject,
+                    "room": room_number,
+                    "teacher": teacher
+                }
+            )
 
     query = """
         SELECT s.Time, sub.SubjectName, GROUP_CONCAT(g.GroupName, ', ') AS GroupNames, r.RoomNumber

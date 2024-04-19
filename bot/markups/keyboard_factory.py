@@ -16,3 +16,9 @@ class DayCallbackFactory(CallbackData, prefix='day_change'):
     value: Optional[str] = None
     day: Optional[int] = None
     week: Optional[int] = None
+
+
+class DefaultChangeCallbackFactory(CallbackData, prefix='default_change'):
+    """Фабрика для создания CallbackData для клавиатур выбора преподавателя, группы или аудитории."""
+    action: Optional[str] = None
+    value: Optional[str] = None

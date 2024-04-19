@@ -97,6 +97,15 @@ async def admin_handler(msg: Message) -> None:
     logging.info(f"{msg.from_user.id} написал админу")
 
 
+@router.message(Command("default"), ChatTypeIdFilter(chat_type=['private']))
+async def default_handler(msg: Message) -> None:
+    """Устанавливает пользователю препода или группу по-умолчанию"""
+    if db.get_user_type(msg.from_user.id) == 'teacher':
+        await msg.answer("Выберите себя из списка", reply_markup=kb.get_default_teachers())
+    else:
+        await msg.answer("Выберите себя из списка", reply_markup=kb.get_default_groups())
+
+
 @router.message(ChatTypeIdFilter(chat_type=['private']))
 async def handler(msg: Message) -> None:
     """Обработчик сообщений от пользователя. Отправляет расписание на сегодня, если пользователь выбрал преподавателя, группу или кабинет."""
@@ -105,7 +114,8 @@ async def handler(msg: Message) -> None:
     if msg.content_type == "text":
         if msg.text == "Расписание на сегодня":
             db.set_today_date(user_id)
-            entity_id = db.get_teacher(user_id) if user_type == "teacher" else db.get_group(user_id)
+            default = db.get_default(user_id)
+            entity_id = default if default is not None else db.get_teacher(user_id) if user_type == "teacher" else db.get_group(user_id)
 
             if not entity_id:
                 await msg.answer(f"Сначала выберите {'ФИО преподавателя' if user_type == 'teacher' else 'группу'}, нажав на соответствующую кнопку.")

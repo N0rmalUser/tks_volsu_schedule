@@ -57,6 +57,26 @@ def get_rooms():
     return builder.as_markup()
 
 
+def get_default_teachers():
+    """Возвращает клавиатуру с преподавателями, указанными в config.py."""
+    builder = InlineKeyboardBuilder()
+    for teacher in config.all_teachers:
+        builder.button(text=str(teacher), callback_data=keyboard_factory.DefaultChangeCallbackFactory(action="default_teacher", value=str(teacher)))
+    builder.button(text="Очистить", callback_data=keyboard_factory.DefaultChangeCallbackFactory(action="default_teacher", value=None))
+    builder.adjust(2)
+    return builder.as_markup()
+
+
+def get_default_groups():
+    """Возвращает клавиатуру с группами, указанными в config.py."""
+    builder = InlineKeyboardBuilder()
+    for group in config.groups:
+        builder.button(text=group, callback_data=keyboard_factory.DefaultChangeCallbackFactory(action="default_group", value=group))
+    builder.button(text="Очистить", callback_data=keyboard_factory.DefaultChangeCallbackFactory(action="default_group", value=None))
+    builder.adjust(3)
+    return builder.as_markup()
+
+
 def get_days(user_id: int, keyboard_type: str, week: int, value: str):
     """Возвращает клавиатуру с днями недели и кнопкой смены недели."""
     builder = InlineKeyboardBuilder()

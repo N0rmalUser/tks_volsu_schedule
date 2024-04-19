@@ -3,7 +3,7 @@ from aiogram.types import CallbackQuery
 
 from bot import database as db
 from bot.markups import user_markups as kb
-from bot.markups.keyboard_factory import ChangeCallbackFactory, DayCallbackFactory
+from bot.markups.keyboard_factory import ChangeCallbackFactory, DayCallbackFactory, DefaultChangeCallbackFactory
 from bot.misc import text_maker
 
 import importlib
@@ -16,6 +16,7 @@ router = Router()
 @router.callback_query(DayCallbackFactory.filter(F.action == "ignore"))
 async def ignore_handler(callback: CallbackQuery) -> None:
     """Функция, сбрасывающая нажатия кнопки без функционала."""
+
     await callback.answer("Сейчас эта неделя")
 
 
@@ -57,6 +58,7 @@ async def day_handler(callback: CallbackQuery, callback_data: DayCallbackFactory
 @router.callback_query(DayCallbackFactory.filter(F.action == "week"))
 async def week_handler(callback: CallbackQuery, callback_data: DayCallbackFactory) -> None:
     """Функция, обрабатывающая нажатие кнопки недели. Отправляет расписание на следующую неделю для преподов, групп и аудиторий, сохраняя день."""
+
     keyboard_type = callback_data.keyboard_type
     value = callback_data.value
     week = 1 if int(callback_data.week) != 2 else 2
@@ -92,6 +94,7 @@ async def week_handler(callback: CallbackQuery, callback_data: DayCallbackFactor
 @router.callback_query(ChangeCallbackFactory.filter(F.action == "room"))
 async def room_handler(callback: CallbackQuery, callback_data: ChangeCallbackFactory) -> None:
     """Функция, обрабатывающая нажатие кнопки аудитории. Отправляет расписание на этот день для аудитории."""
+
     user_id = int(callback.from_user.id)
 
     db.set_today_date(user_id)
@@ -110,10 +113,8 @@ async def teacher_handler(callback: CallbackQuery, callback_data: ChangeCallback
     """
 
     user_id = int(callback.from_user.id)
-
     db.set_today_date(user_id)
     db.set_teacher(user_id, callback_data.value)
-
     await callback.message.edit_text(text_maker.get_teacher_schedule(day=db.get_day(user_id), week=db.get_week(user_id),
                                                                      teacher_name=callback_data.value),
                                      reply_markup=kb.get_days(user_id, keyboard_type='teacher',
@@ -126,15 +127,31 @@ async def teacher_handler(callback: CallbackQuery, callback_data: ChangeCallback
 @router.callback_query(ChangeCallbackFactory.filter(F.action == 'group'))
 async def teacher_handler(callback: CallbackQuery, callback_data: ChangeCallbackFactory) -> None:
     """Функция, обрабатывающая нажатие кнопки группы. Отправляет расписание на этот день для группы."""
-    user_id = int(callback.from_user.id)
 
+    user_id = int(callback.from_user.id)
     db.set_today_date(user_id)
     db.set_group(user_id, callback_data.value)
-
     await callback.message.edit_text(text_maker.get_group_schedule(day=db.get_day(user_id), week=db.get_week(user_id),
                                                                    group_name=callback_data.value),
                                      reply_markup=kb.get_days(user_id, keyboard_type='group', week=db.get_week(user_id),
                                                               value=callback_data.value))
 
+    await getattr(importlib.import_module("bot.bot"), "send_callback")(callback)
+    await callback.answer()
+
+
+@router.callback_query(DefaultChangeCallbackFactory.filter(F.action == 'default_teacher'))
+async def teacher_handler(callback: CallbackQuery, callback_data: ChangeCallbackFactory) -> None:
+    db.set_default(callback.from_user.id, callback_data.value)
+    await callback.message.edit_text(f"Default изменён на {callback_data.value}")
+
+    await getattr(importlib.import_module("bot.bot"), "send_callback")(callback)
+    await callback.answer()
+
+
+@router.callback_query(DefaultChangeCallbackFactory.filter(F.action == 'default_group'))
+async def teacher_handler(callback: CallbackQuery, callback_data: ChangeCallbackFactory) -> None:
+    db.set_default(callback.from_user.id, callback_data.value)
+    await callback.message.edit_text(f"Default изменён на {callback_data.value}")
     await getattr(importlib.import_module("bot.bot"), "send_callback")(callback)
     await callback.answer()

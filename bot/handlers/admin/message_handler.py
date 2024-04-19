@@ -18,12 +18,14 @@ router = Router()
 @router.message(Command("menu"), ChatTypeIdFilter(chat_type=['group', 'supergroup'], chat_id=ADMIN_CHAT_ID))
 async def handle_topic_command_track(msg: Message) -> None:
     """Отправляет меню админа."""
+
     await msg.answer("Меню админа", reply_markup=kb.admin_menu)
 
 
 @router.message(Command('ban'), ChatTypeIdFilter(chat_type=['group', 'supergroup'], chat_id=ADMIN_CHAT_ID))
 async def ban_command_handler(msg: Message) -> None:
     """Банит пользователя. Изменяет значение столбца banned в базе данных."""
+
     user_id = db.get_user_id(msg.message_thread_id)
     db.set_banned(user_id, True)
     await msg.answer("Мы его забанили!!!")
@@ -34,6 +36,7 @@ async def ban_command_handler(msg: Message) -> None:
 @router.message(Command('unban'), ChatTypeIdFilter(chat_type=['group', 'supergroup'], chat_id=ADMIN_CHAT_ID))
 async def ban_command_handler(msg: Message) -> None:
     """Разбанивает пользователя. Изменяет значение столбца banned в базе данных."""
+
     user_id = db.get_user_id(msg.message_thread_id)
     db.set_banned(user_id, False)
     await msg.answer("Мы его разбанили!!!")
@@ -44,6 +47,7 @@ async def ban_command_handler(msg: Message) -> None:
 @router.message(Command("log"), ChatTypeIdFilter(chat_type=['group', 'supergroup'], chat_id=ADMIN_CHAT_ID))
 async def log_handler(msg: Message, command: CommandObject) -> None:
     """Присылает логи бота в админский чат. Либо очищает их."""
+
     if command.args == 'send' or command.args == 'show':
         await msg.answer_document(FSInputFile(LOG_FILE), caption="Вот ваш лог")
     elif command.args == 'clear' or command.args == 'del':
@@ -56,6 +60,7 @@ async def log_handler(msg: Message, command: CommandObject) -> None:
 @router.message(Command("send_db"), ChatTypeIdFilter(chat_type=['group', 'supergroup'], chat_id=ADMIN_CHAT_ID))
 async def send_db_handler(msg: Message) -> None:
     """Отправляет базу данных пользователей в админский чат."""
+
     if msg.message_thread_id:
         await msg.answer_document(FSInputFile(USERS_DB), caption="Вот ваша база данных")
 
@@ -63,24 +68,24 @@ async def send_db_handler(msg: Message) -> None:
 @router.message(Command("dump"), ChatTypeIdFilter(chat_type=['group', 'supergroup'], chat_id=ADMIN_CHAT_ID))
 async def dump_handler(msg: Message) -> None:
     """Отправляет базу данных пользователей и логи в админский чат."""
+
     try:
         await msg.answer_document(FSInputFile(LOG_FILE), caption="Вот ваш лог")
         open(LOG_FILE, 'w').write('')
-        await msg.answer_document(FSInputFile(USERS_DB), caption="Вот ваша база данных")
-        logging.info("Выгружены базы данных и логов")
+        logging.info("Отчищены логи")
     except Exception:
-        logging.error("Ошибка при выгрузке базы данных и логов")
-
-
-@router.message(Command("send_schedule"), ChatTypeIdFilter(chat_type=['group', 'supergroup'], chat_id=ADMIN_CHAT_ID))
-async def schedule_update_handler(msg: Message) -> None:
-    """Отправляет файл с расписанием для обновления последующего."""
-    await msg.answer_document('data/schedule.db', caption='Отправьте исправленную бд для обновления расписания')
+        logging.error('Ошибка при отчистке логов')
+    try:
+        await msg.answer_document(FSInputFile(USERS_DB), caption="Вот ваша база данных")
+        logging.info("Выгружена база данных")
+    except Exception:
+        logging.error("Ошибка при выгрузке базы данных")
 
 
 @router.message(Command("track"), ChatTypeIdFilter(chat_type=['group', 'supergroup'], chat_id=ADMIN_CHAT_ID))
 async def handle_topic_command_track(msg: Message, command: CommandObject) -> None:
     """Включает/выключает трекинг для пользователя или для всех пользователей."""
+
     if command.args is None:
         await msg.answer("Ошибка: не переданы аргументы")
         return
@@ -108,9 +113,10 @@ async def handle_topic_command_track(msg: Message, command: CommandObject) -> No
             await resp.edit_text(f"Трекаются: \n" + tracked if users else "Никто не трекается", parse_mode='MarkdownV2')
 
 
-@router.message(Command("info"))
+@router.message(Command("info"), ChatTypeIdFilter(chat_type=['group', 'supergroup'], chat_id=ADMIN_CHAT_ID))
 async def handle_topic_command_info(msg: Message) -> None:
     """Присылает информацию о пользователе или о всех пользователях в зависимости от топика"""
+
     start = await msg.answer("Собираю статистику")
     if start.message_thread_id:
         await start.edit_text(db.get_user_info(db.get_user_id(msg.message_thread_id)), parse_mode="MarkdownV2")
@@ -118,9 +124,17 @@ async def handle_topic_command_info(msg: Message) -> None:
         await start.edit_text(db.get_all_users_info())
 
 
+@router.message(ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID))
+async def schedule_handler(msg: Document):
+    """Ловит документы и заменяет файл schedule.db на полученный"""
+
+    await getattr(importlib.import_module("bot.bot"), "get_file")(msg)
+
+
 @router.message(ChatTypeIdFilter(chat_type=['group', 'supergroup'], chat_id=ADMIN_CHAT_ID))
 async def handle_topic_message(msg: Message) -> None:
     """Отправляет сообщение в личный топик пользователя"""
+
     try:
         if msg.text[0] != '/':
             if msg.message_thread_id is not None:
@@ -131,9 +145,3 @@ async def handle_topic_message(msg: Message) -> None:
             await msg.answer("Нет такой команды, но я тебя спас, не бойся")
     except TypeError:
         pass
-
-
-@router.message(ChatTypeIdFilter(chat_type=['group', 'supergroup'], chat_id=ADMIN_CHAT_ID))
-async def schedule_handler(msg: Document):
-    """Ловит документы и заменяет файл schedule.db на полученный"""
-    await getattr(importlib.import_module("bot.bot"), "get_file")(msg)
