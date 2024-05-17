@@ -1,83 +1,138 @@
+import pandas as pd
 import sqlite3
+import os
+import openpyxl
 import re
+from progress.bar import Bar
+
+DATABASE_PATH = 'schedule.db'
 
 
-def get_or_insert_group(group_name):
-    cursor.execute('SELECT GroupID FROM Groups WHERE GroupName = ?', (group_name,))
-    row = cursor.fetchone()
-    if row:
-        return row[0]
+def convert_day_name(day_short):
+    days = {
+        "ПН": "Понедельник",
+        "ВТ": "Вторник",
+        "СР": "Среда",
+        "ЧТ": "Четверг",
+        "ПТ": "Пятница",
+        "СБ": "Суббота"
+    }
+    return days.get(day_short, day_short)
+
+
+def initialize_database():
+    conn = sqlite3.connect(DATABASE_PATH)
+    cursor = conn.cursor()
+    cursor.execute('''CREATE TABLE IF NOT EXISTS CollegeSchedule (
+                            ScheduleID INTEGER PRIMARY KEY AUTOINCREMENT,
+                            Time TEXT NOT NULL,
+                            DayOfWeek TEXT NOT NULL,
+                            WeekType TEXT NOT NULL,
+                            GroupID INTEGER,
+                            TeacherID INTEGER,
+                            RoomID INTEGER,
+                            SubjectID INTEGER,
+                            FOREIGN KEY (GroupID) REFERENCES Groups(GroupID),
+                            FOREIGN KEY (TeacherID) REFERENCES Teachers(TeacherID),
+                            FOREIGN KEY (RoomID) REFERENCES Rooms(RoomID),
+                            FOREIGN KEY (SubjectID) REFERENCES Subjects(SubjectID))''')
+    conn.commit()
+    conn.close()
+
+
+def insert_into_database(tm, day, week, room, subject, group, teacher):
+    conn = sqlite3.connect(DATABASE_PATH)
+    cursor = conn.cursor()
+    cursor.execute("SELECT GroupID FROM Groups WHERE GroupName = ?", (group,))
+    group_id = cursor.fetchone()
+    if group_id is None:
+        cursor.execute("INSERT INTO Groups (GroupName) VALUES (?)", (group,))
+        conn.commit()
+        group_id = cursor.lastrowid
     else:
-        cursor.execute('INSERT INTO Groups (GroupName) VALUES (?)', (group_name,))
-        return cursor.lastrowid
+        group_id = group_id[0]
 
-
-def get_or_insert_teacher(teacher_name):
-    cursor.execute('SELECT TeacherID FROM Teachers WHERE TeacherName = ?', (teacher_name,))
-    row = cursor.fetchone()
-    if row:
-        return row[0]
+    # Используем обработанное имя преподавателя
+    cursor.execute("SELECT TeacherID FROM Teachers WHERE TeacherName = ?", (teacher,))
+    teacher_id = cursor.fetchone()
+    if teacher_id is None:
+        cursor.execute("INSERT INTO Teachers (TeacherName) VALUES (?)", (teacher,))
+        conn.commit()
+        teacher_id = cursor.lastrowid
     else:
-        cursor.execute('INSERT INTO Teachers (TeacherName) VALUES (?)', (teacher_name,))
-        return cursor.lastrowid
+        teacher_id = teacher_id[0]
 
-
-def get_or_insert_subject(subject_name):
-    cursor.execute('SELECT SubjectID FROM Subjects WHERE SubjectName = ?', (subject_name,))
-    row = cursor.fetchone()
-    if row:
-        return row[0]
+    cursor.execute("SELECT RoomID FROM Rooms WHERE RoomNumber = ?", (room,))
+    room_id = cursor.fetchone()
+    if room_id is None:
+        cursor.execute("INSERT INTO Rooms (RoomNumber) VALUES (?)", (room,))
+        conn.commit()
+        room_id = cursor.lastrowid
     else:
-        cursor.execute('INSERT INTO Subjects (SubjectName) VALUES (?)', (subject_name,))
-        return cursor.lastrowid
+        room_id = room_id[0]
 
-
-def get_or_insert_room(room_name):
-    cursor.execute('SELECT RoomID FROM Rooms WHERE RoomNumber = ?', (room_name,))
-    row = cursor.fetchone()
-    if row:
-        return row[0]
+    cursor.execute("SELECT SubjectID FROM Subjects WHERE SubjectName = ?", (subject,))
+    subject_id = cursor.fetchone()
+    if subject_id is None:
+        cursor.execute("INSERT INTO Subjects (SubjectName) VALUES (?)", (subject,))
+        conn.commit()
+        subject_id = cursor.lastrowid
     else:
-        cursor.execute('INSERT INTO Rooms (RoomNumber) VALUES (?)', (room_name,))
-        return cursor.lastrowid
+        subject_id = subject_id[0]
+
+    cursor.execute(
+        "INSERT INTO CollegeSchedule (Time, DayOfWeek, WeekType, GroupID, TeacherID, RoomID, SubjectID) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        (tm, day, week, group_id, teacher_id, room_id, subject_id))
+    conn.commit()
+    conn.close()
 
 
-def main(day_n, week_n, para, lesson, group):
-    times = ['08:30', '10:10', '12:00', '13:40', '15:20', '17:00', '18:40']
-    days = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота']
-    day = days[day_n - 1]
-    time = times[para - 1]
-    week = 'Числитель' if week_n == 1 else 'Знаменатель'
+def main():
+    initialize_database()
+    files = [f for f in os.listdir('preparation\\schedules\\') if f.endswith('.xlsx')]
+    bar = Bar('Импорт расписания колледжа в базу данных', max=len(files))
 
-    teacher = re.search(r'преп.\s*(\w*\s*[А-Я]*\.\s*[А-Я]*\.)', lesson).group(1)
-    substitution = re.split(r'\.', lesson)
-    subject = re.search(r'(.*)преп', lesson).group(1)
-    room = re.sub(r'(\s*|,*|ауд)', '', substitution[-1]) if substitution[-1] != '' else re.sub(r'(\s*|,*|ауд)', '', substitution[-2])
+    for file in files:
+        bar.next()
+        file_path = os.path.join('preparation\\schedules\\', file)
+        teacher_name = re.sub(r'_', r'.',
+                              re.sub(r'([А-ЯЁа-яёA-Za-z]{2,})_', r'\1 ',
+                                     re.findall(r'расписание_занятий_(\w+_\w[.|_]\w\.)', file)[0]))
+        df = pd.read_excel(file_path)
 
-    print(time, day, week)
-    print(f'{teacher}\n{room}\n{subject}')
+        excel = openpyxl.load_workbook(filename=file_path)
+        sheet = excel.worksheets[0]
 
-    group_id = get_or_insert_group(group)
-    teacher_id = get_or_insert_teacher(teacher)
-    subject_id = get_or_insert_subject(subject)
-    room_id = get_or_insert_room(room)
+        for r in sheet.merged_cells.ranges:
+            cl, rl, cr, rr = r.bounds
+            rl -= 2
+            rr -= 1
+            cl -= 1
+            base_value = df.iloc[rl, cl]
+            df.iloc[rl:rr, cl:cr] = base_value
 
-    cursor.execute('''INSERT INTO schedule (Time, DayOfWeek, WeekType, GroupID, TeacherID, RoomID, SubjectID)
-                    VALUES (?, ?, ?, ?, ?, ?, ?)''',
-                   (time, day, week, group_id, teacher_id, room_id, subject_id))
+        last_time = 'None'
+        for index, row in df.iterrows():
+            day_name = convert_day_name(row['Unnamed: 0'])
+            time = row['время'].split('-')[0]
+            week_name = 'Числитель' if row['время'] is not last_time else 'Знаменатель'
+            last_time = row['время']
+            if pd.isna(row[teacher_name]):
+                continue
+            substitution = re.split(r'\.', row[teacher_name])
+            groups = substitution[0]
+            subject_name = re.sub(r'\s*,*\s*преп.*$', '', re.sub(r'^\s*', '', substitution[1])) + ')'
+            room_name = re.sub(r'(\s*|,*|ауд)', '', substitution[-1]) \
+                if substitution[-1] != '' \
+                else re.sub(r'(\s*|,*|ауд)', '', substitution[-2])
+            group_name = list(set([i.strip() for i in groups.split(',')]))
+            if len(group_name) > 1:
+                for group in group_name:
+                    insert_into_database(time, day_name, week_name, room_name, subject_name, group, teacher_name)
+            insert_into_database(time, day_name, week_name, room_name, subject_name, group_name[0], teacher_name)
+    bar.finish()
+    print("Расписания успешно сохранены в базу данных.")
 
 
-connection = sqlite3.connect('schedule.db')
-cursor = connection.cursor()
-
-day_n = 6
-week_n = 1
-para = 4
-lesson = 'Технология выполнения работ по рабочей профессии Монтажник оборудования связи (л.) преп. Семенова О.В. Ауд. 2-06М'
-group = 'ИССк-191'
-
-main(day_n, week_n, para, lesson, group)
-
-
-connection.commit()
-connection.close()
+if __name__ == "__main__":
+    main()
