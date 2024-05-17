@@ -44,37 +44,23 @@ def get_time_symbol(start_time: str) -> str:
 
 def get_lesson_label(subject: str) -> str:
     """
-    Метод для получения типа пары по его сокращени
+    Метод для получения типа пары по его сокращению
     :param subject:  :call_type: str
     :return:  :rtype: str
     """
-    if 'Пр' in subject:
+    if 'пр' in subject.lower():
         return 'Практика'
-    elif 'пр' in subject:
+    elif 'пр.' in subject.lower():
         return 'Практика'
-    elif 'Пр.' in subject:
-        return 'Практика'
-    elif 'пр.' in subject:
-        return 'Практика'
-    elif 'Лаб' in subject:
+    elif 'лаб' in subject.lower():
         return 'Лабораторные'
-    elif 'лаб' in subject:
+    elif 'лаб.' in subject.lower():
         return 'Лабораторные'
-    elif 'Лаб.' in subject:
-        return 'Лабораторные'
-    elif 'лаб.' in subject:
-        return 'Лабораторные'
-    elif 'Л' in subject:
+    elif 'л' in subject.lower():
         return 'Лекция'
-    elif 'л' in subject:
+    elif 'л.' in subject.lower():
         return 'Лекция'
-    elif 'Л.' in subject:
-        return 'Лекция'
-    elif 'л.' in subject:
-        return 'Лекция'
-    elif 'кур/проект' in subject:
-        return 'Курсовой проект'
-    elif 'кур/проек.' in subject:
+    elif 'курс' or 'кур/проект' or 'кур/проек.' in subject.lower():
         return 'Курсовой проект'
     else:
         return ''
@@ -88,7 +74,11 @@ def get_group_schedule(day: int, week: int, group_name: str, cursor: sqlite3.Cur
 
     query = """
         SELECT s.Time, sub.SubjectName, r.RoomNumber, t.TeacherName
-        FROM Schedule s
+        FROM (
+            SELECT Time, SubjectID, GroupID, RoomID, TeacherID, DayOfWeek, WeekType FROM Schedule
+            UNION ALL
+            SELECT Time, SubjectID, GroupID, RoomID, TeacherID, DayOfWeek, WeekType FROM CollegeSchedule
+        ) s        
         JOIN Subjects sub ON s.SubjectID = sub.SubjectID
         JOIN Groups g ON s.GroupID = g.GroupID
         JOIN Rooms r ON s.RoomID = r.RoomID
@@ -132,15 +122,19 @@ def get_teacher_schedule(day: int, week: int, teacher_name: str, cursor: sqlite3
     if teacher_name in config.special_teachers.keys():
 
         query = """
-                SELECT s.Time, sub.SubjectName, r.RoomNumber, t.TeacherName
-                FROM Schedule s
-                JOIN Subjects sub ON s.SubjectID = sub.SubjectID
-                JOIN Groups g ON s.GroupID = g.GroupID
-                JOIN Rooms r ON s.RoomID = r.RoomID
-                JOIN Teachers t ON s.TeacherID = t.TeacherID
-                WHERE g.GroupName = ? AND s.DayOfWeek = ? AND s.WeekType = ?
-                ORDER BY s.Time
-                """
+            SELECT s.Time, sub.SubjectName, r.RoomNumber, t.TeacherName
+            FROM (
+                SELECT Time, SubjectID, GroupID, RoomID, TeacherID, DayOfWeek, WeekType FROM Schedule
+                UNION ALL
+                SELECT Time, SubjectID, GroupID, RoomID, TeacherID, DayOfWeek, WeekType FROM CollegeSchedule
+            ) s
+            JOIN Subjects sub ON s.SubjectID = sub.SubjectID
+            JOIN Groups g ON s.GroupID = g.GroupID
+            JOIN Rooms r ON s.RoomID = r.RoomID
+            JOIN Teachers t ON s.TeacherID = t.TeacherID
+            WHERE g.GroupName = ? AND s.DayOfWeek = ? AND s.WeekType = ?
+            ORDER BY s.Time;
+            """
 
         cursor.execute(query, (config.special_teachers[teacher_name], days_of_week[day - 1], week_type))
         rows = cursor.fetchall()
@@ -157,7 +151,11 @@ def get_teacher_schedule(day: int, week: int, teacher_name: str, cursor: sqlite3
 
     query = """
         SELECT s.Time, sub.SubjectName, GROUP_CONCAT(g.GroupName, ', ') AS GroupNames, r.RoomNumber
-        FROM Schedule s
+        FROM (
+            SELECT Time, SubjectID, GroupID, RoomID, TeacherID, DayOfWeek, WeekType FROM Schedule
+            UNION ALL
+            SELECT Time, SubjectID, GroupID, RoomID, TeacherID, DayOfWeek, WeekType FROM CollegeSchedule
+        ) s
         JOIN Subjects sub ON s.SubjectID = sub.SubjectID
         JOIN Groups g ON s.GroupID = g.GroupID
         JOIN Rooms r ON s.RoomID = r.RoomID
@@ -212,7 +210,11 @@ def get_room_schedule(day, week, room_name, cursor: sqlite3.Cursor):
     for room in room_variants:
         query = f"""
             SELECT s.Time, sub.SubjectName, GROUP_CONCAT(g.GroupName, ', ') AS GroupNames, t.TeacherName
-            FROM Schedule s
+            FROM (
+                SELECT Time, SubjectID, GroupID, RoomID, TeacherID, DayOfWeek, WeekType FROM Schedule
+                UNION ALL
+                SELECT Time, SubjectID, GroupID, RoomID, TeacherID, DayOfWeek, WeekType FROM CollegeSchedule
+            ) s            
             JOIN Subjects sub ON s.SubjectID = sub.SubjectID
             JOIN Groups g ON s.GroupID = g.GroupID
             JOIN Rooms r ON s.RoomID = r.RoomID
