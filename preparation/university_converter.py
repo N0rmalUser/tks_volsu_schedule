@@ -5,7 +5,6 @@ import re
 from progress.bar import Bar
 
 DATABASE_PATH = 'schedule.db'
-ORIGINAL_SCHEDULES_PATH = ''
 
 
 def initialize_database():
@@ -118,12 +117,12 @@ def insert_into_database(schedule_name, schedule):
 
 initialize_database()
 all_schedules = {}
-files = [f for f in os.listdir(ORIGINAL_SCHEDULES_PATH + 'schedules\\') if f.endswith('.docx')]
-bar = Bar('Processing', max=len(files))
+files = [f for f in os.listdir('preparation\\schedules\\') if f.endswith('.docx')]
+bar = Bar('Импорт расписания университета в базу данных', max=len(files))
 
 for filename in files:
     bar.next()
-    file_path = os.path.join(ORIGINAL_SCHEDULES_PATH + 'schedules\\', filename)
+    file_path = os.path.join('preparation\\schedules\\', filename)
     doc = Document(file_path)
     table = doc.tables[0]
     temp_schedule = {}
