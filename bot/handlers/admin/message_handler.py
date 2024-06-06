@@ -5,14 +5,31 @@ from aiogram.filters import Command, CommandObject
 from bot import database as db
 from bot.filters import ChatTypeIdFilter
 from bot.markups import admin_markups as kb
+from bot.misc import user_activity
 
-from config import ADMIN_CHAT_ID, LOG_FILE, USERS_DB
+from config import ACTIVITIES_DB, ADMIN_CHAT_ID, LOG_FILE, USERS_DB
 
 import importlib
 
 import logging
 
 router = Router()
+
+
+@router.message(Command("day_stat"), ChatTypeIdFilter(chat_type=['group', 'supergroup'], chat_id=ADMIN_CHAT_ID))
+async def handle_send_daily_plot(msg: Message) -> None:
+    """Отправляет график количества пользователей по дням."""
+    db.update_user_activity_stats()
+    user_activity.plot_user_activity_by_days()
+    await msg.answer_photo(FSInputFile('data/user_activity_by_days.png'))
+
+
+@router.message(Command("hour_stat"), ChatTypeIdFilter(chat_type=['group', 'supergroup'], chat_id=ADMIN_CHAT_ID))
+async def handle_send_hourly_plot(msg: Message) -> None:
+    """Отправляет график количества пользователей по часам для определённого дня."""
+    db.update_user_activity_stats()
+    user_activity.plot_user_activity_by_hours()
+    await msg.answer_photo(FSInputFile('data/user_activity_by_hours.png'))
 
 
 @router.message(Command("menu"), ChatTypeIdFilter(chat_type=['group', 'supergroup'], chat_id=ADMIN_CHAT_ID))
@@ -73,13 +90,18 @@ async def dump_handler(msg: Message) -> None:
         await msg.answer_document(FSInputFile(LOG_FILE), caption="Вот ваш лог")
         open(LOG_FILE, 'w').write('')
         logging.info("Отчищены логи")
-    except Exception:
-        logging.error('Ошибка при отчистке логов')
+    except Exception as e:
+        logging.error('Ошибка при отчистке логов', e)
     try:
         await msg.answer_document(FSInputFile(USERS_DB), caption="Вот ваша база данных")
-        logging.info("Выгружена база данных")
-    except Exception:
-        logging.error("Ошибка при выгрузке базы данных")
+        logging.info("Выгружена база данных пользователей")
+    except Exception as e:
+        logging.error("Ошибка при выгрузке базы данных пользователей", e)
+    try:
+        await msg.answer_document(FSInputFile(ACTIVITIES_DB), caption="Вот ваша база данных")
+        logging.info("Выгружена база данных активности")
+    except Exception as e:
+        logging.error("Ошибка при выгрузке базы данных активности", e)
 
 
 @router.message(Command("track"), ChatTypeIdFilter(chat_type=['group', 'supergroup'], chat_id=ADMIN_CHAT_ID))
@@ -124,11 +146,11 @@ async def handle_topic_command_info(msg: Message) -> None:
         await start.edit_text(db.get_all_users_info())
 
 
-@router.message(ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID))
-async def schedule_handler(msg: Document):
-    """Ловит документы и заменяет файл schedule.db на полученный"""
-
-    await getattr(importlib.import_module("bot.bot"), "get_file")(msg)
+# @router.message(ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID))
+# async def schedule_handler(msg: Document):
+#     """Ловит документы и заменяет файл schedule.db на полученный"""
+#
+#     await getattr(importlib.import_module("bot.bot"), "get_file")(msg)
 
 
 @router.message(ChatTypeIdFilter(chat_type=['group', 'supergroup'], chat_id=ADMIN_CHAT_ID))
@@ -136,12 +158,12 @@ async def handle_topic_message(msg: Message) -> None:
     """Отправляет сообщение в личный топик пользователя"""
 
     try:
-        if msg.text[0] != '/':
+        if '/' in msg.text[0]:
+            await msg.answer("Нет такой команды, но я тебя спас, не бойся")
+        else:
             if msg.message_thread_id is not None:
                 await getattr(importlib.import_module("bot.bot"), "send_to_user")(msg)
             else:
                 await getattr(importlib.import_module("bot.bot"), "broadcast")(msg)
-        else:
-            await msg.answer("Нет такой команды, но я тебя спас, не бойся")
     except TypeError:
         pass
