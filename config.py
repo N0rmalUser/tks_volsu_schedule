@@ -4,8 +4,10 @@ import os
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 ADMIN_CHAT_ID = int(os.getenv("ADMIN_CHAT_ID"))
 USERS_DB = os.getenv("USERS_DB")
+ACTIVITIES_DB = os.getenv("ACTIVITIES_DB")
 SCHEDULE_DB = os.getenv("SCHEDULE_DB")
 LOG_FILE = os.getenv("LOG_FILE")
+timezone = os.getenv("TIMEZONE")
 
 # Время задержки для спама (Сколько должно пройти времени между сообщениями для того, чтобы не считаться спамом)
 THROTTLE_TIME = 1.5
@@ -51,6 +53,3 @@ special_teachers = {'Гладков И.Ф.': 'ИТСм-231',
 rooms = ["2-01К", "3-15К", "3-16К",
          "2-06М", "2-13М", "2-17М",
          "1-19М"]
-
-# Переменная временной зоны
-tz = None
