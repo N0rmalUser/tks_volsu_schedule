@@ -15,7 +15,11 @@ admin_menu = [
         KeyboardButton(text="/send_schedule"),
         KeyboardButton(text="/dump"),
         KeyboardButton(text="/info")
-     ]
+    ],
+    [
+        KeyboardButton(text="/hour_stat"),
+        KeyboardButton(text="/day_stat")
+    ]
 ]
 
 admin_menu = ReplyKeyboardMarkup(keyboard=admin_menu, resize_keyboard=True)
