@@ -1,8 +1,8 @@
 aiogram
 asyncio
-#openpyxl
-#pandas
-#python-docx
-#progress
-pytz
+openpyxl
+pandas
+matplotlib
+python-docx
 progress
+pytz
