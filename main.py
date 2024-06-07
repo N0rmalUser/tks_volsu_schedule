@@ -11,7 +11,6 @@ def timetz(*args):
 
 
 if __name__ == "__main__":
-    tz = pytz.timezone('Europe/Moscow')
     logging.Formatter.converter = timetz
     logging.basicConfig(level=logging.INFO, filename=LOG_FILE, format="%(asctime)s %(levelname)s %(message)s",
                         datefmt='%H:%M:%S %d-%m-%Y', encoding="utf-8")
