@@ -4,6 +4,7 @@ LABEL authors="N0rmalUser"
 WORKDIR /tks_schedule
 
 COPY requirements.txt requirements.txt
+RUN apt-get update && apt-get install -y ca-certificates iputils-ping && update-ca-certificates
 RUN pip install -r requirements.txt
 RUN rm requirements.txt
 
@@ -20,7 +21,11 @@ ENV USERS_DB=/tks_schedule/data/users.db
 ENV ACTIVITIES_DB=/tks_schedule/data/activities.db
 ENV LOG_FILE=logs/bot.log
 
-ENV BOT_TOKEN=6857740783:AAF2JsAWEkLra0u9PdWHBUFySonglckn_Vk
-ENV ADMIN_CHAT_ID=-1001991471871
+#ENV BOT_TOKEN=6857740783:AAF2JsAWEkLra0u9PdWHBUFySonglckn_Vk
+#ENV ADMIN_CHAT_ID=-1001991471871
+
+ENV BOT_TOKEN=6745633448:AAHW1u0NTez9prv4GHlrWl0Sn04shFS1Scg
+ENV ADMIN_CHAT_ID=-1001966122887
+
 
 CMD ["python", "main.py"]
