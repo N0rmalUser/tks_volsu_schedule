@@ -2,7 +2,7 @@ import logging
 
 from aiogram.types import Message
 
-from config import USERS_DB, tz
+from config import ACTIVITIES_DB, USERS_DB, timezone
 
 from datetime import datetime
 
@@ -79,13 +79,16 @@ def set_user_type(msg: Message, user_type: str, cursor: sqlite3.Cursor) -> None:
         SET fullname=excluded.fullname;
         """, (user_id, msg.from_user.full_name))
 
+    formatted_start_date = (msg.date
+                            .astimezone(pytz.timezone(timezone))
+                            .strftime('%d-%m-%Y %H:%M:%S'))
+
     if result is None or result[0] is None:
         cursor.execute("""
             INSERT INTO User_Info(user_id, start_date)
             VALUES(?, ?) ON CONFLICT(user_id) DO UPDATE
             SET start_date=excluded.start_date;
-            """, (user_id, f"{msg.date.strftime('%d-%m-%Y')} "
-                           f"{msg.date.strftime('%H:%M:%S')}"))
+            """, (user_id, formatted_start_date))
 
 
 @sql_kit(USERS_DB)
@@ -218,12 +221,14 @@ def set_last_date(msg: Message, cursor: sqlite3.Cursor) -> None:
     :param msg:  :class:`aiogram.types.Message` Полученное сообщение
     :param cursor:  :class:`sqlite3.Cursor` Не нужно передавать
     """
+    formatted_last_date = (msg.date
+                           .astimezone(pytz.timezone(timezone))
+                           .strftime('%d-%m-%Y %H:%M:%S'))
     cursor.execute("""
         INSERT INTO User_Info(user_id, last_date)
         VALUES(?, ?) ON CONFLICT(user_id) DO UPDATE
         SET last_date=excluded.last_date;
-        """, (msg.from_user.id, f"{msg.date.strftime('%d-%m-%Y')} "
-                                f"{msg.date.strftime('%H:%M:%S')}"))
+        """, (msg.from_user.id, formatted_last_date))
 
 
 @sql_kit(USERS_DB)
@@ -574,8 +579,8 @@ async def get_tracked_users() -> list:
 
 def set_today_date(user_id: int) -> None:
     """Устанавливает день и неделю в зависимости от текущей даты"""
-    day = int(f"{datetime.now(tz).weekday() + 1}")
-    week = 2 if datetime.now(tz).isocalendar()[1] % 2 == 0 else 1
+    day = int(f"{datetime.now(pytz.timezone(timezone)).weekday() + 1}")
+    week = 2 if datetime.now(pytz.timezone(timezone)).isocalendar()[1] % 2 == 0 else 1
     if day == 7:
         set_day(user_id, 1)
         set_week(user_id, week + 1 if week == 1 else week - 1)

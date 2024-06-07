@@ -1,13 +1,13 @@
 import asyncio
 from bot import bot, database as db
-from config import LOG_FILE, tz
+from config import LOG_FILE, timezone
 from datetime import datetime
 import logging
 import pytz
 
 
 def timetz(*args):
-    return datetime.now(tz).timetuple()
+    return datetime.now(pytz.timezone(timezone)).timetuple()
 
 
 if __name__ == "__main__":

@@ -13,6 +13,8 @@ COPY data data
 COPY logs logs
 COPY main.py main.py
 
+ENV TIMEZONE=Europe/Moscow
+
 ENV SCHEDULE_DB=/tks_schedule/data/schedule.db
 ENV USERS_DB=/tks_schedule/data/users.db
 ENV LOG_FILE=logs/bot.log
