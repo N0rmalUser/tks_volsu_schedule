@@ -1,5 +1,5 @@
-from aiogram import Router
-from aiogram.types import Message, FSInputFile, Document
+from aiogram import F, Router
+from aiogram.types import FSInputFile, Message
 from aiogram.filters import Command, CommandObject
 
 from bot import database as db
@@ -7,7 +7,7 @@ from bot.filters import ChatTypeIdFilter
 from bot.markups import admin_markups as kb
 from bot.misc import user_activity
 
-from config import ACTIVITIES_DB, ADMIN_CHAT_ID, LOG_FILE, USERS_DB
+from config import ACTIVITIES_DB, ADMIN_CHAT_ID, LOG_FILE, SCHEDULE_DB, USERS_DB
 
 import importlib
 
@@ -146,11 +146,29 @@ async def handle_topic_command_info(msg: Message) -> None:
         await start.edit_text(db.get_all_users_info())
 
 
-# @router.message(ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID))
-# async def schedule_handler(msg: Document):
-#     """Ловит документы и заменяет файл schedule.db на полученный"""
-#
-#     await getattr(importlib.import_module("bot.bot"), "get_file")(msg)
+@router.message(F.document, ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID))
+async def file_handler(msg: Message):
+    """Ловит документы и заменяет файл schedule.db, users.db, activities.db на полученные."""
+    file_name = msg.document.file_name
+    if file_name == "schedule.db":
+        existing_file = SCHEDULE_DB.replace('/tks_schedule/', '')
+        await getattr(importlib.import_module("bot.bot"), "get_file")(msg, existing_file)
+        logging.info('Заменили расписание')
+        await msg.answer('Заменили расписание')
+    elif file_name == "users.db":
+        existing_file = USERS_DB.replace('/tks_schedule/', '')
+        await getattr(importlib.import_module("bot.bot"), "get_file")(msg, existing_file)
+        logging.info('Заменили базу данных пользователей')
+        await msg.answer('Заменили базу данных пользователей')
+    elif file_name == "activities.db":
+        existing_file = ACTIVITIES_DB.replace('/tks_schedule/', '')
+        await getattr(importlib.import_module("bot.bot"), "get_file")(msg, existing_file)
+        logging.info('Заменили базу данных активности пользователей')
+        await msg.answer('Заменили базу данных активности пользователей')
+    else:
+        await msg.answer("Этот файл нельзя заменить")
+        logging.info(f"{msg.from_user.id} пытался заменить файл {file_name}")
+        await msg.forward(ADMIN_CHAT_ID)
 
 
 @router.message(ChatTypeIdFilter(chat_type=['group', 'supergroup'], chat_id=ADMIN_CHAT_ID))
