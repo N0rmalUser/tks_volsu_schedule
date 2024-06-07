@@ -11,6 +11,10 @@ def initialize_database():
     conn = sqlite3.connect(DATABASE_PATH)
     cursor = conn.cursor()
 
+    cursor.execute('''CREATE TABLE IF NOT EXISTS Rooms (
+                        RoomID INTEGER PRIMARY KEY AUTOINCREMENT,
+                        RoomNumber TEXT UNIQUE NOT NULL)''')
+
     cursor.execute('''CREATE TABLE IF NOT EXISTS Groups (
                         GroupID INTEGER PRIMARY KEY AUTOINCREMENT,
                         GroupName TEXT UNIQUE NOT NULL)''')
@@ -18,10 +22,6 @@ def initialize_database():
     cursor.execute('''CREATE TABLE IF NOT EXISTS Teachers (
                         TeacherID INTEGER PRIMARY KEY AUTOINCREMENT,
                         TeacherName TEXT UNIQUE NOT NULL)''')
-
-    cursor.execute('''CREATE TABLE IF NOT EXISTS Rooms (
-                        RoomID INTEGER PRIMARY KEY AUTOINCREMENT,
-                        RoomNumber TEXT UNIQUE NOT NULL)''')
 
     cursor.execute('''CREATE TABLE IF NOT EXISTS Subjects (
                         SubjectID INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -68,8 +68,9 @@ def insert_into_database(schedule_name, schedule):
         for day_name, day_schedule in week_schedule.items():
             for time, details in day_schedule.items():
                 # Обработка строки преподавателя для извлечения только имени
-                teacher_name = details["Преподаватель"].split(',')[0].strip() if "," in details["Преподаватель"] else \
-                details["Преподаватель"]
+                teacher_name = details["Преподаватель"].split(',')[0].strip() \
+                    if "," in details["Преподаватель"] \
+                    else details["Преподаватель"]
 
                 cursor.execute("SELECT GroupID FROM Groups WHERE GroupName = ?", (schedule_name,))
                 group_id = cursor.fetchone()
@@ -116,36 +117,46 @@ def insert_into_database(schedule_name, schedule):
 
 
 initialize_database()
-all_schedules = {}
 files = [f for f in os.listdir('preparation\\schedules\\') if f.endswith('.docx')]
 bar = Bar('Импорт расписания университета в базу данных', max=len(files))
 
-for filename in files:
-    bar.next()
-    file_path = os.path.join('preparation\\schedules\\', filename)
+for file in files:
+    file_path = os.path.join('preparation\\schedules\\', file)
     doc = Document(file_path)
     table = doc.tables[0]
     temp_schedule = {}
+    group = file.replace(".docx", "")
+    subgroup = False
     for row in table.rows[1:]:
         day, time, info = row.cells[:3]
+        # if len(row.cells) == 3:
+        #     day, time, info = row.cells[:3]
+        # else:
+        #     subgroup = True
+        #     day, time, info, subinfo = row.cells[:4]
+        #     print(subinfo.text)
+        # На будущее разделение по подгруппам
+
         parts = re.split(r'(?<=\))\s*,', re.sub(r'\s*-*\s*поток\s\d+\s*', '', info.text))
         subject = parts[0].strip()
         if subject != '':
             if len(parts) > 1 and parts[1].strip():
                 auditorium_match = re.search(r'Ауд\.*.*', parts[1])
                 if auditorium_match:
-                    auditorium = auditorium_match.group()
-                    teachers_text = parts[1].replace(auditorium, '')
+                    classroom = re.sub(r'СпортивныйзалК', 'Спортзал К',
+                                   re.sub(r'\s*', '', re.sub(r'Ауд\.', '', auditorium_match.group())))
+                    if classroom[-1] in ',;:':
+                        classroom = classroom[:-1]
+                    teachers_text = re.sub(
+                        r'(\s*доцент\s*|\s*преподаватель\s*|\s*старший преподаватель\s*|\s*ассистент|\s*профессор\s*)',
+                        '',
+                        parts[1].replace(classroom, ''))
                 else:
-                    auditorium = ''
+                    classroom = ''
                     teachers_text = ''
-                teachers_text = re.sub(
-                    r'(\s*доцент\s*|\s*преподаватель\s*|\s*старший преподаватель\s*|\s*ассистент|\s*профессор\s*)', '',
-                    teachers_text)
+
                 teachers = [teacher.strip() for teacher in teachers_text.split(',') if teacher.strip()]
                 teacher = ', '.join(teachers)
-                classroom = re.sub(r'СпортивныйзалК', 'Спортзал К',
-                                   re.sub(r'\s*', '', re.sub(r'Ауд\.', '', auditorium)))
             else:
                 teacher = ''
                 classroom = ''
@@ -160,8 +171,10 @@ for filename in files:
         if subject.strip() and teacher.strip() and classroom.strip():
             schedule_entry = {"Предмет": subject, "Преподаватель": teacher, "Аудитория": classroom}
             if key not in temp_schedule:
+                # Засовывает сразу в обе недели это занятие
                 temp_schedule[key] = {"Числитель": schedule_entry, "Знаменатель": schedule_entry}
             else:
+                # Если оно уже заполнено (есть другое на знаменателе), то меняется на новое, даже если None
                 temp_schedule[key]["Знаменатель"] = schedule_entry
     full_schedule = {"Числитель": {}, "Знаменатель": {}}
     for (day, time), parts in temp_schedule.items():
@@ -170,8 +183,9 @@ for filename in files:
                 if day not in full_schedule[part]:
                     full_schedule[part][day] = {}
                 full_schedule[part][day][time] = parts[part]
-    schedule_name = os.path.splitext(filename)[0]
+    schedule_name = os.path.splitext(file)[0]
     insert_into_database(schedule_name, clean_schedule(full_schedule))
+    bar.next()
 bar.finish()
 
 print("Расписания успешно сохранены в базу данных.")
