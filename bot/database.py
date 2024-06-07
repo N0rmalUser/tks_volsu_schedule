@@ -1,18 +1,22 @@
-import logging
-
 from aiogram.types import Message
 
 from config import ACTIVITIES_DB, USERS_DB, timezone
 
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from bot.misc.utils import sql_kit
 
+import logging
+
+import pytz
+
 import sqlite3
+
+from time import sleep
 
 
 @sql_kit(USERS_DB)
-def init_db(cursor: sqlite3.Cursor):
+def init_db_users(cursor: sqlite3.Cursor):
     """Создаёт бд, если её нет"""
 
     cursor.execute("""
@@ -45,6 +49,33 @@ def init_db(cursor: sqlite3.Cursor):
     """)
 
 
+@sql_kit(ACTIVITIES_DB)
+def init_db_activity(cursor: sqlite3.Cursor):
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS User_Activity_Stats (
+            date TEXT,
+            hour INTEGER,
+            user_count INTEGER,
+            PRIMARY KEY (date, hour)
+        );
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS User_Unique_Activity (
+            date TEXT,
+            hour INTEGER,
+            user_id INTEGER,
+            PRIMARY KEY (date, hour, user_id)
+        );
+    """)
+
+
+
+def init_db():
+    init_db_activity()
+    init_db_users()
+
+
 @sql_kit(USERS_DB)
 def set_user_type(msg: Message, user_type: str, cursor: sqlite3.Cursor) -> None:
     """
@@ -54,6 +85,7 @@ def set_user_type(msg: Message, user_type: str, cursor: sqlite3.Cursor) -> None:
     :param cursor:  :class:`sqlite3.Cursor` Не нужно передавать
     """
     user_id = msg.from_user.id
+
     cursor.execute("""
         SELECT start_date FROM User_Info 
         WHERE user_id = ?
@@ -129,7 +161,7 @@ def get_blocked(user_id: int, cursor: sqlite3.Cursor) -> bool:
         SELECT blocked FROM User_Info
         WHERE user_id = ?
         """, (user_id,))
-    return bool(cursor.fetchone())
+    return bool(cursor.fetchone()[0])
 
 
 @sql_kit(USERS_DB)
@@ -426,7 +458,7 @@ def set_day(user_id: int, day: int, cursor: sqlite3.Cursor) -> None:
 @sql_kit(USERS_DB)
 def set_default(user_id: int, default: str, cursor: sqlite3.Cursor):
     cursor.execute("""
-        INSERT INTO User_Info(user_id, defaulte)
+        INSERT INTO Temp_Data(user_id, defaulte)
         VALUES(?, ?) ON CONFLICT(user_id) DO UPDATE
         SET defaulte=excluded.defaulte;
         """, (user_id, default))
@@ -435,11 +467,64 @@ def set_default(user_id: int, default: str, cursor: sqlite3.Cursor):
 @sql_kit(USERS_DB)
 def get_default(user_id: int, cursor: sqlite3.Cursor):
     cursor.execute("""
-        SELECT defaulte FROM User_Info
+        SELECT defaulte FROM Temp_Data
         WHERE user_id = ?
         """, (user_id,))
     result = cursor.fetchone()
     return result[0] if result else None
+
+
+@sql_kit(USERS_DB)
+def get_last_hour_users(cursor: sqlite3.Cursor) -> list:
+    """Возвращает список пользователей, которые заходили в бота в последний час"""
+    one_hour_ago = datetime.now(pytz.timezone(timezone)) - timedelta(hours=1)
+
+    cursor.execute("SELECT user_id, last_date FROM User_Info")
+    all_users = cursor.fetchall()
+
+    active_users = []
+    for user_id, last_date_str in all_users:
+        last_date = pytz.timezone(timezone).localize(datetime.strptime(last_date_str, '%d-%m-%Y %H:%M:%S'))
+        if last_date >= one_hour_ago:
+            active_users.append(user_id)
+    return active_users
+
+
+@sql_kit(ACTIVITIES_DB)
+def update_user_activity_stats(cursor: sqlite3.Cursor):
+    active_users = get_last_hour_users()
+    current_datetime = datetime.now(pytz.timezone('Europe/Moscow'))
+    date_str = current_datetime.strftime('%d-%m-%Y')
+    current_hour = current_datetime.hour
+
+    # Сначала обновляем таблицу уникальных пользователей
+    for user_id in active_users:
+        cursor.execute("""
+               INSERT OR IGNORE INTO User_Unique_Activity (date, hour, user_id)
+               VALUES (?, ?, ?)
+           """, (date_str, current_hour, user_id))
+
+    # Теперь подсчитываем количество уникальных пользователей для данного часа
+    cursor.execute("""
+           SELECT COUNT(*) FROM User_Unique_Activity
+           WHERE date = ? AND hour = ?
+       """, (date_str, current_hour))
+
+    user_count = cursor.fetchone()[0]
+
+    # Обновляем основную таблицу статистики активности пользователей
+    cursor.execute("""
+           INSERT INTO User_Activity_Stats (date, hour, user_count)
+           VALUES (?, ?, ?)
+           ON CONFLICT(date, hour) DO UPDATE SET user_count = excluded.user_count
+       """, (date_str, current_hour, user_count))
+
+
+@sql_kit(ACTIVITIES_DB)
+def fetch_user_activity_stats(cursor: sqlite3.Cursor):
+    cursor.execute("SELECT * FROM User_Activity_Stats")
+    data = cursor.fetchall()
+    return data
 
 
 @sql_kit(USERS_DB)
@@ -458,9 +543,6 @@ def get_user_info(user_id: int, cursor: sqlite3.Cursor):
         WHERE user_id = ?
         """, (user_id,))
     temp = cursor.fetchall()[0]
-    print(data)
-    print(temp)
-    print(temp[1])
     last_date = datetime.strptime(data[6], '%d-%m-%Y %H:%M:%S').date()
     days_until = (last_date - datetime.today().date()).days
     return f"""
@@ -553,6 +635,8 @@ async def broadcast_message(bot, text: str) -> None:
                 await bot.send_message(user_id, text)
             except Exception as e:
                 logging.error(f"Не удалось отправить сообщение пользователю {user_id}: {e}")
+            finally:
+                sleep(0.5)
 
 
 async def tracking_manage(tracking: bool) -> None:

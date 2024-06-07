@@ -17,6 +17,7 @@ ENV TIMEZONE=Europe/Moscow
 
 ENV SCHEDULE_DB=/tks_schedule/data/schedule.db
 ENV USERS_DB=/tks_schedule/data/users.db
+ENV ACTIVITIES_DB=/tks_schedule/data/activities.db
 ENV LOG_FILE=logs/bot.log
 
 ENV BOT_TOKEN=6857740783:AAF2JsAWEkLra0u9PdWHBUFySonglckn_Vk

@@ -32,6 +32,7 @@ async def start_deep_handler(msg: Message, command: CommandObject) -> None:
             user_type = "student"
             menu, keyboard = kb.student_menu, kb.get_groups()
         db.set_last_date(msg)
+        db.update_user_activity_stats()
         db.set_today_date(user_id)
         db.set_week(user_id, 1)
         db.set_user_type(msg, user_type)
@@ -47,6 +48,7 @@ async def start_handler(msg: Message) -> None:
     """Обработчик команды /start без deep_link'а."""
     user_id = int(msg.from_user.id)
     db.set_last_date(msg)
+    db.update_user_activity_stats()
     db.set_today_date(user_id)
     db.set_week(user_id, 1)
     user_type = db.get_user_type(user_id)
@@ -144,3 +146,4 @@ async def handler(msg: Message) -> None:
     else:
         await msg.answer("Я тебя не понимаю, буковы пиши!")
     db.set_last_date(msg)
+    db.update_user_activity_stats()
