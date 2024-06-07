@@ -11,7 +11,6 @@ from config import BOT_TOKEN, ADMIN_CHAT_ID
 
 import logging
 
-import os
 
 bot: Bot
 
@@ -83,21 +82,13 @@ async def send_to_user(msg: Message) -> None:
     await bot.send_message(db.get_user_id(msg.message_thread_id), text=msg.text)
 
 
-async def get_file(msg: Document):
+async def get_file(msg: Document, existing_file):
     """Получает файл с расписанием и заменяет им текущее расписание"""
     file_id = msg.document.file_id
     file_info = await bot.get_file(file_id)
-    file_path = file_info.file_path
-    downloaded_file = await bot.download_file(file_path)
-    if '.db' in os.path.basename(file_path):
-        existing_file = 'data/schedule.db'
-        os.remove(existing_file)
-        destination = 'data/schedule.db'
-        with open(destination, 'wb') as new_file:
-            new_file.write(downloaded_file.read())
-        logging.info('Заменили расписание')
-    else:
-        logging.info('Скинули не тот файл расписания')
+    downloaded_file = await bot.download_file(file_info.file_path)
+    with open(existing_file, 'wb') as new_file:
+        new_file.write(downloaded_file.read())
 
 
 async def send_custom_message(user_id: int, text: str):
