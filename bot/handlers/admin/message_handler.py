@@ -16,7 +16,7 @@ import logging
 router = Router()
 
 
-@router.message(Command("day_stat"), ChatTypeIdFilter(chat_type=['group', 'supergroup'], chat_id=ADMIN_CHAT_ID))
+@router.message(Command("days_stat"), ChatTypeIdFilter(chat_type=['group', 'supergroup'], chat_id=ADMIN_CHAT_ID))
 async def handle_send_daily_plot(msg: Message) -> None:
     """Отправляет график количества пользователей по дням."""
     db.update_user_activity_stats()
@@ -24,7 +24,7 @@ async def handle_send_daily_plot(msg: Message) -> None:
     await msg.answer_photo(FSInputFile('data/user_activity_by_days.png'))
 
 
-@router.message(Command("hour_stat"), ChatTypeIdFilter(chat_type=['group', 'supergroup'], chat_id=ADMIN_CHAT_ID))
+@router.message(Command("hours_stat"), ChatTypeIdFilter(chat_type=['group', 'supergroup'], chat_id=ADMIN_CHAT_ID))
 async def handle_send_hourly_plot(msg: Message) -> None:
     """Отправляет график количества пользователей по часам для определённого дня."""
     db.update_user_activity_stats()

@@ -17,8 +17,8 @@ admin_menu = [
         KeyboardButton(text="/info")
     ],
     [
-        KeyboardButton(text="/hour_stat"),
-        KeyboardButton(text="/day_stat")
+        KeyboardButton(text="/hours_stat"),
+        KeyboardButton(text="/days_stat")
     ]
 ]
 
