@@ -25,10 +25,10 @@ async def handle_send_daily_plot(msg: Message) -> None:
 
 
 @router.message(Command("hours_stat"), ChatTypeIdFilter(chat_type=['group', 'supergroup'], chat_id=ADMIN_CHAT_ID))
-async def handle_send_hourly_plot(msg: Message) -> None:
+async def handle_send_hourly_plot(msg: Message, command: CommandObject = None) -> None:
     """Отправляет график количества пользователей по часам для определённого дня."""
     db.update_user_activity_stats()
-    user_activity.plot_user_activity_by_hours()
+    user_activity.plot_user_activity_by_hours(command.args)
     await msg.answer_photo(FSInputFile('data/user_activity_by_hours.png'))
 
 

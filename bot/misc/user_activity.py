@@ -10,13 +10,13 @@ import pandas as pd
 from pytz import timezone as tz
 
 
-def plot_user_activity_by_hours(date_str=None):
+def plot_user_activity_by_hours(date_string=None):
     """Строит и сохраняет график активности пользователей по часам за определённый день по часам."""
 
     df = pd.DataFrame(db.fetch_user_activity_stats(), columns=['date', 'hour', 'user_count'])
 
-    selected_date = datetime.strptime(date_str, '%d-%m-%Y').date() \
-        if date_str \
+    selected_date = datetime.strptime(date_string, '%d.%m.%y').date() \
+        if date_string \
         else datetime.now(tz(timezone)).date()
 
     df['date'] = pd.to_datetime(df['date'], format='%d-%m-%Y').dt.date
