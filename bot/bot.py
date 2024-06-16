@@ -33,13 +33,18 @@ async def main() -> None:
     await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types(), polling_timeout=60)
 
 
-# Функции-обработчики команд из importlib (нельзя использовать в других файлах из-за зацикливания)
+async def start_message(msg: Message, menu, keyboard) -> None:
+    """Отправляет сообщение при старте бота. Создаёт топик пользователя. Отправляет ссылку для приглашения и меню."""
 
-
-async def topic_create(msg: Message) -> None:
-    """Создаёт личный топик юзера в админском чате. Если топик для этого пользователя определён в базе данных, ничего не делает."""
     global bot
+
     user = UserDatabase(msg.from_user.id)
+    link = await create_start_link(bot, f"{msg.from_user.id}={UserDatabase(msg.from_user.id).type}", encode=True)
+    await msg.answer(f"Привет, {msg.from_user.full_name}\n"
+                     f"Вот ссылка для приглашения: {link}",
+                     reply_markup=menu)
+    await msg.answer("Выбери себя в списке", reply_markup=keyboard)
+
     if user.topic_id:
         return
     if msg.from_user.username:
