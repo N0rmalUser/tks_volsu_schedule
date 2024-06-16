@@ -9,27 +9,6 @@ import pytz
 import sqlite3
 
 
-@sql_kit(ACTIVITIES_DB)
-def init_db_activity(cursor: sqlite3.Cursor):
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS User_Activity_Stats (
-            date TEXT,
-            hour INTEGER,
-            user_count INTEGER,
-            PRIMARY KEY (date, hour)
-        );
-    """)
-
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS User_Unique_Activity (
-            date TEXT,
-            hour INTEGER,
-            user_id INTEGER,
-            PRIMARY KEY (date, hour, user_id)
-        );
-    """)
-
-
 @sql_kit(USERS_DB)
 def get_last_hour_users(cursor: sqlite3.Cursor) -> list:
     """Возвращает список пользователей, которые заходили в бота в последний час"""

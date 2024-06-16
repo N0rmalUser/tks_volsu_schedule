@@ -31,38 +31,6 @@ def sql_kit(db=":memory:"):
     return decorator
 
 
-@sql_kit(USERS_DB)
-def initialize_db(cursor: sqlite3.Cursor):
-    """Создаёт бд, если её нет"""
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS User_Info (
-            user_id INTEGER PRIMARY KEY,
-            user_type TEXT DEFAULT student,
-            username TEXT,
-            fullname TEXT,
-            topic_id INTEGER,
-            start_date TEXT,
-            last_date TEXT,
-            inviter_id INTEGER,
-            blocked BOOLEAN DEFAULT false,
-            banned BOOLEAN DEFAULT false,
-            FOREIGN KEY (inviter_id) REFERENCES User_Info(user_id)
-        )
-    """)
-
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS Temp_Data (
-            user_id INTEGER PRIMARY KEY,
-            tracking BOOLEAN DEFAULT false,
-            week INTEGER,
-            day INTEGER,
-            teacher_name TEXT,
-            group_name TEXT,
-            defaulte TEXT,
-            FOREIGN KEY (user_id) REFERENCES User_Info(user_id)
-        )
-    """)
-
 def user_info(user_id: int):
     """Возвращает информацию о пользователе, подготовленную к отправке админу"""
 
