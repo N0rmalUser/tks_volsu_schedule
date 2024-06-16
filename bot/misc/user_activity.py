@@ -1,4 +1,4 @@
-import bot.database as db
+import bot.database.activity as db
 
 from config import timezone
 

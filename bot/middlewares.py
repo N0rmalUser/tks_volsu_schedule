@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 
 from typing import Callable, Dict, Any, Awaitable
 
-from bot import database as db
+from bot.database.user import UserDatabase
 
 import logging
 
@@ -80,10 +80,10 @@ class BanUsersMiddleware(BaseMiddleware):
             event: Update,
             data: Dict[str, Any]
     ) -> Any:
-        user = data['event_from_user']
+        user = UserDatabase(data['event_from_user'].id)
 
-        if db.user_exists(user.id):
-            if not db.get_banned(user.id):
+        if user.exists():
+            if not user.banned:
                 return await handler(event, data)
         else:
             return await handler(event, data)

@@ -2,12 +2,13 @@ from aiogram import F, Router
 from aiogram.types import FSInputFile, Message
 from aiogram.filters import Command, CommandObject
 
-from bot import database as db
+from bot.database import utils, activity as db
+from bot.database.user import UserDatabase
 from bot.filters import ChatTypeIdFilter
 from bot.markups import admin_markups as kb
 from bot.misc import user_activity
 
-from config import ACTIVITIES_DB, ADMIN_CHAT_ID, LOG_FILE, SCHEDULE_DB, USERS_DB
+from config import ACTIVITIES_DB, ADMIN_CHAT_ID, LOG_FILE, SCHEDULE_DB, USERS_DB, INVITATION_LINK
 
 import importlib
 
@@ -19,6 +20,7 @@ router = Router()
 @router.message(Command("days_stat"), ChatTypeIdFilter(chat_type=['group', 'supergroup'], chat_id=ADMIN_CHAT_ID))
 async def handle_send_daily_plot(msg: Message) -> None:
     """Отправляет график количества пользователей по дням."""
+
     db.update_user_activity_stats()
     user_activity.plot_user_activity_by_days()
     await msg.answer_photo(FSInputFile('data/user_activity_by_days.png'))
@@ -27,6 +29,7 @@ async def handle_send_daily_plot(msg: Message) -> None:
 @router.message(Command("hours_stat"), ChatTypeIdFilter(chat_type=['group', 'supergroup'], chat_id=ADMIN_CHAT_ID))
 async def handle_send_hourly_plot(msg: Message, command: CommandObject = None) -> None:
     """Отправляет график количества пользователей по часам для определённого дня."""
+
     db.update_user_activity_stats()
     user_activity.plot_user_activity_by_hours(command.args)
     await msg.answer_photo(FSInputFile('data/user_activity_by_hours.png'))
@@ -43,22 +46,22 @@ async def handle_topic_command_track(msg: Message) -> None:
 async def ban_command_handler(msg: Message) -> None:
     """Банит пользователя. Изменяет значение столбца banned в базе данных."""
 
-    user_id = db.get_user_id(msg.message_thread_id)
-    db.set_banned(user_id, True)
+    user = UserDatabase(topic_id=msg.message_thread_id)
+    user.banned = True
     await msg.answer("Мы его забанили!!!")
-    await getattr(importlib.import_module("bot.bot"), "send_custom_message")(user_id, "За нарушение правил, тебя забанили")
-    logging.info(f'Забанен юзверь {user_id}')
+    await getattr(importlib.import_module("bot.bot"), "send_custom_message")(user.tg_id(), "За нарушение правил, тебя забанили")
+    logging.info(f'Забанен юзверь {user.tg_id()}')
 
 
 @router.message(Command('unban'), ChatTypeIdFilter(chat_type=['group', 'supergroup'], chat_id=ADMIN_CHAT_ID))
 async def ban_command_handler(msg: Message) -> None:
     """Разбанивает пользователя. Изменяет значение столбца banned в базе данных."""
 
-    user_id = db.get_user_id(msg.message_thread_id)
-    db.set_banned(user_id, False)
+    user = UserDatabase(topic_id=msg.message_thread_id)
+    user.banned = False
     await msg.answer("Мы его разбанили!!!")
-    await getattr(importlib.import_module("bot.bot"), "send_custom_message")(user_id, "Амнистия! Тебя разбанили")
-    logging.info(f'Разбанен юзверь {user_id}')
+    await getattr(importlib.import_module("bot.bot"), "send_custom_message")(user.tg_id(), "Амнистия! Тебя разбанили")
+    logging.info(f'Разбанен юзверь {user.tg_id()}')
 
 
 @router.message(Command("log"), ChatTypeIdFilter(chat_type=['group', 'supergroup'], chat_id=ADMIN_CHAT_ID))
@@ -114,36 +117,40 @@ async def handle_topic_command_track(msg: Message, command: CommandObject) -> No
     command = str(command.args).lower()
     resp = await msg.answer("Подождите...")
     if resp.message_thread_id:
-        user_id = db.get_user_id(resp.message_thread_id)
+        user = UserDatabase(topic_id=resp.message_thread_id)
         if command == "start":
-            db.set_tracking(user_id, True)
+            user.tracking = True
         elif command == "stop":
-            db.set_tracking(user_id, False)
+            user.tracking = False
         elif command == "status":
             pass
-        await resp.edit_text(f"Трекинг {'включен' if db.get_tracking(user_id) else 'выключен'}")
+        await resp.edit_text(f"Трекинг {'включен' if user.tracking else 'выключен'}")
     else:
         if command == "start":
-            await db.tracking_manage(True)
+            await utils.tracking_manage(True)
             await resp.edit_text("Трекинг включен для всех пользователей")
         elif command == "stop":
-            await db.tracking_manage(False)
+            await utils.tracking_manage(False)
             await resp.edit_text("Трекинг выключен для всех пользователей")
         elif command == "status":
-            users = await db.get_tracked_users()
+            users = await utils.get_tracked_users()
             tracked = '\n'.join([str(user) for user in users])
             await resp.edit_text(f"Трекаются: \n" + tracked if users else "Никто не трекается", parse_mode='MarkdownV2')
 
 
 @router.message(Command("info"), ChatTypeIdFilter(chat_type=['group', 'supergroup'], chat_id=ADMIN_CHAT_ID))
-async def handle_topic_command_info(msg: Message) -> None:
+async def handle_topic_command_info(msg: Message, command: CommandObject = None) -> None:
     """Присылает информацию о пользователе или о всех пользователях в зависимости от топика"""
 
     start = await msg.answer("Собираю статистику")
-    if start.message_thread_id:
-        await start.edit_text(db.get_user_info(db.get_user_id(msg.message_thread_id)), parse_mode="MarkdownV2")
+    if command.args is None:
+        if start.message_thread_id:
+            await start.edit_text(utils.user_info(UserDatabase(topic_id=msg.message_thread_id).tg_id()), parse_mode="MarkdownV2")
+        else:
+            await start.edit_text(utils.get_all_users_info())
     else:
-        await start.edit_text(db.get_all_users_info())
+        await msg.answer(f"https://t.me/{INVITATION_LINK}/{UserDatabase(int(command.args)).topic_id}")
+        await start.edit_text(utils.user_info(int(command.args)), parse_mode="MarkdownV2")
 
 
 @router.message(F.document, ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID))

@@ -3,7 +3,9 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.types import Message, ChatMemberUpdated, Document
 from aiogram.utils.deep_linking import create_start_link
 
-from bot import database as db, middlewares
+from bot import middlewares
+from bot.database.utils import all_user_ids
+from bot.database.user import UserDatabase
 from bot.handlers import admin, user
 from bot.markups import admin_markups as kb
 
@@ -37,33 +39,34 @@ async def main() -> None:
 async def topic_create(msg: Message) -> None:
     """Создаёт личный топик юзера в админском чате. Если топик для этого пользователя определён в базе данных, ничего не делает."""
     global bot
-    user_id = msg.from_user.id
-    if db.get_topic_id(user_id):
+    user = UserDatabase(msg.from_user.id)
+    if user.topic_id:
         return
     if msg.from_user.username:
-        topic_name = f"{msg.from_user.username} {user_id}"
+        topic_name = f"{msg.from_user.username} {msg.from_user.id}"
     else:
-        topic_name = f"{msg.from_user.full_name} {str(user_id)}"
+        topic_name = f"{msg.from_user.full_name} {str(msg.from_user.id)}"
     result = await bot.create_forum_topic(ADMIN_CHAT_ID, topic_name, icon_custom_emoji_id="5312016608254762256")\
-        if db.get_user_type(user_id) == "teacher"\
+        if user.type == "teacher"\
         else await bot.create_forum_topic(ADMIN_CHAT_ID, topic_name)
     topic_id = result.message_thread_id
-    db.set_topic_id(user_id, topic_id)
-    inviter = db.get_inviter(user_id)
+    user.topic_id = topic_id
+    inviter = user.inviter_id
     user_info = (f"Пользователь: <code>{msg.from_user.full_name}</code>\n"
-                 f"ID: <code>{user_id}</code>\n"
+                 f"ID: <code>{msg.from_user.id}</code>\n"
                  f"Username: @{msg.from_user.username}\n"
                  f"Пригласил: <code>{inviter if inviter else 'Никто'}</code>\n"
-                 f"Тип пользователя: {db.get_user_type(user_id)}")
+                 f"Тип пользователя: {user.type}")
     await bot.send_message(ADMIN_CHAT_ID, message_thread_id=topic_id, text=user_info, reply_markup=kb.admin_menu, parse_mode="HTML")
-    db.set_tracking(msg.from_user.id, False)
-    logging.info(f'Создан топик имени {user_id} @{msg.from_user.username}')
+    user.tracking = False
+    logging.info(f'Создан топик имени {msg.from_user.id} @{msg.from_user.username}')
 
 
-async def start_message(msg: Message, user_id: int, menu, keyboard) -> None:
+async def start_message(msg: Message, menu, keyboard) -> None:
     """Отправляет сообщение при старте бота. Создаёт топик пользователя. Отправляет ссылку для приглашения и меню."""
     global bot
-    link = await create_start_link(bot, f"{user_id}={db.get_user_type(user_id)}", encode=True)
+    user = UserDatabase(msg.from_user.id)
+    link = await create_start_link(bot, f"{msg.from_user.id}={user.type}", encode=True)
     await msg.answer(f"Привет, {msg.from_user.full_name}\n"
                      f"Вот ссылка для приглашения: {link}",
                      reply_markup=menu)
@@ -73,13 +76,15 @@ async def start_message(msg: Message, user_id: int, menu, keyboard) -> None:
 
 async def admin_sender(msg: Message) -> None:
     """Отправляет крик о помощи в админский чат"""
-    await bot.send_message(ADMIN_CHAT_ID, message_thread_id=db.get_topic_id(msg.from_user.id),
+    user = UserDatabase(msg.from_user.id)
+    await bot.send_message(ADMIN_CHAT_ID, message_thread_id=user.topic_id,
                            text="Юзверь просит помощи админа @n0rmal_user")
     logging.warning(f'Юзверь {msg.from_user.id} @{msg.from_user.username} просит помощи админа')
 
 
 async def send_to_user(msg: Message) -> None:
-    await bot.send_message(db.get_user_id(msg.message_thread_id), text=msg.text)
+    from bot.database.user import UserDatabase
+    await bot.send_message(UserDatabase(topic_id=msg.message_thread_id).tg_id(), text=msg.text)
 
 
 async def get_file(msg: Document, existing_file):
@@ -98,18 +103,29 @@ async def send_custom_message(user_id: int, text: str):
 
 async def broadcast(msg: Message) -> None:
     """Отправляет сообщение всем пользователям, не заблокировавшим бота."""
-    await db.broadcast_message(bot, msg.text)
+    from asyncio import sleep
+    user_ids = all_user_ids()
+    for user_id in user_ids:
+        if not UserDatabase(user_id).blocked:
+            try:
+                await bot.send_message(user_id, msg.text)
+            except Exception as e:
+                logging.error(f"Не удалось отправить сообщение пользователю {user_id}: {e}")
+            finally:
+                await sleep(0.5)
     logging.info('Отправлено сообщение всем пользователям')
 
 
 async def send_callback(callback: Message) -> None:
     """Отправляет сообщение в личный топик пользователя при нажатии на инлайн кнопку."""
-    if db.get_tracking(callback.from_user.id):
-        await bot.send_message(ADMIN_CHAT_ID, message_thread_id=db.get_topic_id(callback.from_user.id),
+    user = UserDatabase(callback.from_user.id)
+    if user.tracking:
+        await bot.send_message(ADMIN_CHAT_ID, message_thread_id=user.topic_id,
                                text=callback.data)
 
 
 async def send_user_status(event: ChatMemberUpdated, status: str) -> None:
     """Отправляет сообщение в админский чат о статусе пользователя (заблокировал или разблокировал бота)."""
+    user = UserDatabase(event.from_user.id)
     await bot.send_message(ADMIN_CHAT_ID, f"Пользователь @{event.from_user.username} {status} бота",
-                           message_thread_id=db.get_topic_id(event.from_user.id))
+                           message_thread_id=user.topic_id)

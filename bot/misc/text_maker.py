@@ -2,7 +2,7 @@ import config
 
 import re
 
-from bot.misc.utils import sql_kit
+from bot.database.utils import sql_kit
 
 import sqlite3
 

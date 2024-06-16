@@ -1,5 +1,6 @@
 import asyncio
-from bot import bot, database as db
+from bot import bot
+from bot.database import activity as db, utils
 from config import LOG_FILE, timezone
 from datetime import datetime
 import logging
@@ -12,8 +13,9 @@ def timetz(*args):
 
 if __name__ == "__main__":
     logging.Formatter.converter = timetz
-    logging.basicConfig(level=logging.INFO, filename=LOG_FILE, format="%(asctime)s %(levelname)s %(message)s",
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s",
                         datefmt='%H:%M:%S %d-%m-%Y', encoding="utf-8")
     logging.getLogger('aiogram.event').setLevel(logging.WARNING)
-    db.init_db()
+    utils.initialize_db()
+    db.init_db_activity()
     asyncio.run(bot.main())

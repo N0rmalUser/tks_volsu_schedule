@@ -1,14 +1,16 @@
+import pytz
 from aiogram import Router
 from aiogram.filters import Command, CommandStart, CommandObject
 from aiogram.types import Message
 from aiogram.utils.deep_linking import decode_payload
 
-from bot import database as db
+from bot.database import activity as db
+from bot.database.user import UserDatabase
 from bot.filters import ChatTypeIdFilter
 from bot.misc import text_maker
 from bot.markups import user_markups as kb
 
-from config import ADMIN_CHAT_ID
+from config import ADMIN_CHAT_ID, timezone
 
 import importlib
 
@@ -23,21 +25,26 @@ async def start_deep_handler(msg: Message, command: CommandObject) -> None:
     try:
         payload = decode_payload(command.args)
         args = payload.split("=")
-        user_id = int(msg.from_user.id)
-        db.set_inviter(user_id, int(args[0]))
+        user = UserDatabase(msg.from_user.id)
+        user.inviter = int(args[0])
         if args[1] == "teacher":
-            user_type = "teacher"
+            user.user_type = "teacher"
             menu, keyboard = kb.teacher_menu, kb.get_teachers()
         else:
-            user_type = "student"
+            user.user_type = "student"
             menu, keyboard = kb.student_menu, kb.get_groups()
-        db.set_last_date(msg)
+        if user.start_date is None:
+            user.start_date = (msg.date
+                               .astimezone(pytz.timezone(timezone))
+                               .strftime('%d-%m-%Y %H:%M:%S'))
+            user.username = f"@{msg.from_user.username}"
+            user.fullname = msg.from_user.full_name
+        user.last_date(msg)
         db.update_user_activity_stats()
-        db.set_today_date(user_id)
-        db.set_week(user_id, 1)
-        db.set_user_type(msg, user_type)
-
-        await getattr(importlib.import_module("bot.bot"), "start_message")(msg, user_id, menu, keyboard)
+        user.set_today_date()
+        user.week = 1
+        user.tracking = False
+        await getattr(importlib.import_module("bot.bot"), "start_message")(msg, menu, keyboard)
     except Exception:
         logging.warning(f"{msg.from_user.id} перешёл по неверной ссылке")
         await msg.answer("Неверная ссылка")
@@ -46,46 +53,51 @@ async def start_deep_handler(msg: Message, command: CommandObject) -> None:
 @router.message(CommandStart(), ChatTypeIdFilter(chat_type=['private']))
 async def start_handler(msg: Message) -> None:
     """Обработчик команды /start без deep_link'а."""
-    user_id = int(msg.from_user.id)
-    db.set_last_date(msg)
+    user = UserDatabase(msg.from_user.id)
+    user.last_date = msg
     db.update_user_activity_stats()
-    db.set_today_date(user_id)
-    db.set_week(user_id, 1)
-    user_type = db.get_user_type(user_id)
-    db.set_user_type(msg, user_type)
-    menu, keyboard = (kb.teacher_menu, kb.get_teachers()) if user_type == "teacher" else (kb.student_menu, kb.get_groups())
-    await getattr(importlib.import_module("bot.bot"), "start_message")(msg, user_id, menu, keyboard)
+    if user.start_date is None:
+        user.start_date = (msg.date
+                           .astimezone(pytz.timezone(timezone))
+                           .strftime('%d-%m-%Y %H:%M:%S'))
+        user.username = f"@{msg.from_user.username}"
+        user.fullname = msg.from_user.full_name
+    user.set_today_date()
+    user.week = 1
+    user.tracking = False
+    menu, keyboard = (kb.teacher_menu, kb.get_teachers()) if user.type == "teacher" else (kb.student_menu, kb.get_groups())
+    await getattr(importlib.import_module("bot.bot"), "start_message")(msg, menu, keyboard)
 
 
 @router.message(Command('help'), ChatTypeIdFilter(chat_type=['private']))
 async def help_handler(msg: Message) -> None:
     """Обработчик команды /help. Отправляет сообщение с описанием бота."""
-    if db.get_user_type == 'teacher':
+    if UserDatabase(msg.from_user.id).type == 'teacher':
         await msg.answer("""
 Привет, это бот расписания кафедры ТКС!
 
-Кнопка `Расписание на сегодня` показываает расписание на сегодняшний день для выбранного преподавателя.
+Кнопка `Расписание на сегодня` показывает расписание на сегодняшний день для выбранного преподавателя.
 Кнопки `Группы`, `Преподаватели`, `Кабинеты` открывают соответствующие меню выбора.
 
 Если у группы номер `ИБТС-231_2` - это 2-я подгруппа, если `_2` отсутствует, то должно придти вся группа, либо первая подгруппа. Отдельно первая подгруппа ни как не обозначается!!!
 
 ✅ показывает, что выбрана эта неделя, для изменения недели нужно нажать кнопку с ➡️
 
-Для связи с администратором при возникших ошибках/измнениях в расписании используйте команду /admin и опишите проблему.
+Для связи с администратором при возникших ошибках/изменениях в расписании используйте команду /admin и опишите проблему.
 """)
     else:
         await msg.answer("""
 Привет, это бот расписания кафедры ТКС!
 Донаты принимаются вкусняшками в 1-19М
 
-Кнопка `Расписание на сегодня` показываает расписание на сегодняшний день для выбранной группы.
+Кнопка `Расписание на сегодня` показывает расписание на сегодняшний день для выбранной группы.
 Кнопка `Группы` открывает меню выбора групп
 
 Если у группы номер `ИБТС-231_2` - это 2-я подгруппа, если `_2` отсутствует, первая
 
 ✅ показывает, что выбрана эта неделя, для изменения недели нужно нажать кнопку с ➡️
 
-Для связи с администратором при возникших ошибках/измнениях в расписании используйте команду /admin и опишите проблему.
+Для связи с администратором при возникших ошибках/изменениях в расписании используйте команду /admin и опишите проблему.
 """)
 
 
@@ -93,16 +105,17 @@ async def help_handler(msg: Message) -> None:
 async def admin_handler(msg: Message) -> None:
     """Обработчик команды /admin. Пересылает сообщение админу и включает слежку за действиями пользователя."""
     await getattr(importlib.import_module("bot.bot"), "admin_sender")(msg)
-    await msg.forward(chat_id=ADMIN_CHAT_ID, message_thread_id=db.get_topic_id(msg.from_user.id))
+    user = UserDatabase(msg.from_user.id)
+    await msg.forward(chat_id=ADMIN_CHAT_ID, message_thread_id=user.topic_id)
     await msg.answer("Модератор скоро напишет вам, ожидайте")
-    db.set_tracking(msg.from_user.id, True)
+    user.tracking = True
     logging.info(f"{msg.from_user.id} написал админу")
 
 
 @router.message(Command("default"), ChatTypeIdFilter(chat_type=['private']))
 async def default_handler(msg: Message) -> None:
-    """Устанавливает пользователю препода или группу по-умолчанию"""
-    if db.get_user_type(msg.from_user.id) == 'teacher':
+    """Устанавливает пользователю преподавателя или группу по-умолчанию"""
+    if UserDatabase(msg.from_user.id).type == 'teacher':
         await msg.answer("Выберите себя из списка", reply_markup=kb.get_default_teachers())
     else:
         await msg.answer("Выберите себя из списка", reply_markup=kb.get_default_groups())
@@ -112,22 +125,25 @@ async def default_handler(msg: Message) -> None:
 async def handler(msg: Message) -> None:
     """Обработчик сообщений от пользователя. Отправляет расписание на сегодня, если пользователь выбрал преподавателя, группу или кабинет."""
     user_id = msg.from_user.id
-    user_type = db.get_user_type(user_id)
+    user = UserDatabase(user_id)
     if msg.content_type == "text":
         if msg.text == "Расписание на сегодня":
-            db.set_today_date(user_id)
-            default = db.get_default(user_id)
-            entity_id = default if default is not None else db.get_teacher(user_id) if user_type == "teacher" else db.get_group(user_id)
+            user.set_today_date()
+            default = user.default
+            entity_id = default if default is not None else user.teacher if user.type == "teacher" else user.group
 
             if not entity_id:
-                await msg.answer(f"Сначала выберите {'ФИО преподавателя' if user_type == 'teacher' else 'группу'}, нажав на соответствующую кнопку.")
+                await msg.answer(
+                    f"Сначала выберите {'ФИО преподавателя' if user.type == 'teacher' else 'группу'}, нажав на соответствующую кнопку.")
                 return
-            if user_type == "teacher":
-                week_kb = kb.get_days(user_id, 'teacher', db.get_week(user_id), value=entity_id)
-                await msg.answer(text_maker.get_teacher_schedule(day=db.get_day(user_id), week=db.get_week(user_id), teacher_name=entity_id), reply_markup=week_kb)
-            elif user_type == "student":
-                week_kb = kb.get_days(user_id, 'group', db.get_week(user_id), value=entity_id)
-                await msg.answer(text_maker.get_group_schedule(day=db.get_day(user_id), week=db.get_week(user_id), group_name=entity_id), reply_markup=week_kb)
+            if user.type == "teacher":
+                week_kb = kb.get_days(user_id, 'teacher', user.week, value=entity_id)
+                await msg.answer(text_maker.get_teacher_schedule(day=user.day, week=user.week, teacher_name=entity_id),
+                                 reply_markup=week_kb)
+            elif user.type == "student":
+                week_kb = kb.get_days(user_id, 'group', user.week, value=entity_id)
+                await msg.answer(text_maker.get_group_schedule(day=user.day, week=user.week, group_name=entity_id),
+                                 reply_markup=week_kb)
             else:
                 logging.info(f"{msg.from_user.id} неправильный тип пользователя")
                 await msg.answer("Ошибка! Напишите админу /admin")
@@ -139,11 +155,11 @@ async def handler(msg: Message) -> None:
             await msg.answer(f"Выберите преподавателя", reply_markup=kb.get_teachers())
         else:
             logging.info(f"{msg.from_user.id} написал неправильную команду")
-            if not db.get_tracking(user_id):
+            if not user.tracking:
                 await msg.answer("Я не знаю такой команды")
-        if db.get_tracking(user_id):
-            await msg.forward(ADMIN_CHAT_ID, message_thread_id=db.get_topic_id(msg.from_user.id))
+        if user.tracking:
+            await msg.forward(ADMIN_CHAT_ID, message_thread_id=user.topic_id)
     else:
         await msg.answer("Я тебя не понимаю, буковы пиши!")
-    db.set_last_date(msg)
+    user.last_date(msg)
     db.update_user_activity_stats()
