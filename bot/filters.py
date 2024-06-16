@@ -14,6 +14,3 @@ class ChatTypeIdFilter(BaseFilter):
             if message.chat.type in self.chat_type and self.chat_id is not None:
                 return str(message.chat.id) == str(ADMIN_CHAT_ID)
             return message.chat.type in self.chat_type
-
-
-
