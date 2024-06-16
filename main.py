@@ -7,13 +7,9 @@ import logging
 import pytz
 
 
-def timetz(*args):
-    return datetime.now(pytz.timezone(timezone)).timetuple()
-
-
 if __name__ == "__main__":
-    logging.Formatter.converter = timetz
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s",
+    logging.Formatter.converter = lambda *args: datetime.now(pytz.timezone(timezone)).timetuple()
+    logging.basicConfig(level=logging.INFO, filename=LOG_FILE, format="%(asctime)s %(levelname)s  %(message)s",
                         datefmt='%H:%M:%S %d-%m-%Y', encoding="utf-8")
     logging.getLogger('aiogram.event').setLevel(logging.WARNING)
     db_init()
