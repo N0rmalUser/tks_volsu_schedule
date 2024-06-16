@@ -12,8 +12,6 @@ from bot.markups import user_markups as kb
 
 from config import ADMIN_CHAT_ID, timezone
 
-import importlib
-
 import logging
 
 router = Router()
@@ -44,7 +42,9 @@ async def start_deep_handler(msg: Message, command: CommandObject) -> None:
         user.set_today_date()
         user.week = 1
         user.tracking = False
-        await getattr(importlib.import_module("bot.bot"), "start_message")(msg, menu, keyboard)
+
+        from bot.bot import start_message
+        await start_message(msg, menu, keyboard)
     except Exception:
         logging.warning(f"{msg.from_user.id} перешёл по неверной ссылке")
         await msg.answer("Неверная ссылка")
@@ -66,7 +66,9 @@ async def start_handler(msg: Message) -> None:
     user.week = 1
     user.tracking = False
     menu, keyboard = (kb.teacher_menu, kb.get_teachers()) if user.type == "teacher" else (kb.student_menu, kb.get_groups())
-    await getattr(importlib.import_module("bot.bot"), "start_message")(msg, menu, keyboard)
+
+    from bot.bot import start_message
+    await start_message(msg, menu, keyboard)
 
 
 @router.message(Command('help'), ChatTypeIdFilter(chat_type=['private']))
@@ -104,7 +106,11 @@ async def help_handler(msg: Message) -> None:
 @router.message(Command("admin"), ChatTypeIdFilter(chat_type=['private']))
 async def admin_handler(msg: Message) -> None:
     """Обработчик команды /admin. Пересылает сообщение админу и включает слежку за действиями пользователя."""
-    await getattr(importlib.import_module("bot.bot"), "admin_sender")(msg)
+
+    from bot.bot import bot
+
+    await bot.send_message(ADMIN_CHAT_ID, message_thread_id=UserDatabase(msg.from_user.id).topic_id, text="Юзверь просит помощи админа @n0rmal_user")
+    logging.warning(f'Юзверь {msg.from_user.id} @{msg.from_user.username} просит помощи админа')
     user = UserDatabase(msg.from_user.id)
     await msg.forward(chat_id=ADMIN_CHAT_ID, message_thread_id=user.topic_id)
     await msg.answer("Модератор скоро напишет вам, ожидайте")
@@ -115,6 +121,7 @@ async def admin_handler(msg: Message) -> None:
 @router.message(Command("default"), ChatTypeIdFilter(chat_type=['private']))
 async def default_handler(msg: Message) -> None:
     """Устанавливает пользователю преподавателя или группу по-умолчанию"""
+
     if UserDatabase(msg.from_user.id).type == 'teacher':
         await msg.answer("Выберите себя из списка", reply_markup=kb.get_default_teachers())
     else:

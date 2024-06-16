@@ -4,20 +4,29 @@ from aiogram.types import ChatMemberUpdated
 
 from bot.database.user import UserDatabase
 
-import importlib
-
 router = Router()
 
 
 @router.my_chat_member(ChatMemberUpdatedFilter(member_status_changed=KICKED))
 async def user_blocked_bot(event: ChatMemberUpdated):
     """Хендлер для считывания блокировки бота пользователем."""
-    UserDatabase(event.from_user.id).blocked = True
-    await getattr(importlib.import_module("bot.bot"), "send_user_status")(event, "заблокировал")
+
+    from bot.bot import bot
+    from config import ADMIN_CHAT_ID
+
+    user = UserDatabase(event.from_user.id)
+    user.blocked = True
+    await bot.send_message(ADMIN_CHAT_ID, f"Пользователь @{event.from_user.username} заблокировал бота",
+                           message_thread_id=user.topic_id)
 
 
 @router.my_chat_member(ChatMemberUpdatedFilter(member_status_changed=MEMBER))
 async def user_unblocked_bot(event: ChatMemberUpdated):
     """Хендлер для считывания разблокировки бота пользователем."""
-    UserDatabase(event.from_user.id).blocked = False
-    await getattr(importlib.import_module("bot.bot"), "send_user_status")(event, "разблокировал")
+
+    from bot.bot import bot
+    from config import ADMIN_CHAT_ID
+    user = UserDatabase(event.from_user.id)
+    user.blocked = False
+
+    await bot.send_message(ADMIN_CHAT_ID, f"Пользователь @{event.from_user.username} разблокировал бота", message_thread_id=user.topic_id)

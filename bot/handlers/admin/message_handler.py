@@ -10,8 +10,6 @@ from bot.misc import user_activity
 
 from config import ACTIVITIES_DB, ADMIN_CHAT_ID, LOG_FILE, SCHEDULE_DB, USERS_DB, INVITATION_LINK
 
-import importlib
-
 import logging
 
 router = Router()
@@ -45,11 +43,12 @@ async def handle_topic_command_track(msg: Message) -> None:
 @router.message(Command('ban'), ChatTypeIdFilter(chat_type=['group', 'supergroup'], chat_id=ADMIN_CHAT_ID))
 async def ban_command_handler(msg: Message) -> None:
     """Банит пользователя. Изменяет значение столбца banned в базе данных."""
+    from bot.bot import bot
 
     user = UserDatabase(topic_id=msg.message_thread_id)
     user.banned = True
     await msg.answer("Мы его забанили!!!")
-    await getattr(importlib.import_module("bot.bot"), "send_custom_message")(user.tg_id(), "За нарушение правил, тебя забанили")
+    await bot.send_message(user.tg_id(), "За нарушение правил, тебя забанили")
     logging.info(f'Забанен юзверь {user.tg_id()}')
 
 
@@ -57,10 +56,12 @@ async def ban_command_handler(msg: Message) -> None:
 async def ban_command_handler(msg: Message) -> None:
     """Разбанивает пользователя. Изменяет значение столбца banned в базе данных."""
 
+    from bot.bot import bot
+
     user = UserDatabase(topic_id=msg.message_thread_id)
     user.banned = False
     await msg.answer("Мы его разбанили!!!")
-    await getattr(importlib.import_module("bot.bot"), "send_custom_message")(user.tg_id(), "Амнистия! Тебя разбанили")
+    await bot.send_message(user.tg_id(), "Амнистия! Тебя разбанили")
     logging.info(f'Разбанен юзверь {user.tg_id()}')
 
 
@@ -93,8 +94,10 @@ async def handle_topic_command_track(msg: Message, command: CommandObject) -> No
     if command.args is None:
         await msg.answer("Ошибка: не переданы аргументы")
         return
+
     command = str(command.args).lower()
     resp = await msg.answer("Подождите...")
+
     if resp.message_thread_id:
         user = UserDatabase(topic_id=resp.message_thread_id)
         if command == "start":
@@ -135,22 +138,33 @@ async def handle_topic_command_info(msg: Message, command: CommandObject = None)
 @router.message(F.document, ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID))
 async def file_handler(msg: Message):
     """Ловит документы и заменяет файл schedule.db, users.db, activities.db на полученные."""
+
+    from bot.bot import bot
+
     file_name = msg.document.file_name
-    if file_name == "schedule.db":
-        existing_file = SCHEDULE_DB.replace('/tks_schedule/', '')
-        await getattr(importlib.import_module("bot.bot"), "get_file")(msg, existing_file)
-        logging.info('Заменили расписание')
-        await msg.answer('Заменили расписание')
-    elif file_name == "users.db":
-        existing_file = USERS_DB.replace('/tks_schedule/', '')
-        await getattr(importlib.import_module("bot.bot"), "get_file")(msg, existing_file)
-        logging.info('Заменили базу данных пользователей')
-        await msg.answer('Заменили базу данных пользователей')
-    elif file_name == "activities.db":
-        existing_file = ACTIVITIES_DB.replace('/tks_schedule/', '')
-        await getattr(importlib.import_module("bot.bot"), "get_file")(msg, existing_file)
-        logging.info('Заменили базу данных активности пользователей')
-        await msg.answer('Заменили базу данных активности пользователей')
+    file_map = {
+        "schedule.db": {
+            "path": SCHEDULE_DB.replace('/tks_schedule/', ''),
+            "message": 'Заменили расписание'
+        },
+        "users.db": {
+            "path": USERS_DB.replace('/tks_schedule/', ''),
+            "message": 'Заменили базу данных пользователей'
+        },
+        "activities.db": {
+            "path": ACTIVITIES_DB.replace('/tks_schedule/', ''),
+            "message": 'Заменили базу данных активности пользователей'
+        }
+    }
+
+    if file_name in file_map:
+        file_id = msg.document.file_id
+        file_info = await bot.get_file(file_id)
+        downloaded_file = await bot.download_file(file_info.file_path)
+        with open(file_map[file_name]["path"], 'wb') as new_file:
+            new_file.write(downloaded_file.read())
+        logging.info(file_map[file_name]["message"])
+        await msg.answer(file_map[file_name]["message"])
     else:
         await msg.answer("Этот файл нельзя заменить")
         logging.info(f"{msg.from_user.id} пытался заменить файл {file_name}")
@@ -165,9 +179,24 @@ async def handle_topic_message(msg: Message) -> None:
         if '/' in msg.text[0]:
             await msg.answer("Нет такой команды, но я тебя спас, не бойся")
         else:
+            from bot.bot import bot
+            from bot.database.user import UserDatabase
+
             if msg.message_thread_id is not None:
-                await getattr(importlib.import_module("bot.bot"), "send_to_user")(msg)
+                await bot.send_message(UserDatabase(topic_id=msg.message_thread_id).tg_id(), text=msg.text)
             else:
-                await getattr(importlib.import_module("bot.bot"), "broadcast")(msg)
+                from asyncio import sleep
+                from bot.database.utils import all_user_ids
+
+                user_ids = all_user_ids()
+                for user_id in user_ids:
+                    if not UserDatabase(user_id).blocked:
+                        try:
+                            await bot.send_message(user_id, msg.text)
+                        except Exception as e:
+                            logging.error(f"Не удалось отправить сообщение пользователю {user_id}: {e}")
+                        finally:
+                            await sleep(0.5)
+                logging.info('Отправлено сообщение всем пользователям')
     except TypeError:
         pass
