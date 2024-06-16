@@ -64,27 +64,6 @@ async def ban_command_handler(msg: Message) -> None:
     logging.info(f'Разбанен юзверь {user.tg_id()}')
 
 
-@router.message(Command("log"), ChatTypeIdFilter(chat_type=['group', 'supergroup'], chat_id=ADMIN_CHAT_ID))
-async def log_handler(msg: Message, command: CommandObject) -> None:
-    """Присылает логи бота в админский чат. Либо очищает их."""
-
-    if command.args == 'send' or command.args == 'show':
-        await msg.answer_document(FSInputFile(LOG_FILE), caption="Вот ваш лог")
-    elif command.args == 'clear' or command.args == 'del':
-        open(LOG_FILE, 'w').write('')
-        await msg.answer("Логи очищены")
-    else:
-        await msg.answer("Такой команды нету (аргумент не правильный)")
-
-
-@router.message(Command("send_db"), ChatTypeIdFilter(chat_type=['group', 'supergroup'], chat_id=ADMIN_CHAT_ID))
-async def send_db_handler(msg: Message) -> None:
-    """Отправляет базу данных пользователей в админский чат."""
-
-    if msg.message_thread_id:
-        await msg.answer_document(FSInputFile(USERS_DB), caption="Вот ваша база данных")
-
-
 @router.message(Command("dump"), ChatTypeIdFilter(chat_type=['group', 'supergroup'], chat_id=ADMIN_CHAT_ID))
 async def dump_handler(msg: Message) -> None:
     """Отправляет базу данных пользователей и логи в админский чат."""
