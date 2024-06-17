@@ -88,13 +88,12 @@ class UserDatabase:
 
     @property
     def banned(self) -> bool:
-        try:
-            self.__cursor.execute("""
-                SELECT banned FROM User_Info
-                WHERE user_id = ?
-                """, (self.__user_id,))
-        except Exception:
-            pass
+        """Возвращает значение banned из базы данных. Если banned = True, то пользователь заблокирован."""
+
+        self.__cursor.execute("""
+            SELECT banned FROM User_Info
+            WHERE user_id = ?
+            """, (self.__user_id,))
         result = self.__cursor.fetchone()
         return bool(result[0]) if result is not None else False
 

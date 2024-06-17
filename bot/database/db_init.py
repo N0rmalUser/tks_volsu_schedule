@@ -104,6 +104,8 @@ def activity_db_init(cursor: sqlite3.Cursor):
 
 
 def db_init():
+    """Инициализация базы данных"""
+
     import logging
 
     try:
