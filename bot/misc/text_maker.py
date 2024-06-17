@@ -8,21 +8,15 @@ import sqlite3
 
 
 def time_to_minutes(time_str: str) -> int:
-    """
-    Метод для перевода времени в минуты
-    :param time_str:  :call_type: str
-    :return:  :rtype: int
-    """
+    """Метод для перевода времени в минуты"""
+
     hours, minutes = map(int, time_str.split(':'))
     return hours * 60 + minutes
 
 
 def get_time_symbol(start_time: str) -> str:
-    """
-    Метод для получения эмодзи часов с указанным временем времени
-    :param start_time:  :call_type: str
-    :return:  :rtype: str
-    """
+    """Метод для получения эмодзи часов с указанным временем времени"""
+
     hour = int(start_time.split(':')[0])
     if 8 <= hour < 10:
         return '🕣 '
@@ -43,11 +37,8 @@ def get_time_symbol(start_time: str) -> str:
 
 
 def get_lesson_label(subject: str) -> str:
-    """
-    Метод для получения типа пары по его сокращению
-    :param subject:  :call_type: str
-    :return:  :rtype: str
-    """
+    """Метод для получения типа пары по его сокращению"""
+
     if 'пр' in subject.lower():
         return 'Практика'
     elif 'пр.' in subject.lower():
@@ -69,6 +60,7 @@ def get_lesson_label(subject: str) -> str:
 @sql_kit(config.SCHEDULE_DB)
 def get_group_schedule(day: int, week: int, group_name: str, cursor: sqlite3.Cursor):
     """Возвращает отформатированное расписание для указанной группы на указанный день и неделю"""
+
     week_type = "Числитель" if week == 1 else "Знаменатель"
     days_of_week = ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота"]
 
@@ -115,6 +107,7 @@ def get_group_schedule(day: int, week: int, group_name: str, cursor: sqlite3.Cur
 @sql_kit(config.SCHEDULE_DB)
 def get_teacher_schedule(day: int, week: int, teacher_name: str, cursor: sqlite3.Cursor):
     """Возвращает отформатированное расписание для указанного преподавателя на указанный день и неделю. Если преподаватель обучается в какой-либо группе (указывается в config.py), то возвращает расписание для этой группы, смешанное с расписанием преподавателя."""
+
     week_type = "Числитель" if week == 1 else "Знаменатель"
     days_of_week = ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота"]
 
@@ -196,6 +189,7 @@ def get_teacher_schedule(day: int, week: int, teacher_name: str, cursor: sqlite3
 @sql_kit(config.SCHEDULE_DB)
 def get_room_schedule(day, week, room_name, cursor: sqlite3.Cursor):
     """Возвращает отформатированное расписание для указанной аудитории на указанный день и неделю. Если аудитория имеет несколько вариантов (например, 2-13М и 2-13аМ), то возвращает расписание для всех вариантов."""
+
     week_type = "Числитель" if week == 1 else "Знаменатель"
     days_of_week = ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Понедельник"]
 
