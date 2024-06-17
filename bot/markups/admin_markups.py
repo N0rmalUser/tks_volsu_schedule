@@ -7,13 +7,12 @@ admin_menu = [
         KeyboardButton(text="/track status")
     ],
     [
-        KeyboardButton(text="/send_schedule"),
-        KeyboardButton(text="/dump"),
-        KeyboardButton(text="/info")
+        KeyboardButton(text="/days_stat"),
+        KeyboardButton(text="/hours_stat")
     ],
     [
-        KeyboardButton(text="/hours_stat"),
-        KeyboardButton(text="/days_stat")
+        KeyboardButton(text="/dump"),
+        KeyboardButton(text="/info")
     ]
 ]
 
