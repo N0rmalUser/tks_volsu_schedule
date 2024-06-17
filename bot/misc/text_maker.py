@@ -57,6 +57,23 @@ def get_lesson_label(subject: str) -> str:
         return ''
 
 
+def get_date_for_day(day: int, week: int) -> str:
+    """Возвращает дату для указанного дня недели и типа недели. Если указан день недели, который уже прошел в этой неделе, то возвращает дату для следующей недели. Если сегодня числитель, но целевой день на знаменателе, то возвращает дату для следующей недели."""
+
+    from datetime import datetime, timedelta
+
+    today = datetime.now()
+    today_day_of_week = today.weekday() + 1
+    day_diff = day - today_day_of_week
+
+    if day_diff < 0 or (day_diff == 0 and week == 2 and today.isocalendar()[1] % 2 == week):
+        day_diff += 7
+    if today.isocalendar()[1] % 2 == 1 and week == 2:
+        day_diff += 7
+
+    return (today + timedelta(days=day_diff)).strftime('%d.%m.%Y')
+
+
 @sql_kit(config.SCHEDULE_DB)
 def get_group_schedule(day: int, week: int, group_name: str, cursor: sqlite3.Cursor):
     """Возвращает отформатированное расписание для указанной группы на указанный день и неделю"""
@@ -92,6 +109,7 @@ def get_group_schedule(day: int, week: int, group_name: str, cursor: sqlite3.Cur
             "teacher": teacher
         })
 
+    date = get_date_for_day(day, week)
     text = header = f'{days_of_week[day - 1]}       {week_type}\n{group_name}\n'
     if schedule:
         sorted_lessons = sorted(schedule, key=lambda x: time_to_minutes(x['time']))
@@ -99,9 +117,10 @@ def get_group_schedule(day: int, week: int, group_name: str, cursor: sqlite3.Cur
             subject = re.sub(r'\([^)]*\)', '', lesson['subject'])
             label = get_lesson_label(str(re.search(r'\(([^)]*)\)', lesson['subject'])))
             text += f"\n{get_time_symbol(lesson['time'])}{lesson['time']}       {label}\n📖 {subject}\n👨‍🏫 {lesson['teacher']}\n🏠 Ауд. {lesson['room']}\n"
+            text += f"\nДата: {date}"
         return text
     else:
-        return f'{header}\n\nСегодня пар нет!'
+        return f'{header}\nСегодня пар нет!\n\nДата: {date}'
 
 
 @sql_kit(config.SCHEDULE_DB)
@@ -170,6 +189,7 @@ def get_teacher_schedule(day: int, week: int, teacher_name: str, cursor: sqlite3
             "room": room_name
         })
 
+    date = get_date_for_day(day, week)
     text = header = f'{days_of_week[day - 1]}       {week_type}\n{teacher_name}\n'
     if schedule:
         sorted_lessons = sorted(schedule, key=lambda x: time_to_minutes(x['time']))
@@ -180,10 +200,10 @@ def get_teacher_schedule(day: int, week: int, teacher_name: str, cursor: sqlite3
                 text += f"\n{get_time_symbol(lesson['time'])}{lesson['time']}       {label}\n📖 {subject}\n👫 {lesson['group']}\n🏠 Ауд. {lesson['room']}\n"
             except KeyError:
                 text += f"\n{get_time_symbol(lesson['time'])}{lesson['time']}       {label}\n📖 {subject}\n👨‍🏫 {lesson['teacher']}\n🏠 Ауд. {lesson['room']}\n"
+        text += f"\nДата: {date}"
         return text
     else:
-        status = 'Сегодня пар нет!'
-        return f'{header}\n\n{status}'
+        return f'{header}\nСегодня пар нет!\n\nДата: {date}'
 
 
 @sql_kit(config.SCHEDULE_DB)
@@ -231,6 +251,7 @@ def get_room_schedule(day, week, room_name, cursor: sqlite3.Cursor):
                 "room": room
             })
 
+    date = get_date_for_day(day, week)
     text = header = f'{days_of_week[day - 1]}       {week_type}\n{room_name}\n'
     if schedule:
         sorted_lessons = sorted(schedule, key=lambda x: time_to_minutes(x['time']))
@@ -240,7 +261,8 @@ def get_room_schedule(day, week, room_name, cursor: sqlite3.Cursor):
             suffix = re.sub(r'\d*-\d*', '', lesson['room'])
             suffix = f'|{suffix[:-1]}|' if suffix[:-1] != '' else ''
             text += f"\n{get_time_symbol(lesson['time'])}{lesson['time']}    {suffix}   {label}\n📖 {subject}\n👫 {lesson['group']}\n‍👨‍🏫 {lesson['teacher']}\n"
+            text += f"\nДата: {date}"
         return text
     else:
-        status = 'Сегодня пар нет!'
-        return f'{header}\n\n{status}'
+        return f'{header}\nСегодня пар нет!\n\nДата: {date}'
+
