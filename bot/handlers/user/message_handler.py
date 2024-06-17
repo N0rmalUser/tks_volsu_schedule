@@ -1,18 +1,16 @@
-import pytz
 from aiogram import Router
 from aiogram.filters import Command, CommandStart, CommandObject
 from aiogram.types import Message
-from aiogram.utils.deep_linking import decode_payload
 
-from bot.database import activity as db
 from bot.database.user import UserDatabase
 from bot.filters import ChatTypeIdFilter
-from bot.misc import text_maker
 from bot.markups import user_markups as kb
 
 from config import ADMIN_CHAT_ID, timezone
 
 import logging
+
+from pytz import timezone as tz
 
 router = Router()
 
@@ -20,6 +18,9 @@ router = Router()
 @router.message(CommandStart(deep_link=True), ChatTypeIdFilter(chat_type=['private']))
 async def start_deep_handler(msg: Message, command: CommandObject) -> None:
     """Обработчик команды /start с deep_link'ом. Назначает тип пользователя в зависимости от ссылки, а также добавляет id пригласившего пользователя в базу данных."""
+
+    from aiogram.utils.deep_linking import decode_payload
+
     try:
         payload = decode_payload(command.args)
         args = payload.split("=")
@@ -33,12 +34,11 @@ async def start_deep_handler(msg: Message, command: CommandObject) -> None:
             menu, keyboard = kb.student_menu, kb.get_groups()
         if user.start_date is None:
             user.start_date = (msg.date
-                               .astimezone(pytz.timezone(timezone))
+                               .astimezone(tz(timezone))
                                .strftime('%d-%m-%Y %H:%M:%S'))
             user.username = f"@{msg.from_user.username}"
             user.fullname = msg.from_user.full_name
         user.last_date(msg)
-        db.update_user_activity_stats()
         user.set_today_date()
         user.week = 1
         user.tracking = False
@@ -55,10 +55,9 @@ async def start_handler(msg: Message) -> None:
     """Обработчик команды /start без deep_link'а."""
     user = UserDatabase(msg.from_user.id)
     user.last_date = msg
-    db.update_user_activity_stats()
     if user.start_date is None:
         user.start_date = (msg.date
-                           .astimezone(pytz.timezone(timezone))
+                           .astimezone(tz(timezone))
                            .strftime('%d-%m-%Y %H:%M:%S'))
         user.username = f"@{msg.from_user.username}"
         user.fullname = msg.from_user.full_name
@@ -109,11 +108,11 @@ async def admin_handler(msg: Message) -> None:
 
     from bot.bot import bot
 
-    await bot.send_message(ADMIN_CHAT_ID, message_thread_id=UserDatabase(msg.from_user.id).topic_id, text="Юзверь просит помощи админа @n0rmal_user")
+    await bot.send_message(ADMIN_CHAT_ID, message_thread_id=UserDatabase(msg.from_user.id).topic_id, text="Юзверь просит помощи админа!")
     logging.warning(f'Юзверь {msg.from_user.id} @{msg.from_user.username} просит помощи админа')
     user = UserDatabase(msg.from_user.id)
     await msg.forward(chat_id=ADMIN_CHAT_ID, message_thread_id=user.topic_id)
-    await msg.answer("Модератор скоро напишет вам, ожидайте")
+    await msg.answer("Модератор скоро напишет вам, ожидайте. Пока можете описать проблему.")
     user.tracking = True
     logging.info(f"{msg.from_user.id} написал админу")
 
@@ -131,6 +130,9 @@ async def default_handler(msg: Message) -> None:
 @router.message(ChatTypeIdFilter(chat_type=['private']))
 async def handler(msg: Message) -> None:
     """Обработчик сообщений от пользователя. Отправляет расписание на сегодня, если пользователь выбрал преподавателя, группу или кабинет."""
+
+    from bot.misc import text_maker
+
     user_id = msg.from_user.id
     user = UserDatabase(user_id)
     if msg.content_type == "text":
@@ -168,5 +170,4 @@ async def handler(msg: Message) -> None:
             await msg.forward(ADMIN_CHAT_ID, message_thread_id=user.topic_id)
     else:
         await msg.answer("Я тебя не понимаю, буковы пиши!")
-    user.last_date(msg)
-    db.update_user_activity_stats()
+    user.last_date = msg
