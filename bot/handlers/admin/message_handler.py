@@ -72,7 +72,7 @@ async def dump_handler(msg: Message) -> None:
     try:
         await msg.answer_document(FSInputFile(LOG_FILE), caption="Вот ваш лог")
         open(LOG_FILE, 'w').write('')
-        logging.info("Отчищены логи")
+        logging.info("Выгружены и отчищены логи")
     except Exception as e:
         logging.error('Ошибка при отчистке логов', e)
     try:
