@@ -1,11 +1,9 @@
-from bot.database.user import UserDatabase
-from config import USERS_DB, SCHEDULE_DB
-
+import sqlite3
 from datetime import datetime
-
 from functools import wraps
 
-import sqlite3
+from bot.database.user import UserDatabase
+from config import SCHEDULE_DB, USERS_DB
 
 
 def sql_kit(db=":memory:"):
@@ -35,8 +33,10 @@ def user_info(user_id: int):
     """Возвращает информацию о пользователе, подготовленную к отправке админу"""
 
     user = UserDatabase(user_id)
-    days_until = (datetime.strptime(user.last_date, '%d-%m-%Y %H:%M:%S').date()
-                  - datetime.today().date()).days
+    days_until = (
+        datetime.strptime(user.last_date, "%d-%m-%Y %H:%M:%S").date()
+        - datetime.today().date()
+    ).days
     return f"""
 Информация о пользователе:
 `user_type:``  ``{user.type}`
@@ -81,7 +81,7 @@ def get_all_users_info(cursor: sqlite3.Cursor) -> str:
     month_users_count, week_users_count, today_users_count = 0, 0, 0
     today = datetime.today().date()
     for (last_date_str,) in users:
-        last_date = datetime.strptime(last_date_str, '%d-%m-%Y %H:%M:%S').date()
+        last_date = datetime.strptime(last_date_str, "%d-%m-%Y %H:%M:%S").date()
         days_until = (last_date - today).days
         if days_until >= -30:
             month_users_count += 1
@@ -99,16 +99,18 @@ def get_all_users_info(cursor: sqlite3.Cursor) -> str:
     cursor.execute("SELECT COUNT(*) FROM User_Info WHERE user_type = 'teacher'")
     teachers = cursor.fetchone()[0]
 
-    result = (f"Пользователей: {users_count}\n\n"
-              f"Из них:\n"
-              f"Преподов {teachers}\n"
-              f"Студентов {int(users_count) - int(teachers)}\n\n"
-              f"Активных:\n"
-              f"За месяц - {month_users_count}\n"
-              f"За неделю - {week_users_count}\n"
-              f"За день - {today_users_count}\n"
-              f"Заблокировали бота: {blocked_count}\n"
-              f"Забанено: {banned_count}")
+    result = (
+        f"Пользователей: {users_count}\n\n"
+        f"Из них:\n"
+        f"Преподов {teachers}\n"
+        f"Студентов {int(users_count) - int(teachers)}\n\n"
+        f"Активных:\n"
+        f"За месяц - {month_users_count}\n"
+        f"За неделю - {week_users_count}\n"
+        f"За день - {today_users_count}\n"
+        f"Заблокировали бота: {blocked_count}\n"
+        f"Забанено: {banned_count}"
+    )
     return result
 
 
@@ -132,5 +134,5 @@ async def get_tracked_users() -> list:
     tracked_users = []
     for user_id in user_ids:
         if UserDatabase(user_id).tracking:
-            tracked_users.append(f'`{user_id}`')
+            tracked_users.append(f"`{user_id}`")
     return tracked_users

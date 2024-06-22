@@ -1,14 +1,14 @@
 import os
 
 # Указывается в Dockerfile
-BOT_TOKEN = os.getenv("BOT_TOKEN")
-ADMIN_CHAT_ID = int(os.getenv("ADMIN_CHAT_ID"))
-USERS_DB = os.getenv("USERS_DB")
-ACTIVITIES_DB = os.getenv("ACTIVITIES_DB")
-INVITATION_LINK = os.getenv("INVITATION_LINK")
-SCHEDULE_DB = os.getenv("SCHEDULE_DB")
-LOG_FILE = os.getenv("LOG_FILE")
-timezone = os.getenv("TIMEZONE")
+BOT_TOKEN = "6745633448:AAHW1u0NTez9prv4GHlrWl0Sn04shFS1Scg"
+ADMIN_CHAT_ID = -1001966122887
+USERS_DB = r"C:\Users\normal\PycharmProjects\tks_volsu_schedule\data\users.db"
+ACTIVITIES_DB = r"C:\Users\normal\PycharmProjects\tks_volsu_schedule\data\activities.db"
+INVITATION_LINK = r"Aoldx7sSKQg0MWEy"
+SCHEDULE_DB = r"C:\Users\normal\PycharmProjects\tks_volsu_schedule\data\schedule.db"
+LOG_FILE = r"C:\Users\normal\PycharmProjects\tks_volsu_schedule\logs\bot.log"
+timezone = "Europe/Moscow"
 
 # Время задержки для спама (Сколько должно пройти времени между сообщениями для того, чтобы не считаться спамом)
 THROTTLE_TIME = 1.5
@@ -16,11 +16,16 @@ THROTTLE_TIME = 1.5
 
 # Список групп (не подгружается автоматом при запуске скрипта или изменения расписания)
 groups = ['ИБТС-211', 'ИБТС-221', 'ИБТС-231',
-          'ИБТС-231_2', 'ИТСб-201', 'ИТСб-211',
-          'ИТСб-211_2', 'ИТСб-221', 'ИТСб-221_2',
-          'ИТСб-231', 'ИТСб-231_2', 'РСК-201',
-          'РСК-211', 'РСК-221', 'РСК-231',
-          'ИТСм-231', 'ИТСм-221']
+          'ИТСб-201', 'ИТСб-211', 'ИТСб-221',
+          'ИТСб-231', 'РСК-201', 'РСК-211',
+          'РСК-221', 'РСК-231', 'ИТСм-231',
+          'ИТСм-221']
+# groups = ['ИБТС-211', 'ИБТС-221', 'ИБТС-231',
+#           'ИБТС-231_2', 'ИТСб-201', 'ИТСб-211',
+#           'ИТСб-211_2', 'ИТСб-221', 'ИТСб-221_2',
+#           'ИТСб-231', 'ИТСб-231_2', 'РСК-201',
+#           'РСК-211', 'РСК-221', 'РСК-231',
+#           'ИТСм-231', 'ИТСм-221']
 
 # Список преподавателей
 teachers = ["Арепьева Е.Е.", "Безбожнов О.Н.", "Василюк Д.И.", "Галич С.В.",

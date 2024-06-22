@@ -18,10 +18,12 @@ def start_scheduler():
     scheduler.add_job(update_user_activity_stats, 'interval', hours=1, start_date=next_hour)
     scheduler.start()
 
+# black bot preparation
+# isort bot preparation
 
 if __name__ == "__main__":
     logging.Formatter.converter = lambda *args: datetime.now(pytz.timezone(timezone)).timetuple()
-    logging.basicConfig(level=logging.INFO, filename=LOG_FILE, format="%(asctime)s %(levelname)s  %(message)s",
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s  %(message)s",
                         datefmt='%H:%M:%S %d-%m-%Y', encoding="utf-8")
     logging.getLogger('aiogram.event').setLevel(logging.WARNING)
     db_init()

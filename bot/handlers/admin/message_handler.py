@@ -1,46 +1,59 @@
-from aiogram import F, Router
-from aiogram.types import FSInputFile, Message
-from aiogram.filters import Command, CommandObject
+import logging
 
-from bot.database import utils, activity as db
+from aiogram import F, Router
+from aiogram.filters import Command, CommandObject
+from aiogram.types import FSInputFile, Message
+
+from bot.database import activity as db
+from bot.database import utils
 from bot.database.user import UserDatabase
 from bot.filters import ChatTypeIdFilter
 from bot.markups import admin_markups as kb
 from bot.misc import user_activity
-
-from config import ACTIVITIES_DB, ADMIN_CHAT_ID, LOG_FILE, SCHEDULE_DB, USERS_DB, INVITATION_LINK
-
-import logging
+from config import (ACTIVITIES_DB, ADMIN_CHAT_ID, INVITATION_LINK, LOG_FILE,
+                    SCHEDULE_DB, USERS_DB)
 
 router = Router()
 
 
-@router.message(Command("days_stat"), ChatTypeIdFilter(chat_type=['group', 'supergroup'], chat_id=ADMIN_CHAT_ID))
+@router.message(
+    Command("days_stat"),
+    ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID),
+)
 async def handle_send_daily_plot(msg: Message) -> None:
     """Отправляет график количества пользователей по дням."""
 
     db.update_user_activity_stats()
     user_activity.plot_user_activity_by_days()
-    await msg.answer_photo(FSInputFile('data/user_activity_by_days.png'))
+    await msg.answer_photo(FSInputFile("data/user_activity_by_days.png"))
 
 
-@router.message(Command("hours_stat"), ChatTypeIdFilter(chat_type=['group', 'supergroup'], chat_id=ADMIN_CHAT_ID))
+@router.message(
+    Command("hours_stat"),
+    ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID),
+)
 async def handle_send_hourly_plot(msg: Message, command: CommandObject = None) -> None:
     """Отправляет график количества пользователей по часам для определённого дня."""
 
     db.update_user_activity_stats()
     user_activity.plot_user_activity_by_hours(command.args)
-    await msg.answer_photo(FSInputFile('data/user_activity_by_hours.png'))
+    await msg.answer_photo(FSInputFile("data/user_activity_by_hours.png"))
 
 
-@router.message(Command("menu"), ChatTypeIdFilter(chat_type=['group', 'supergroup'], chat_id=ADMIN_CHAT_ID))
+@router.message(
+    Command("menu"),
+    ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID),
+)
 async def handle_topic_command_track(msg: Message) -> None:
     """Отправляет меню админа."""
 
     await msg.answer("Меню админа", reply_markup=kb.admin_menu)
 
 
-@router.message(Command('ban'), ChatTypeIdFilter(chat_type=['group', 'supergroup'], chat_id=ADMIN_CHAT_ID))
+@router.message(
+    Command("ban"),
+    ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID),
+)
 async def ban_command_handler(msg: Message) -> None:
     """Банит пользователя. Изменяет значение столбца banned в базе данных."""
     from bot.bot import bot
@@ -49,10 +62,13 @@ async def ban_command_handler(msg: Message) -> None:
     user.banned = True
     await msg.answer("Мы его забанили!!!")
     await bot.send_message(user.tg_id(), "За нарушение правил, тебя забанили")
-    logging.info(f'Забанен юзверь {user.tg_id()}')
+    logging.info(f"Забанен юзверь {user.tg_id()}")
 
 
-@router.message(Command('unban'), ChatTypeIdFilter(chat_type=['group', 'supergroup'], chat_id=ADMIN_CHAT_ID))
+@router.message(
+    Command("unban"),
+    ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID),
+)
 async def ban_command_handler(msg: Message) -> None:
     """Разбанивает пользователя. Изменяет значение столбца banned в базе данных."""
 
@@ -62,37 +78,47 @@ async def ban_command_handler(msg: Message) -> None:
     user.banned = False
     await msg.answer("Мы его разбанили!!!")
     await bot.send_message(user.tg_id(), "Амнистия! Тебя разбанили")
-    logging.info(f'Разбанен юзверь {user.tg_id()}')
+    logging.info(f"Разбанен юзверь {user.tg_id()}")
 
 
-@router.message(Command("dump"), ChatTypeIdFilter(chat_type=['group', 'supergroup'], chat_id=ADMIN_CHAT_ID))
+@router.message(
+    Command("dump"),
+    ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID),
+)
 async def dump_handler(msg: Message) -> None:
     """Отправляет базу данных пользователей и логи в админский чат."""
 
     try:
         await msg.answer_document(FSInputFile(LOG_FILE), caption="Вот ваш лог")
-        open(LOG_FILE, 'w').write('')
+        open(LOG_FILE, "w").write("")
         logging.info("Выгружены и отчищены логи")
     except Exception as e:
-        logging.error('Ошибка при отчистке логов', e)
+        logging.error("Ошибка при отчистке логов", e)
     try:
         await msg.answer_document(FSInputFile(USERS_DB), caption="Вот ваша база данных")
         logging.info("Выгружена база данных пользователей")
     except Exception as e:
         logging.error("Ошибка при выгрузке базы данных пользователей", e)
     try:
-        await msg.answer_document(FSInputFile(ACTIVITIES_DB), caption="Вот ваша база данных")
+        await msg.answer_document(
+            FSInputFile(ACTIVITIES_DB), caption="Вот ваша база данных"
+        )
         logging.info("Выгружена база данных активности")
     except Exception as e:
         logging.error("Ошибка при выгрузке базы данных активности", e)
     try:
-        await msg.answer_document(FSInputFile(SCHEDULE_DB), caption="Вот ваше расписание")
+        await msg.answer_document(
+            FSInputFile(SCHEDULE_DB), caption="Вот ваше расписание"
+        )
         logging.info("Выгружено расписание")
     except Exception as e:
         logging.error("Ошибка при выгрузке расписания", e)
 
 
-@router.message(Command("track"), ChatTypeIdFilter(chat_type=['group', 'supergroup'], chat_id=ADMIN_CHAT_ID))
+@router.message(
+    Command("track"),
+    ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID),
+)
 async def handle_topic_command_track(msg: Message, command: CommandObject) -> None:
     """Включает/выключает трекинг для пользователя или для всех пользователей."""
 
@@ -121,26 +147,44 @@ async def handle_topic_command_track(msg: Message, command: CommandObject) -> No
             await resp.edit_text("Трекинг выключен для всех пользователей")
         elif command == "status":
             users = await utils.get_tracked_users()
-            tracked = '\n'.join([str(user) for user in users])
-            await resp.edit_text(f"Трекаются: \n" + tracked if users else "Никто не трекается", parse_mode='MarkdownV2')
+            tracked = "\n".join([str(user) for user in users])
+            await resp.edit_text(
+                f"Трекаются: \n" + tracked if users else "Никто не трекается",
+                parse_mode="MarkdownV2",
+            )
 
 
-@router.message(Command("info"), ChatTypeIdFilter(chat_type=['group', 'supergroup'], chat_id=ADMIN_CHAT_ID))
-async def handle_topic_command_info(msg: Message, command: CommandObject = None) -> None:
+@router.message(
+    Command("info"),
+    ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID),
+)
+async def handle_topic_command_info(
+    msg: Message, command: CommandObject = None
+) -> None:
     """Присылает информацию о пользователе или о всех пользователях в зависимости от топика"""
 
     start = await msg.answer("Собираю статистику")
     if command.args is None:
         if start.message_thread_id:
-            await start.edit_text(utils.user_info(UserDatabase(topic_id=msg.message_thread_id).tg_id()), parse_mode="MarkdownV2")
+            await start.edit_text(
+                utils.user_info(UserDatabase(topic_id=msg.message_thread_id).tg_id()),
+                parse_mode="MarkdownV2",
+            )
         else:
             await start.edit_text(utils.get_all_users_info())
     else:
-        await msg.answer(f"https://t.me/{INVITATION_LINK}/{UserDatabase(int(command.args)).topic_id}")
-        await start.edit_text(utils.user_info(int(command.args)), parse_mode="MarkdownV2")
+        await msg.answer(
+            f"https://t.me/{INVITATION_LINK}/{UserDatabase(int(command.args)).topic_id}"
+        )
+        await start.edit_text(
+            utils.user_info(int(command.args)), parse_mode="MarkdownV2"
+        )
 
 
-@router.message(F.document, ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID))
+@router.message(
+    F.document,
+    ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID),
+)
 async def file_handler(msg: Message):
     """Ловит документы и заменяет файл schedule.db, users.db, activities.db на полученные."""
 
@@ -149,24 +193,24 @@ async def file_handler(msg: Message):
     file_name = msg.document.file_name
     file_map = {
         "schedule.db": {
-            "path": SCHEDULE_DB.replace('/tks_schedule/', ''),
-            "message": 'Заменили расписание'
+            "path": SCHEDULE_DB.replace("/tks_schedule/", ""),
+            "message": "Заменили расписание",
         },
         "users.db": {
-            "path": USERS_DB.replace('/tks_schedule/', ''),
-            "message": 'Заменили базу данных пользователей'
+            "path": USERS_DB.replace("/tks_schedule/", ""),
+            "message": "Заменили базу данных пользователей",
         },
         "activities.db": {
-            "path": ACTIVITIES_DB.replace('/tks_schedule/', ''),
-            "message": 'Заменили базу данных активности пользователей'
-        }
+            "path": ACTIVITIES_DB.replace("/tks_schedule/", ""),
+            "message": "Заменили базу данных активности пользователей",
+        },
     }
 
     if file_name in file_map:
         file_id = msg.document.file_id
         file_info = await bot.get_file(file_id)
         downloaded_file = await bot.download_file(file_info.file_path)
-        with open(file_map[file_name]["path"], 'wb') as new_file:
+        with open(file_map[file_name]["path"], "wb") as new_file:
             new_file.write(downloaded_file.read())
         logging.info(file_map[file_name]["message"])
         await msg.answer(file_map[file_name]["message"])
@@ -176,21 +220,26 @@ async def file_handler(msg: Message):
         await msg.forward(ADMIN_CHAT_ID)
 
 
-@router.message(ChatTypeIdFilter(chat_type=['group', 'supergroup'], chat_id=ADMIN_CHAT_ID))
+@router.message(
+    ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID)
+)
 async def handle_topic_message(msg: Message) -> None:
     """Отправляет сообщение в личный топик пользователя"""
 
     try:
-        if '/' in msg.text[0]:
+        if "/" in msg.text[0]:
             await msg.answer("Нет такой команды, но я тебя спас, не бойся")
         else:
             from bot.bot import bot
             from bot.database.user import UserDatabase
 
             if msg.message_thread_id is not None:
-                await bot.send_message(UserDatabase(topic_id=msg.message_thread_id).tg_id(), text=msg.text)
+                await bot.send_message(
+                    UserDatabase(topic_id=msg.message_thread_id).tg_id(), text=msg.text
+                )
             else:
                 from asyncio import sleep
+
                 from bot.database.utils import all_user_ids
 
                 user_ids = all_user_ids()
@@ -199,9 +248,11 @@ async def handle_topic_message(msg: Message) -> None:
                         try:
                             await bot.send_message(user_id, msg.text)
                         except Exception as e:
-                            logging.error(f"Не удалось отправить сообщение пользователю {user_id}: {e}")
+                            logging.error(
+                                f"Не удалось отправить сообщение пользователю {user_id}: {e}"
+                            )
                         finally:
                             await sleep(0.5)
-                logging.info('Отправлено сообщение всем пользователям')
+                logging.info("Отправлено сообщение всем пользователям")
     except TypeError:
         pass

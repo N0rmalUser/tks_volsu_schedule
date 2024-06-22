@@ -1,6 +1,1 @@
-from . import database
-from . import filters
-from . import handlers
-from . import markups
-from . import middlewares
-from . import misc
+from . import database, filters, handlers, markups, middlewares, misc

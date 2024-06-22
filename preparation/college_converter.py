@@ -1,11 +1,12 @@
-import pandas as pd
-import sqlite3
 import os
-import openpyxl
 import re
+import sqlite3
+
+import openpyxl
+import pandas as pd
 from progress.bar import Bar
 
-DATABASE_PATH = 'schedule.db'
+DATABASE_PATH = "schedule.db"
 
 
 def convert_day_name(day_short):
@@ -15,7 +16,7 @@ def convert_day_name(day_short):
         "СР": "Среда",
         "ЧТ": "Четверг",
         "ПТ": "Пятница",
-        "СБ": "Суббота"
+        "СБ": "Суббота",
     }
     return days.get(day_short, day_short)
 
@@ -23,19 +24,21 @@ def convert_day_name(day_short):
 def initialize_database():
     conn = sqlite3.connect(DATABASE_PATH)
     cursor = conn.cursor()
-    cursor.execute('''CREATE TABLE IF NOT EXISTS CollegeSchedule (
-                            ScheduleID INTEGER PRIMARY KEY AUTOINCREMENT,
-                            Time TEXT NOT NULL,
-                            DayOfWeek TEXT NOT NULL,
-                            WeekType TEXT NOT NULL,
-                            GroupID INTEGER,
-                            TeacherID INTEGER,
-                            RoomID INTEGER,
-                            SubjectID INTEGER,
-                            FOREIGN KEY (GroupID) REFERENCES Groups(GroupID),
-                            FOREIGN KEY (TeacherID) REFERENCES Teachers(TeacherID),
-                            FOREIGN KEY (RoomID) REFERENCES Rooms(RoomID),
-                            FOREIGN KEY (SubjectID) REFERENCES Subjects(SubjectID))''')
+    cursor.execute(
+        """CREATE TABLE IF NOT EXISTS CollegeSchedule (
+                ScheduleID INTEGER PRIMARY KEY AUTOINCREMENT,
+                Time TEXT NOT NULL,
+                DayOfWeek TEXT NOT NULL,
+                WeekType TEXT NOT NULL,
+                GroupID INTEGER,
+                TeacherID INTEGER,
+                RoomID INTEGER,
+                SubjectID INTEGER,
+                FOREIGN KEY (GroupID) REFERENCES Groups(GroupID),
+                FOREIGN KEY (TeacherID) REFERENCES Teachers(TeacherID),
+                FOREIGN KEY (RoomID) REFERENCES Rooms(RoomID),
+                FOREIGN KEY (SubjectID) REFERENCES Subjects(SubjectID))"""
+    )
     conn.commit()
     conn.close()
 
@@ -82,22 +85,29 @@ def insert_into_database(tm, day, week, room, subject, group, teacher):
 
     cursor.execute(
         "INSERT INTO CollegeSchedule (Time, DayOfWeek, WeekType, GroupID, TeacherID, RoomID, SubjectID) VALUES (?, ?, ?, ?, ?, ?, ?)",
-        (tm, day, week, group_id, teacher_id, room_id, subject_id))
+        (tm, day, week, group_id, teacher_id, room_id, subject_id),
+    )
     conn.commit()
     conn.close()
 
 
 def main():
     initialize_database()
-    files = [f for f in os.listdir('preparation\\schedules\\') if f.endswith('.xlsx')]
-    bar = Bar('Импорт расписания колледжа в базу данных', max=len(files))
+    files = [f for f in os.listdir("preparation\\schedules\\") if f.endswith(".xlsx")]
+    bar = Bar("Импорт расписания колледжа в базу данных", max=len(files))
 
     for file in files:
         bar.next()
-        file_path = os.path.join('preparation\\schedules\\', file)
-        teacher_name = re.sub(r'_', r'.',
-                              re.sub(r'([А-ЯЁа-яёA-Za-z]{2,})_', r'\1 ',
-                                     re.findall(r'расписание_занятий_(\w+_\w[.|_]\w\.)', file)[0]))
+        file_path = os.path.join("preparation\\schedules\\", file)
+        teacher_name = re.sub(
+            r"_",
+            r".",
+            re.sub(
+                r"([А-ЯЁа-яёA-Za-z]{2,})_",
+                r"\1 ",
+                re.findall(r"расписание_занятий_(\w+_\w[.|_]\w\.)", file)[0],
+            ),
+        )
         df = pd.read_excel(file_path)
 
         excel = openpyxl.load_workbook(filename=file_path)
@@ -111,25 +121,46 @@ def main():
             base_value = df.iloc[rl, cl]
             df.iloc[rl:rr, cl:cr] = base_value
 
-        last_time = 'None'
+        last_time = "None"
         for index, row in df.iterrows():
-            day_name = convert_day_name(row['Unnamed: 0'])
-            time = row['время'].split('-')[0]
-            week_name = 'Числитель' if row['время'] is not last_time else 'Знаменатель'
-            last_time = row['время']
+            day_name = convert_day_name(row["Unnamed: 0"])
+            time = row["время"].split("-")[0]
+            week_name = "Числитель" if row["время"] is not last_time else "Знаменатель"
+            last_time = row["время"]
             if pd.isna(row[teacher_name]):
                 continue
-            substitution = re.split(r'\.', row[teacher_name])
+            substitution = re.split(r"\.", row[teacher_name])
             groups = substitution[0]
-            subject_name = re.sub(r'\s*,*\s*преп.*$', '', re.sub(r'^\s*', '', substitution[1])) + ')'
-            room_name = re.sub(r'(\s*|,*|ауд)', '', substitution[-1]) \
-                if substitution[-1] != '' \
-                else re.sub(r'(\s*|,*|ауд)', '', substitution[-2])
-            group_name = list(set([i.strip() for i in groups.split(',')]))
+            subject_name = (
+                re.sub(r"\s*,*\s*преп.*$", "", re.sub(r"^\s*", "", substitution[1]))
+                + ")"
+            )
+            room_name = (
+                re.sub(r"(\s*|,*|ауд)", "", substitution[-1])
+                if substitution[-1] != ""
+                else re.sub(r"(\s*|,*|ауд)", "", substitution[-2])
+            )
+            group_name = list(set([i.strip() for i in groups.split(",")]))
             if len(group_name) > 1:
                 for group in group_name:
-                    insert_into_database(time, day_name, week_name, room_name, subject_name, group, teacher_name)
-            insert_into_database(time, day_name, week_name, room_name, subject_name, group_name[0], teacher_name)
+                    insert_into_database(
+                        time,
+                        day_name,
+                        week_name,
+                        room_name,
+                        subject_name,
+                        group,
+                        teacher_name,
+                    )
+            insert_into_database(
+                time,
+                day_name,
+                week_name,
+                room_name,
+                subject_name,
+                group_name[0],
+                teacher_name,
+            )
     bar.finish()
     print("Расписания успешно сохранены в базу данных.")
 

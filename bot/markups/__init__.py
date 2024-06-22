@@ -1,3 +1,1 @@
-from . import admin_markups
-from . import user_markups
-from . import keyboard_factory
+from . import admin_markups, keyboard_factory, user_markups

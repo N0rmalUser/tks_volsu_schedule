@@ -1,10 +1,12 @@
-from aiogram.filters import BaseFilter
 from aiogram import types
+from aiogram.filters import BaseFilter
+
 from config import ADMIN_CHAT_ID
 
 
 class ChatTypeIdFilter(BaseFilter):
     """Фильтр, проверяющий тип чата и id, если указан, и возвращающий True или False"""
+
     def __init__(self, chat_type: list, chat_id: int = None):
         self.chat_id = chat_id
         self.chat_type = chat_type

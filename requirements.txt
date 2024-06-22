@@ -7,3 +7,5 @@ matplotlib~=3.9.0
 python-docx
 #progress~=1.6
 pytz~=2024.1
+black~=24.4.2
+isort~=5.13.2

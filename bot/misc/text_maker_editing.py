@@ -1,13 +1,10 @@
-from bot.database.utils import sql_kit
-from bot.misc.text_maker import (
-    time_to_minutes,
-    get_time_symbol,
-    get_lesson_label,
-    get_date_for_day,
-)
-import config
 import re
 import sqlite3
+
+import config
+from bot.database.utils import sql_kit
+from bot.misc.text_maker import (get_date_for_day, get_lesson_label,
+                                 get_time_symbol, time_to_minutes)
 
 
 @sql_kit(config.SCHEDULE_DB)

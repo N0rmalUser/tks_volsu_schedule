@@ -1,33 +1,43 @@
-from docx import Document
-import sqlite3
 import os
 import re
+import sqlite3
+
+from docx import Document
 from progress.bar import Bar
 
-DATABASE_PATH = 'schedule.db'
+DATABASE_PATH = "schedule.db"
 
 
 def initialize_database():
     conn = sqlite3.connect(DATABASE_PATH)
     cursor = conn.cursor()
 
-    cursor.execute('''CREATE TABLE IF NOT EXISTS Rooms (
+    cursor.execute(
+        """CREATE TABLE IF NOT EXISTS Rooms (
                         RoomID INTEGER PRIMARY KEY AUTOINCREMENT,
-                        RoomNumber TEXT UNIQUE NOT NULL)''')
+                        RoomNumber TEXT UNIQUE NOT NULL)"""
+    )
 
-    cursor.execute('''CREATE TABLE IF NOT EXISTS Groups (
+    cursor.execute(
+        """CREATE TABLE IF NOT EXISTS Groups (
                         GroupID INTEGER PRIMARY KEY AUTOINCREMENT,
-                        GroupName TEXT UNIQUE NOT NULL)''')
+                        GroupName TEXT UNIQUE NOT NULL)"""
+    )
 
-    cursor.execute('''CREATE TABLE IF NOT EXISTS Teachers (
+    cursor.execute(
+        """CREATE TABLE IF NOT EXISTS Teachers (
                         TeacherID INTEGER PRIMARY KEY AUTOINCREMENT,
-                        TeacherName TEXT UNIQUE NOT NULL)''')
+                        TeacherName TEXT UNIQUE NOT NULL)"""
+    )
 
-    cursor.execute('''CREATE TABLE IF NOT EXISTS Subjects (
+    cursor.execute(
+        """CREATE TABLE IF NOT EXISTS Subjects (
                         SubjectID INTEGER PRIMARY KEY AUTOINCREMENT,
-                        SubjectName TEXT UNIQUE NOT NULL)''')
+                        SubjectName TEXT UNIQUE NOT NULL)"""
+    )
 
-    cursor.execute('''CREATE TABLE IF NOT EXISTS Schedule (
+    cursor.execute(
+        """CREATE TABLE IF NOT EXISTS Schedule (
                         ScheduleID INTEGER PRIMARY KEY AUTOINCREMENT,
                         Time TEXT NOT NULL,
                         DayOfWeek TEXT NOT NULL,
@@ -39,15 +49,16 @@ def initialize_database():
                         FOREIGN KEY (GroupID) REFERENCES Groups(GroupID),
                         FOREIGN KEY (TeacherID) REFERENCES Teachers(TeacherID),
                         FOREIGN KEY (RoomID) REFERENCES Rooms(RoomID),
-                        FOREIGN KEY (SubjectID) REFERENCES Subjects(SubjectID))''')
+                        FOREIGN KEY (SubjectID) REFERENCES Subjects(SubjectID))"""
+    )
 
     conn.commit()
     conn.close()
 
 
 def clean_schedule(schedule):
-    times = ['08:30', '10:10', '12:00', '13:40', '15:20', '17:00', '18:40']
-    days = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота']
+    times = ["08:30", "10:10", "12:00", "13:40", "15:20", "17:00", "18:40"]
+    days = ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота"]
     for week_name, week_schedule in schedule.items():
         for day_name, day_schedule in week_schedule.items():
             for subject_time in times:
@@ -68,42 +79,65 @@ def insert_into_database(schedule_name, schedule):
         for day_name, day_schedule in week_schedule.items():
             for time, details in day_schedule.items():
                 # Обработка строки преподавателя для извлечения только имени
-                teacher_name = details["Преподаватель"].split(',')[0].strip() \
-                    if "," in details["Преподаватель"] \
+                teacher_name = (
+                    details["Преподаватель"].split(",")[0].strip()
+                    if "," in details["Преподаватель"]
                     else details["Преподаватель"]
+                )
 
-                cursor.execute("SELECT GroupID FROM Groups WHERE GroupName = ?", (schedule_name,))
+                cursor.execute(
+                    "SELECT GroupID FROM Groups WHERE GroupName = ?", (schedule_name,)
+                )
                 group_id = cursor.fetchone()
                 if group_id is None:
-                    cursor.execute("INSERT INTO Groups (GroupName) VALUES (?)", (schedule_name,))
+                    cursor.execute(
+                        "INSERT INTO Groups (GroupName) VALUES (?)", (schedule_name,)
+                    )
                     conn.commit()
                     group_id = cursor.lastrowid
                 else:
                     group_id = group_id[0]
 
                 # Используем обработанное имя преподавателя
-                cursor.execute("SELECT TeacherID FROM Teachers WHERE TeacherName = ?", (teacher_name,))
+                cursor.execute(
+                    "SELECT TeacherID FROM Teachers WHERE TeacherName = ?",
+                    (teacher_name,),
+                )
                 teacher_id = cursor.fetchone()
                 if teacher_id is None:
-                    cursor.execute("INSERT INTO Teachers (TeacherName) VALUES (?)", (teacher_name,))
+                    cursor.execute(
+                        "INSERT INTO Teachers (TeacherName) VALUES (?)", (teacher_name,)
+                    )
                     conn.commit()
                     teacher_id = cursor.lastrowid
                 else:
                     teacher_id = teacher_id[0]
 
-                cursor.execute("SELECT RoomID FROM Rooms WHERE RoomNumber = ?", (details["Аудитория"],))
+                cursor.execute(
+                    "SELECT RoomID FROM Rooms WHERE RoomNumber = ?",
+                    (details["Аудитория"],),
+                )
                 room_id = cursor.fetchone()
                 if room_id is None:
-                    cursor.execute("INSERT INTO Rooms (RoomNumber) VALUES (?)", (details["Аудитория"],))
+                    cursor.execute(
+                        "INSERT INTO Rooms (RoomNumber) VALUES (?)",
+                        (details["Аудитория"],),
+                    )
                     conn.commit()
                     room_id = cursor.lastrowid
                 else:
                     room_id = room_id[0]
 
-                cursor.execute("SELECT SubjectID FROM Subjects WHERE SubjectName = ?", (details["Предмет"],))
+                cursor.execute(
+                    "SELECT SubjectID FROM Subjects WHERE SubjectName = ?",
+                    (details["Предмет"],),
+                )
                 subject_id = cursor.fetchone()
                 if subject_id is None:
-                    cursor.execute("INSERT INTO Subjects (SubjectName) VALUES (?)", (details["Предмет"],))
+                    cursor.execute(
+                        "INSERT INTO Subjects (SubjectName) VALUES (?)",
+                        (details["Предмет"],),
+                    )
                     conn.commit()
                     subject_id = cursor.lastrowid
                 else:
@@ -111,17 +145,26 @@ def insert_into_database(schedule_name, schedule):
 
                 cursor.execute(
                     "INSERT INTO Schedule (Time, DayOfWeek, WeekType, GroupID, TeacherID, RoomID, SubjectID) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                    (time, day_name, week_type, group_id, teacher_id, room_id, subject_id))
+                    (
+                        time,
+                        day_name,
+                        week_type,
+                        group_id,
+                        teacher_id,
+                        room_id,
+                        subject_id,
+                    ),
+                )
     conn.commit()
     conn.close()
 
 
 initialize_database()
-files = [f for f in os.listdir('preparation\\schedules\\') if f.endswith('.docx')]
-bar = Bar('Импорт расписания университета в базу данных', max=len(files))
+files = [f for f in os.listdir("preparation\\schedules\\") if f.endswith(".docx")]
+bar = Bar("Импорт расписания университета в базу данных", max=len(files))
 
 for file in files:
-    file_path = os.path.join('preparation\\schedules\\', file)
+    file_path = os.path.join("preparation\\schedules\\", file)
     doc = Document(file_path)
     table = doc.tables[0]
     temp_schedule = {}
@@ -137,42 +180,61 @@ for file in files:
         #     print(subinfo.text)
         # На будущее разделение по подгруппам
 
-        parts = re.split(r'(?<=\))\s*,', re.sub(r'\s*-*\s*поток\s\d+\s*', '', info.text))
+        parts = re.split(
+            r"(?<=\))\s*,", re.sub(r"\s*-*\s*поток\s\d+\s*", "", info.text)
+        )
         subject = parts[0].strip()
-        if subject != '':
+        if subject != "":
             if len(parts) > 1 and parts[1].strip():
-                auditorium_match = re.search(r'Ауд\.*.*', parts[1])
+                auditorium_match = re.search(r"Ауд\.*.*", parts[1])
                 if auditorium_match:
-                    classroom = re.sub(r'СпортивныйзалК', 'Спортзал К',
-                                   re.sub(r'\s*', '', re.sub(r'Ауд\.', '', auditorium_match.group())))
-                    if classroom[-1] in ',;:':
+                    classroom = re.sub(
+                        r"СпортивныйзалК",
+                        "Спортзал К",
+                        re.sub(
+                            r"\s*", "", re.sub(r"Ауд\.", "", auditorium_match.group())
+                        ),
+                    )
+                    if classroom[-1] in ",;:":
                         classroom = classroom[:-1]
                     teachers_text = re.sub(
-                        r'(\s*доцент\s*|\s*преподаватель\s*|\s*старший преподаватель\s*|\s*ассистент|\s*профессор\s*)',
-                        '',
-                        parts[1].replace(classroom, ''))
+                        r"(\s*доцент\s*|\s*преподаватель\s*|\s*старший преподаватель\s*|\s*ассистент|\s*профессор\s*)",
+                        "",
+                        parts[1].replace(classroom, ""),
+                    )
                 else:
-                    classroom = ''
-                    teachers_text = ''
+                    classroom = ""
+                    teachers_text = ""
 
-                teachers = [teacher.strip() for teacher in teachers_text.split(',') if teacher.strip()]
-                teacher = ', '.join(teachers)
+                teachers = [
+                    teacher.strip()
+                    for teacher in teachers_text.split(",")
+                    if teacher.strip()
+                ]
+                teacher = ", ".join(teachers)
             else:
-                teacher = ''
-                classroom = ''
+                teacher = ""
+                classroom = ""
         else:
-            teacher = 'None'
-            subject = 'None'
-            classroom = 'None'
-        formatted_time = time.text.split('-')[0]
-        time = re.sub(r'\b8:30\b', '08:30', re.sub(r'\s*', '', formatted_time))
-        day = re.sub(r'\s+', '', day.text)
+            teacher = "None"
+            subject = "None"
+            classroom = "None"
+        formatted_time = time.text.split("-")[0]
+        time = re.sub(r"\b8:30\b", "08:30", re.sub(r"\s*", "", formatted_time))
+        day = re.sub(r"\s+", "", day.text)
         key = (str(day), str(time))
         if subject.strip() and teacher.strip() and classroom.strip():
-            schedule_entry = {"Предмет": subject, "Преподаватель": teacher, "Аудитория": classroom}
+            schedule_entry = {
+                "Предмет": subject,
+                "Преподаватель": teacher,
+                "Аудитория": classroom,
+            }
             if key not in temp_schedule:
                 # Засовывает сразу в обе недели это занятие
-                temp_schedule[key] = {"Числитель": schedule_entry, "Знаменатель": schedule_entry}
+                temp_schedule[key] = {
+                    "Числитель": schedule_entry,
+                    "Знаменатель": schedule_entry,
+                }
             else:
                 # Если оно уже заполнено (есть другое на знаменателе), то меняется на новое, даже если None
                 temp_schedule[key]["Знаменатель"] = schedule_entry

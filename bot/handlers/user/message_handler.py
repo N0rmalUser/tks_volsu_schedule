@@ -1,21 +1,20 @@
+import logging
+
 from aiogram import Router
-from aiogram.filters import Command, CommandStart, CommandObject
-from aiogram.types import Message
+from aiogram.filters import Command, CommandObject, CommandStart
+from aiogram.types import KeyboardButton, Message
+from aiogram.utils.keyboard import InlineKeyboardBuilder, ReplyKeyboardBuilder
+from pytz import timezone as tz
 
 from bot.database.user import UserDatabase
 from bot.filters import ChatTypeIdFilter
 from bot.markups import user_markups as kb
-
 from config import ADMIN_CHAT_ID, timezone
-
-import logging
-
-from pytz import timezone as tz
 
 router = Router()
 
 
-@router.message(CommandStart(deep_link=True), ChatTypeIdFilter(chat_type=['private']))
+@router.message(CommandStart(deep_link=True), ChatTypeIdFilter(chat_type=["private"]))
 async def start_deep_handler(msg: Message, command: CommandObject) -> None:
     """Обработчик команды /start с deep_link'ом. Назначает тип пользователя в зависимости от ссылки, а также добавляет id пригласившего пользователя в базу данных."""
 
@@ -33,9 +32,9 @@ async def start_deep_handler(msg: Message, command: CommandObject) -> None:
             user.user_type = "student"
             menu, keyboard = kb.student_menu, kb.get_groups()
         if user.start_date is None:
-            user.start_date = (msg.date
-                               .astimezone(tz(timezone))
-                               .strftime('%d-%m-%Y %H:%M:%S'))
+            user.start_date = msg.date.astimezone(tz(timezone)).strftime(
+                "%d-%m-%Y %H:%M:%S"
+            )
             user.username = f"@{msg.from_user.username}"
             user.fullname = msg.from_user.full_name
         user.last_date(msg)
@@ -44,37 +43,69 @@ async def start_deep_handler(msg: Message, command: CommandObject) -> None:
         user.tracking = False
 
         from bot.bot import start_message
+
         await start_message(msg, menu, keyboard)
     except Exception:
         logging.warning(f"{msg.from_user.id} перешёл по неверной ссылке")
         await msg.answer("Неверная ссылка")
 
 
-@router.message(CommandStart(), ChatTypeIdFilter(chat_type=['private']))
+@router.message(CommandStart(), ChatTypeIdFilter(chat_type=["private"]))
 async def start_handler(msg: Message) -> None:
     """Обработчик команды /start без deep_link'а."""
+
     user = UserDatabase(msg.from_user.id)
     user.last_date = msg
     if user.start_date is None:
-        user.start_date = (msg.date
-                           .astimezone(tz(timezone))
-                           .strftime('%d-%m-%Y %H:%M:%S'))
+        user.start_date = msg.date.astimezone(tz(timezone)).strftime(
+            "%d-%m-%Y %H:%M:%S"
+        )
         user.username = f"@{msg.from_user.username}"
         user.fullname = msg.from_user.full_name
     user.set_today_date()
     user.week = 1
     user.tracking = False
-    menu, keyboard = (kb.teacher_menu, kb.get_teachers()) if user.type == "teacher" else (kb.student_menu, kb.get_groups())
+    menu, keyboard = (
+        (kb.teacher_menu, kb.get_teachers())
+        if user.type == "teacher"
+        else (kb.student_menu, kb.get_groups())
+    )
 
     from bot.bot import start_message
+
     await start_message(msg, menu, keyboard)
 
 
-@router.message(Command('help'), ChatTypeIdFilter(chat_type=['private']))
+# black aiogram tests examples
+# isort aiogram tests examples
+def test_markup2():
+    builder = ReplyKeyboardBuilder()
+    builder.row(*(KeyboardButton(text=f"test-{index}") for index in range(8)))
+    builder.button(text="Add", callback_data="add")
+    builder.button(text="Cancel", callback_data="cancel")
+    builder.adjust(3, 1, -2)
+    return builder.as_markup()
+
+
+def test_markup():
+    builder = InlineKeyboardBuilder()
+    for i in range(1):
+        builder.button(text=f"test{i}", callback_data=f"test{i}")
+    builder.adjust(-2)
+    return builder.as_markup()
+
+
+@router.message(Command("test"))
+async def test_handler(msg: Message) -> None:
+    await msg.answer("This is TEST!!!", reply_markup=test_markup())
+
+
+@router.message(Command("help"), ChatTypeIdFilter(chat_type=["private"]))
 async def help_handler(msg: Message) -> None:
     """Обработчик команды /help. Отправляет сообщение с описанием бота."""
-    if UserDatabase(msg.from_user.id).type == 'teacher':
-        await msg.answer("""
+    if UserDatabase(msg.from_user.id).type == "teacher":
+        await msg.answer(
+            """
 Привет, это бот расписания кафедры ТКС!
 
 Кнопка `Расписание на сегодня` показывает расписание на сегодняшний день для выбранного преподавателя.
@@ -85,9 +116,11 @@ async def help_handler(msg: Message) -> None:
 ✅ показывает, что выбрана эта неделя, для изменения недели нужно нажать кнопку с ➡️
 
 Для связи с администратором при возникших ошибках/изменениях в расписании используйте команду /admin и опишите проблему.
-""")
+"""
+        )
     else:
-        await msg.answer("""
+        await msg.answer(
+            """
 Привет, это бот расписания кафедры ТКС!
 Донаты принимаются вкусняшками в 1-19М
 
@@ -99,35 +132,48 @@ async def help_handler(msg: Message) -> None:
 ✅ показывает, что выбрана эта неделя, для изменения недели нужно нажать кнопку с ➡️
 
 Для связи с администратором при возникших ошибках/изменениях в расписании используйте команду /admin и опишите проблему.
-""")
+"""
+        )
 
 
-@router.message(Command("admin"), ChatTypeIdFilter(chat_type=['private']))
+@router.message(Command("admin"), ChatTypeIdFilter(chat_type=["private"]))
 async def admin_handler(msg: Message) -> None:
     """Обработчик команды /admin. Пересылает сообщение админу и включает слежку за действиями пользователя."""
 
     from bot.bot import bot
 
-    await bot.send_message(ADMIN_CHAT_ID, message_thread_id=UserDatabase(msg.from_user.id).topic_id, text="Юзверь просит помощи админа!")
-    logging.warning(f'Юзверь {msg.from_user.id} @{msg.from_user.username} просит помощи админа')
+    await bot.send_message(
+        ADMIN_CHAT_ID,
+        message_thread_id=UserDatabase(msg.from_user.id).topic_id,
+        text="Юзверь просит помощи админа!",
+    )
+    logging.warning(
+        f"Юзверь {msg.from_user.id} @{msg.from_user.username} просит помощи админа"
+    )
     user = UserDatabase(msg.from_user.id)
     await msg.forward(chat_id=ADMIN_CHAT_ID, message_thread_id=user.topic_id)
-    await msg.answer("Модератор скоро напишет вам, ожидайте. Пока можете описать проблему.")
+    await msg.answer(
+        "Модератор скоро напишет вам, ожидайте. Пока можете описать проблему."
+    )
     user.tracking = True
     logging.info(f"{msg.from_user.id} написал админу")
 
 
-@router.message(Command("default"), ChatTypeIdFilter(chat_type=['private']))
+@router.message(Command("default"), ChatTypeIdFilter(chat_type=["private"]))
 async def default_handler(msg: Message) -> None:
     """Устанавливает пользователю преподавателя или группу по-умолчанию"""
 
-    if UserDatabase(msg.from_user.id).type == 'teacher':
-        await msg.answer("Выберите себя из списка", reply_markup=kb.get_default_teachers())
+    if UserDatabase(msg.from_user.id).type == "teacher":
+        await msg.answer(
+            "Выберите себя из списка", reply_markup=kb.get_default_teachers()
+        )
     else:
-        await msg.answer("Выберите себя из списка", reply_markup=kb.get_default_groups())
+        await msg.answer(
+            "Выберите себя из списка", reply_markup=kb.get_default_groups()
+        )
 
 
-@router.message(ChatTypeIdFilter(chat_type=['private']))
+@router.message(ChatTypeIdFilter(chat_type=["private"]))
 async def handler(msg: Message) -> None:
     """Обработчик сообщений от пользователя. Отправляет расписание на сегодня, если пользователь выбрал преподавателя, группу или кабинет."""
 
@@ -138,26 +184,46 @@ async def handler(msg: Message) -> None:
     if msg.content_type == "text":
         if msg.text == "Расписание на сегодня":
             from bot.database.schedule import Schedule
+
             user.set_today_date()
             default = user.default
 
             if default is None:
-                entity_id = Schedule().get_teacher_id(user.teacher) if user.type == "teacher" else Schedule().get_group_id(user.group)
+                entity_id = (
+                    Schedule().get_teacher_id(user.teacher)
+                    if user.type == "teacher"
+                    else Schedule().get_group_id(user.group)
+                )
             else:
                 entity_id = Schedule().get_teacher_id(default)
 
             if not entity_id:
                 await msg.answer(
-                    f"Сначала выберите {'ФИО преподавателя' if user.type == 'teacher' else 'группу'}, нажав на соответствующую кнопку.")
+                    f"Сначала выберите {'ФИО преподавателя' if user.type == 'teacher' else 'группу'}, нажав на соответствующую кнопку."
+                )
                 return
             if user.type == "teacher":
-                week_kb = kb.get_days_teacher(user_id, 'teacher', user.week, value=entity_id)
-                await msg.answer(text_maker.get_teacher_schedule(day=user.day, week=user.week, teacher_name=Schedule().get_teacher_name(entity_id)),
-                                 reply_markup=week_kb)
+                week_kb = kb.get_days_teacher(
+                    user_id, "teacher", user.week, value=entity_id
+                )
+                await msg.answer(
+                    text_maker.get_teacher_schedule(
+                        day=user.day,
+                        week=user.week,
+                        teacher_name=Schedule().get_teacher_name(entity_id),
+                    ),
+                    reply_markup=week_kb,
+                )
             elif user.type == "student":
-                week_kb = kb.get_days(user_id, 'group', user.week, value=entity_id)
-                await msg.answer(text_maker.get_group_schedule(day=user.day, week=user.week, group_name=Schedule().get_group_name(entity_id)),
-                                 reply_markup=week_kb)
+                week_kb = kb.get_days(user_id, "group", user.week, value=entity_id)
+                await msg.answer(
+                    text_maker.get_group_schedule(
+                        day=user.day,
+                        week=user.week,
+                        group_name=Schedule().get_group_name(entity_id),
+                    ),
+                    reply_markup=week_kb,
+                )
             else:
                 logging.info(f"{msg.from_user.id} неправильный тип пользователя")
                 await msg.answer("Ошибка! Напишите админу /admin")
