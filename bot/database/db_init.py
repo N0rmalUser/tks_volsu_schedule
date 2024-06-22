@@ -17,6 +17,7 @@ def user_db_init(cursor: sqlite3.Cursor):
             inviter_id INTEGER,
             blocked BOOLEAN DEFAULT false,
             banned BOOLEAN DEFAULT false,
+            defaulte TEXT,
             FOREIGN KEY (inviter_id) REFERENCES User_Info(user_id)
         )
     """)
@@ -29,7 +30,6 @@ def user_db_init(cursor: sqlite3.Cursor):
             day INTEGER,
             teacher_name TEXT,
             group_name TEXT,
-            defaulte TEXT,
             FOREIGN KEY (user_id) REFERENCES User_Info(user_id)
         )
     """)
