@@ -137,21 +137,26 @@ async def handler(msg: Message) -> None:
     user = UserDatabase(user_id)
     if msg.content_type == "text":
         if msg.text == "Расписание на сегодня":
+            from bot.database.schedule import Schedule
             user.set_today_date()
             default = user.default
-            entity_id = default if default is not None else user.teacher if user.type == "teacher" else user.group
+
+            if default is None:
+                entity_id = Schedule().get_teacher_id(user.teacher) if user.type == "teacher" else Schedule().get_group_id(user.group)
+            else:
+                entity_id = Schedule().get_teacher_id(default)
 
             if not entity_id:
                 await msg.answer(
                     f"Сначала выберите {'ФИО преподавателя' if user.type == 'teacher' else 'группу'}, нажав на соответствующую кнопку.")
                 return
             if user.type == "teacher":
-                week_kb = kb.get_days(user_id, 'teacher', user.week, value=entity_id)
-                await msg.answer(text_maker.get_teacher_schedule(day=user.day, week=user.week, teacher_name=entity_id),
+                week_kb = kb.get_days_teacher(user_id, 'teacher', user.week, value=entity_id)
+                await msg.answer(text_maker.get_teacher_schedule(day=user.day, week=user.week, teacher_name=Schedule().get_teacher_name(entity_id)),
                                  reply_markup=week_kb)
             elif user.type == "student":
                 week_kb = kb.get_days(user_id, 'group', user.week, value=entity_id)
-                await msg.answer(text_maker.get_group_schedule(day=user.day, week=user.week, group_name=entity_id),
+                await msg.answer(text_maker.get_group_schedule(day=user.day, week=user.week, group_name=Schedule().get_group_name(entity_id)),
                                  reply_markup=week_kb)
             else:
                 logging.info(f"{msg.from_user.id} неправильный тип пользователя")

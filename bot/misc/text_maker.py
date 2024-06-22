@@ -77,7 +77,6 @@ def get_date_for_day(day: int, week: int) -> str:
 @sql_kit(config.SCHEDULE_DB)
 def get_group_schedule(day: int, week: int, group_name: str, cursor: sqlite3.Cursor):
     """Возвращает отформатированное расписание для указанной группы на указанный день и неделю"""
-
     week_type = "Числитель" if week == 1 else "Знаменатель"
     days_of_week = ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота"]
 
@@ -93,6 +92,7 @@ def get_group_schedule(day: int, week: int, group_name: str, cursor: sqlite3.Cur
         JOIN Rooms r ON s.RoomID = r.RoomID
         JOIN Teachers t ON s.TeacherID = t.TeacherID
         WHERE g.GroupName = ? AND s.DayOfWeek = ? AND s.WeekType = ?
+        GROUP BY s.Time, sub.SubjectName, r.RoomNumber
         ORDER BY s.Time
         """
 
@@ -117,7 +117,7 @@ def get_group_schedule(day: int, week: int, group_name: str, cursor: sqlite3.Cur
             subject = re.sub(r'\([^)]*\)', '', lesson['subject'])
             label = get_lesson_label(str(re.search(r'\(([^)]*)\)', lesson['subject'])))
             text += f"\n{get_time_symbol(lesson['time'])}{lesson['time']}       {label}\n📖 {subject}\n👨‍🏫 {lesson['teacher']}\n🏠 Ауд. {lesson['room']}\n"
-            text += f"\nДата: {date}"
+        text += f"\nДата: {date}"
         return text
     else:
         return f'{header}\nСегодня пар нет!\n\nДата: {date}'
@@ -126,7 +126,6 @@ def get_group_schedule(day: int, week: int, group_name: str, cursor: sqlite3.Cur
 @sql_kit(config.SCHEDULE_DB)
 def get_teacher_schedule(day: int, week: int, teacher_name: str, cursor: sqlite3.Cursor):
     """Возвращает отформатированное расписание для указанного преподавателя на указанный день и неделю. Если преподаватель обучается в какой-либо группе (указывается в config.py), то возвращает расписание для этой группы, смешанное с расписанием преподавателя."""
-
     week_type = "Числитель" if week == 1 else "Знаменатель"
     days_of_week = ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота"]
 
@@ -209,7 +208,6 @@ def get_teacher_schedule(day: int, week: int, teacher_name: str, cursor: sqlite3
 @sql_kit(config.SCHEDULE_DB)
 def get_room_schedule(day, week, room_name, cursor: sqlite3.Cursor):
     """Возвращает отформатированное расписание для указанной аудитории на указанный день и неделю. Если аудитория имеет несколько вариантов (например, 2-13М и 2-13аМ), то возвращает расписание для всех вариантов."""
-
     week_type = "Числитель" if week == 1 else "Знаменатель"
     days_of_week = ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Понедельник"]
 
@@ -261,7 +259,7 @@ def get_room_schedule(day, week, room_name, cursor: sqlite3.Cursor):
             suffix = re.sub(r'\d*-\d*', '', lesson['room'])
             suffix = f'|{suffix[:-1]}|' if suffix[:-1] != '' else ''
             text += f"\n{get_time_symbol(lesson['time'])}{lesson['time']}    {suffix}   {label}\n📖 {subject}\n👫 {lesson['group']}\n‍👨‍🏫 {lesson['teacher']}\n"
-            text += f"\nДата: {date}"
+        text += f"\nДата: {date}"
         return text
     else:
         return f'{header}\nСегодня пар нет!\n\nДата: {date}'
