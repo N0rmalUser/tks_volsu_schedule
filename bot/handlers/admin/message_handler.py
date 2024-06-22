@@ -85,6 +85,11 @@ async def dump_handler(msg: Message) -> None:
         logging.info("Выгружена база данных активности")
     except Exception as e:
         logging.error("Ошибка при выгрузке базы данных активности", e)
+    try:
+        await msg.answer_document(FSInputFile(SCHEDULE_DB), caption="Вот ваше расписание")
+        logging.info("Выгружено расписание")
+    except Exception as e:
+        logging.error("Ошибка при выгрузке расписания", e)
 
 
 @router.message(Command("track"), ChatTypeIdFilter(chat_type=['group', 'supergroup'], chat_id=ADMIN_CHAT_ID))

@@ -306,7 +306,7 @@ class UserDatabase:
         """Возвращает группу или преподавателя по умолчанию"""
 
         self.__cursor.execute("""
-            SELECT defaulte FROM Temp_Data
+            SELECT defaulte FROM User_Info
             WHERE user_id = ?
             """, (self.__user_id,))
         result = self.__cursor.fetchone()
@@ -317,7 +317,7 @@ class UserDatabase:
         """Устанавливает группу или преподавателя по умолчанию"""
 
         self.__cursor.execute("""
-            INSERT INTO Temp_Data(user_id, defaulte)
+            INSERT INTO User_Info(user_id, defaulte)
             VALUES(?, ?) ON CONFLICT(user_id) DO UPDATE
             SET defaulte=excluded.defaulte;
             """, (self.__user_id, default))
