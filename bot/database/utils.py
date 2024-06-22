@@ -1,5 +1,5 @@
 from bot.database.user import UserDatabase
-from config import USERS_DB
+from config import USERS_DB, SCHEDULE_DB
 
 from datetime import datetime
 
@@ -134,4 +134,3 @@ async def get_tracked_users() -> list:
         if UserDatabase(user_id).tracking:
             tracked_users.append(f'`{user_id}`')
     return tracked_users
-
