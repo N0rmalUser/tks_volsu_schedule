@@ -3,13 +3,12 @@ LABEL authors="N0rmalUser"
 
 WORKDIR /tks_schedule
 
-COPY requirements.txt requirements.txt
 RUN apt-get update && apt-get install -y ca-certificates iputils-ping && update-ca-certificates
-RUN pip install -r requirements.txt
-RUN rm requirements.txt
 
-COPY config.py config.py
 COPY bot bot
+RUN pip install -r bot/requirements.txt
+RUN rm bot/requirements.txt
+COPY config.py config.py
 COPY data data
 COPY logs logs
 COPY main.py main.py

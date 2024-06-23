@@ -1,0 +1,7 @@
+APScheduler~=3.10.4
+aiogram~=3.7.0
+asyncio~=3.4.3
+matplotlib~=3.9.0
+pandas~=2.2.2
+python-docx
+pytz~=2024.1
