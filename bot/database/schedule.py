@@ -1,56 +1,6 @@
 import sqlite3
 
-from config import SCHEDULE_DB
-
-
-class Subjects:
-    def __init__(self):
-        self.__conn = sqlite3.connect(SCHEDULE_DB)
-        self.__cursor = self.__conn.cursor()
-
-    def add_subject(self, subject_name):
-        self.__cursor.execute(
-            "SELECT SubjectID FROM Subjects WHERE SubjectName = ?", (subject_name,)
-        )
-        subject_id = self.__cursor.fetchone()
-        if subject_id is None:
-            self.__cursor.execute("SELECT MAX(SubjectID) FROM Subjects")
-            max_id = self.__cursor.fetchone()[0]
-            subject_id = max_id + 1 if max_id is not None else 1
-            self.__cursor.execute(
-                "INSERT INTO Subjects (SubjectName, SubjectID) VALUES (?, ?)",
-                (subject_name, subject_id),
-            )
-            self.__conn.commit()
-        return subject_id
-
-    def delete_subject(self, subject_id=None, subject_name=None):
-        if subject_id is not None:
-            self.__cursor.execute(
-                "DELETE FROM Subjects WHERE SubjectID = ?", (subject_id,)
-            )
-        elif subject_name is not None:
-            self.__cursor.execute(
-                "DELETE FROM Subjects WHERE SubjectName = ?", (subject_name,)
-            )
-        else:
-            raise ValueError("Поле subject_id или subject_name не должны быть пустыми.")
-        self.__conn.commit()
-
-    def get_subject_name(self, subject_id):
-        self.__cursor.execute(
-            "SELECT * FROM Subjects WHERE SubjectID = ?", (subject_id,)
-        )
-        return self.__cursor.fetchone()
-
-    def get_subject_id(self, subject_name):
-        self.__cursor.execute(
-            "SELECT * FROM Subjects WHERE SubjectName = ?", (subject_name,)
-        )
-        return self.__cursor.fetchone()
-
-    def __del__(self):
-        self.__conn.close()
+from config import COLLEGE_CONST, SCHEDULE_DB, special_teachers
 
 
 class Schedule:
@@ -342,48 +292,6 @@ class Schedule:
             "SELECT GroupID FROM Groups WHERE GroupName = ?", (group_name,)
         )
         return self.__cursor.fetchone()[0]
-
-    def __del__(self):
-        self.__conn.close()
-
-
-class CollegeSchedule:
-    def __init__(self):
-        self.__conn = sqlite3.connect(SCHEDULE_DB)
-        self.__cursor = self.__conn.cursor()
-
-    def add_schedule(
-        self, time, day_name, week_type, group_id, teacher_id, room_id, subject_id
-    ):
-        self.__cursor.execute("SELECT MAX(ScheduleID) FROM CollegeSchedule")
-        max_id = self.__cursor.fetchone()[0]
-        schedule_id = max_id + 1 if max_id is not None else 1
-
-        self.__cursor.execute(
-            "INSERT INTO Schedule (ScheduleID, Time, DayOfWeek, WeekType, GroupID, TeacherID, RoomID, SubjectID) VALUES (?, ?, ?, ?, ?, ?, ?)",
-            (
-                schedule_id,
-                time,
-                day_name,
-                week_type,
-                group_id,
-                teacher_id,
-                room_id,
-                subject_id,
-            ),
-        )
-
-    def delete_schedule(self, schedule_id):
-        self.__cursor.execute(
-            "DELETE FROM Schedule WHERE ScheduleID = ?", (schedule_id,)
-        )
-        self.__conn.commit()
-
-    def get_schedule(self, schedule_id) -> tuple:
-        self.__cursor.execute(
-            "SELECT * FROM Schedule WHERE ScheduleID = ?", (schedule_id,)
-        )
-        return self.__cursor.fetchone()
 
     def __del__(self):
         self.__conn.close()
