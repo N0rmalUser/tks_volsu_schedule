@@ -76,30 +76,6 @@ async def start_handler(msg: Message) -> None:
     await start_message(msg, menu, keyboard)
 
 
-# black aiogram tests examples
-# isort aiogram tests examples
-def test_markup2():
-    builder = ReplyKeyboardBuilder()
-    builder.row(*(KeyboardButton(text=f"test-{index}") for index in range(8)))
-    builder.button(text="Add", callback_data="add")
-    builder.button(text="Cancel", callback_data="cancel")
-    builder.adjust(3, 1, -2)
-    return builder.as_markup()
-
-
-def test_markup():
-    builder = InlineKeyboardBuilder()
-    for i in range(1):
-        builder.button(text=f"test{i}", callback_data=f"test{i}")
-    builder.adjust(-2)
-    return builder.as_markup()
-
-
-@router.message(Command("test"))
-async def test_handler(msg: Message) -> None:
-    await msg.answer("This is TEST!!!", reply_markup=test_markup())
-
-
 @router.message(Command("help"), ChatTypeIdFilter(chat_type=["private"]))
 async def help_handler(msg: Message) -> None:
     """Обработчик команды /help. Отправляет сообщение с описанием бота."""
