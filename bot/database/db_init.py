@@ -45,7 +45,7 @@ def schedule_db_init(cursor: sqlite3.Cursor):
     cursor.execute(
         """CREATE TABLE IF NOT EXISTS Rooms (
                         RoomID INTEGER PRIMARY KEY AUTOINCREMENT,
-                        RoomNumber TEXT UNIQUE NOT NULL)"""
+                        RoomName TEXT UNIQUE NOT NULL)"""
     )
 
     cursor.execute(
