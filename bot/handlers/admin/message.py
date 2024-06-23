@@ -10,8 +10,8 @@ from bot.database.user import UserDatabase
 from bot.filters import ChatTypeIdFilter
 from bot.markups import admin_markups as kb
 from bot.misc import user_activity
-from config import (ACTIVITIES_DB, ADMIN_CHAT_ID, INVITATION_LINK, LOG_FILE,
-                    SCHEDULE_DB, USERS_DB)
+from config import (ACTIVITIES_DB, ADMIN_CHAT_ID, LOG_FILE, SCHEDULE_DB,
+                    USERS_DB)
 
 router = Router()
 
@@ -173,9 +173,6 @@ async def handle_topic_command_info(
         else:
             await start.edit_text(utils.get_all_users_info())
     else:
-        await msg.answer(
-            f"https://t.me/{INVITATION_LINK}/{UserDatabase(int(command.args)).topic_id}"
-        )
         await start.edit_text(
             utils.user_info(int(command.args)), parse_mode="MarkdownV2"
         )

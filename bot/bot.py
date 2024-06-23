@@ -2,12 +2,11 @@ import logging
 
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
-from aiogram.types import ChatMemberUpdated, Document, Message
+from aiogram.types import Message
 from aiogram.utils.deep_linking import create_start_link
 
 from bot import middlewares
 from bot.database.user import UserDatabase
-from bot.database.utils import all_user_ids
 from bot.handlers import admin, user
 from bot.markups import admin_markups as kb
 from config import ADMIN_CHAT_ID, BOT_TOKEN
@@ -22,10 +21,11 @@ async def main() -> None:
     dp = Dispatcher(storage=MemoryStorage())
 
     dp.include_routers(
-        user.callback_handler.router,
-        user.message_handler.router,
-        user.status_handler.router,
-        admin.message_handler.router,
+        user.callback.router,
+        user.schedule_editing.router,
+        user.message.router,
+        user.status.router,
+        admin.message.router,
     )
 
     dp.update.middleware(middlewares.BanUsersMiddleware())
