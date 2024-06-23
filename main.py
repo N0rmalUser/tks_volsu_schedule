@@ -18,8 +18,6 @@ def start_scheduler():
     scheduler.add_job(update_user_activity_stats, 'interval', hours=1, start_date=next_hour)
     scheduler.start()
 
-# black bot preparation
-# isort bot preparation
 
 if __name__ == "__main__":
     logging.Formatter.converter = lambda *args: datetime.now(pytz.timezone(timezone)).timetuple()
