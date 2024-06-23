@@ -80,7 +80,7 @@ def get_default_teachers():
     from bot.database.schedule import Schedule
 
     builder = InlineKeyboardBuilder()
-    for teacher in config.all_teachers:
+    for teacher in config.all_personal:
         builder.button(
             text=str(teacher),
             callback_data=keyboard_factory.DefaultChangeCallbackFactory(
