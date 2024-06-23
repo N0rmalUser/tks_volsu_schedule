@@ -14,10 +14,10 @@ class DayCallbackFactory(CallbackData, prefix="day_change"):
     """Фабрика для создания CallbackData для клавиатур изменения дня или недели."""
 
     action: Optional[str] = None
-    keyboard_type: Optional[str] = None
     value: Optional[int] = None
     day: Optional[int] = None
     week: Optional[int] = None
+    keyboard_type: Optional[str] = None
 
 
 class DefaultChangeCallbackFactory(CallbackData, prefix="default_change"):
@@ -35,3 +35,4 @@ class ScheduleEditingCallbackFactory(CallbackData, prefix="edit"):
     day: Optional[int] = None
     edit: Optional[str] = None
     schedule_id: Optional[int] = None
+    keyboard_type: Optional[str] = None
