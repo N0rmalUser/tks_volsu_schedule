@@ -1,165 +1,26 @@
 import os
 import re
-import sqlite3
 
 from docx import Document
 from progress.bar import Bar
 
-DATABASE_PATH = "schedule.db"
+import config
+from bot.database.db_init import schedule_db_init
+from bot.database.schedule import Schedule
 
 
-def initialize_database():
-    conn = sqlite3.connect(DATABASE_PATH)
-    cursor = conn.cursor()
-
-    cursor.execute(
-        """CREATE TABLE IF NOT EXISTS Rooms (
-                        RoomID INTEGER PRIMARY KEY AUTOINCREMENT,
-                        RoomNumber TEXT UNIQUE NOT NULL)"""
-    )
-
-    cursor.execute(
-        """CREATE TABLE IF NOT EXISTS Groups (
-                        GroupID INTEGER PRIMARY KEY AUTOINCREMENT,
-                        GroupName TEXT UNIQUE NOT NULL)"""
-    )
-
-    cursor.execute(
-        """CREATE TABLE IF NOT EXISTS Teachers (
-                        TeacherID INTEGER PRIMARY KEY AUTOINCREMENT,
-                        TeacherName TEXT UNIQUE NOT NULL)"""
-    )
-
-    cursor.execute(
-        """CREATE TABLE IF NOT EXISTS Subjects (
-                        SubjectID INTEGER PRIMARY KEY AUTOINCREMENT,
-                        SubjectName TEXT UNIQUE NOT NULL)"""
-    )
-
-    cursor.execute(
-        """CREATE TABLE IF NOT EXISTS Schedule (
-                        ScheduleID INTEGER PRIMARY KEY AUTOINCREMENT,
-                        Time TEXT NOT NULL,
-                        DayOfWeek TEXT NOT NULL,
-                        WeekType TEXT NOT NULL,
-                        GroupID INTEGER,
-                        TeacherID INTEGER,
-                        RoomID INTEGER,
-                        SubjectID INTEGER,
-                        FOREIGN KEY (GroupID) REFERENCES Groups(GroupID),
-                        FOREIGN KEY (TeacherID) REFERENCES Teachers(TeacherID),
-                        FOREIGN KEY (RoomID) REFERENCES Rooms(RoomID),
-                        FOREIGN KEY (SubjectID) REFERENCES Subjects(SubjectID))"""
-    )
-
-    conn.commit()
-    conn.close()
+def set_default():
+    for i in sorted(config.groups):
+        schedule_db.add_group(i)
+    for i in sorted(config.all_personal):
+        schedule_db.add_teacher(i)
+    for i in sorted(config.rooms):
+        schedule_db.add_room(i)
 
 
-def clean_schedule(schedule):
-    times = ["08:30", "10:10", "12:00", "13:40", "15:20", "17:00", "18:40"]
-    days = ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота"]
-    for week_name, week_schedule in schedule.items():
-        for day_name, day_schedule in week_schedule.items():
-            for subject_time in times:
-                if subject_time in day_schedule:
-                    if day_schedule[subject_time]["Предмет"] == "None":
-                        del schedule[week_name][day_name][subject_time]
-        for DAY in days:
-            if DAY in week_schedule:
-                if schedule[week_name][DAY] == {}:
-                    del schedule[week_name][DAY]
-    return schedule
-
-
-def insert_into_database(schedule_name, schedule):
-    conn = sqlite3.connect(DATABASE_PATH)
-    cursor = conn.cursor()
-    for week_type, week_schedule in schedule.items():
-        for day_name, day_schedule in week_schedule.items():
-            for time, details in day_schedule.items():
-                # Обработка строки преподавателя для извлечения только имени
-                teacher_name = (
-                    details["Преподаватель"].split(",")[0].strip()
-                    if "," in details["Преподаватель"]
-                    else details["Преподаватель"]
-                )
-
-                cursor.execute(
-                    "SELECT GroupID FROM Groups WHERE GroupName = ?", (schedule_name,)
-                )
-                group_id = cursor.fetchone()
-                if group_id is None:
-                    cursor.execute(
-                        "INSERT INTO Groups (GroupName) VALUES (?)", (schedule_name,)
-                    )
-                    conn.commit()
-                    group_id = cursor.lastrowid
-                else:
-                    group_id = group_id[0]
-
-                # Используем обработанное имя преподавателя
-                cursor.execute(
-                    "SELECT TeacherID FROM Teachers WHERE TeacherName = ?",
-                    (teacher_name,),
-                )
-                teacher_id = cursor.fetchone()
-                if teacher_id is None:
-                    cursor.execute(
-                        "INSERT INTO Teachers (TeacherName) VALUES (?)", (teacher_name,)
-                    )
-                    conn.commit()
-                    teacher_id = cursor.lastrowid
-                else:
-                    teacher_id = teacher_id[0]
-
-                cursor.execute(
-                    "SELECT RoomID FROM Rooms WHERE RoomNumber = ?",
-                    (details["Аудитория"],),
-                )
-                room_id = cursor.fetchone()
-                if room_id is None:
-                    cursor.execute(
-                        "INSERT INTO Rooms (RoomNumber) VALUES (?)",
-                        (details["Аудитория"],),
-                    )
-                    conn.commit()
-                    room_id = cursor.lastrowid
-                else:
-                    room_id = room_id[0]
-
-                cursor.execute(
-                    "SELECT SubjectID FROM Subjects WHERE SubjectName = ?",
-                    (details["Предмет"],),
-                )
-                subject_id = cursor.fetchone()
-                if subject_id is None:
-                    cursor.execute(
-                        "INSERT INTO Subjects (SubjectName) VALUES (?)",
-                        (details["Предмет"],),
-                    )
-                    conn.commit()
-                    subject_id = cursor.lastrowid
-                else:
-                    subject_id = subject_id[0]
-
-                cursor.execute(
-                    "INSERT INTO Schedule (Time, DayOfWeek, WeekType, GroupID, TeacherID, RoomID, SubjectID) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                    (
-                        time,
-                        day_name,
-                        week_type,
-                        group_id,
-                        teacher_id,
-                        room_id,
-                        subject_id,
-                    ),
-                )
-    conn.commit()
-    conn.close()
-
-
-initialize_database()
+schedule_db_init()
+schedule_db = Schedule()
+set_default()
 files = [f for f in os.listdir("preparation\\schedules\\") if f.endswith(".docx")]
 bar = Bar("Импорт расписания университета в базу данных", max=len(files))
 
@@ -178,7 +39,7 @@ for file in files:
         #     subgroup = True
         #     day, time, info, subinfo = row.cells[:4]
         #     print(subinfo.text)
-        # На будущее разделение по подгруппам
+        # TODO: Разделение по подгруппам
 
         parts = re.split(
             r"(?<=\))\s*,", re.sub(r"\s*-*\s*поток\s\d+\s*", "", info.text)
@@ -230,13 +91,11 @@ for file in files:
                 "Аудитория": classroom,
             }
             if key not in temp_schedule:
-                # Засовывает сразу в обе недели это занятие
                 temp_schedule[key] = {
                     "Числитель": schedule_entry,
                     "Знаменатель": schedule_entry,
                 }
             else:
-                # Если оно уже заполнено (есть другое на знаменателе), то меняется на новое, даже если None
                 temp_schedule[key]["Знаменатель"] = schedule_entry
     full_schedule = {"Числитель": {}, "Знаменатель": {}}
     for (day, time), parts in temp_schedule.items():
@@ -245,8 +104,39 @@ for file in files:
                 if day not in full_schedule[part]:
                     full_schedule[part][day] = {}
                 full_schedule[part][day][time] = parts[part]
-    schedule_name = os.path.splitext(file)[0]
-    insert_into_database(schedule_name, clean_schedule(full_schedule))
+    group_name = os.path.splitext(file)[0]
+
+    times = ["08:30", "10:10", "12:00", "13:40", "15:20", "17:00", "18:40"]
+    days = ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота"]
+
+    for week_name, week_schedule in full_schedule.items():
+        for day_name, day_schedule in week_schedule.items():
+            for subject_time in times:
+                if subject_time in day_schedule:
+                    if day_schedule[subject_time]["Предмет"] == "None":
+                        del full_schedule[week_name][day_name][subject_time]
+        for DAY in days:
+            if DAY in week_schedule:
+                if full_schedule[week_name][DAY] == {}:
+                    del full_schedule[week_name][DAY]
+
+    for week_type, week_schedule in full_schedule.items():
+        for day_name, day_schedule in week_schedule.items():
+            for time, details in day_schedule.items():
+                teacher_name = (
+                    details["Преподаватель"].split(",")[0].strip()
+                    if "," in details["Преподаватель"]
+                    else details["Преподаватель"]
+                )
+                schedule_db.add_schedule(
+                    time=time,
+                    day_name=day_name,
+                    week_type=week_type,
+                    group_id=schedule_db.add_group(group_name),
+                    teacher_id=schedule_db.add_teacher(teacher_name),
+                    room_id=schedule_db.add_room(details["Аудитория"]),
+                    subject_id=schedule_db.add_subject(details["Предмет"]),
+                )
     bar.next()
 bar.finish()
 
