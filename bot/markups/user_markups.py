@@ -201,7 +201,10 @@ def get_days_teacher(user_id: int, keyboard_type: str, week: int, value: int):
         builder.button(
             text="✏ Изменить ",
             callback_data=keyboard_factory.DayCallbackFactory(
-                action="schedule_editing", day=UserDatabase(user_id).day, value=value
+                action="schedule_editing",
+                day=UserDatabase(user_id).day,
+                value=value,
+                keyboard_type=keyboard_type,
             ),
         )
         builder.button(
@@ -222,11 +225,14 @@ def get_days_teacher(user_id: int, keyboard_type: str, week: int, value: int):
         builder.button(
             text="✏ Изменить ",
             callback_data=keyboard_factory.DayCallbackFactory(
-                action="schedule_editing", day=UserDatabase(user_id).day, value=value
+                action="schedule_editing",
+                day=UserDatabase(user_id).day,
+                value=value,
+                keyboard_type=keyboard_type,
             ),
         )
         builder.button(
-            text="Числитель ➡️",
+            text="Числитель ➡",
             callback_data=keyboard_factory.DayCallbackFactory(
                 action="week",
                 keyboard_type=keyboard_type,
@@ -244,18 +250,24 @@ def get_days_teacher(user_id: int, keyboard_type: str, week: int, value: int):
     return builder.as_markup()
 
 
-def get_editing_menu(schedule_id: int, week: int, value: int):
+def get_editing_menu(schedule_id: int, week: int, value: int, keyboard_type: str):
     builder = InlineKeyboardBuilder()
     builder.button(
         text="Время",
         callback_data=keyboard_factory.ScheduleEditingCallbackFactory(
-            action="time", value=value, schedule_id=schedule_id
+            action="time",
+            value=value,
+            schedule_id=schedule_id,
+            keyboard_type=keyboard_type,
         ),
     )
     builder.button(
         text="День",
         callback_data=keyboard_factory.ScheduleEditingCallbackFactory(
-            action="day", value=value, schedule_id=schedule_id
+            action="day",
+            value=value,
+            schedule_id=schedule_id,
+            keyboard_type=keyboard_type,
         ),
     )
     builder.button(
@@ -265,264 +277,379 @@ def get_editing_menu(schedule_id: int, week: int, value: int):
             edit="2" if week == 1 else "1",
             schedule_id=schedule_id,
             value=value,
-        ),
-    )
-    builder.button(
-        text="Тип занятия",
-        callback_data=keyboard_factory.ScheduleEditingCallbackFactory(
-            action="lesson_type", value=value, schedule_id=schedule_id
+            keyboard_type=keyboard_type,
         ),
     )
     builder.button(
         text="Преподаватель",
         callback_data=keyboard_factory.ScheduleEditingCallbackFactory(
-            action="teacher", value=value, schedule_id=schedule_id
+            action="teacher",
+            value=value,
+            schedule_id=schedule_id,
+            keyboard_type=keyboard_type,
         ),
     )
     builder.button(
         text="Группа",
         callback_data=keyboard_factory.ScheduleEditingCallbackFactory(
-            action="group", value=value, schedule_id=schedule_id
+            action="group",
+            value=value,
+            schedule_id=schedule_id,
+            keyboard_type=keyboard_type,
         ),
     )
     builder.button(
         text="Аудитория",
         callback_data=keyboard_factory.ScheduleEditingCallbackFactory(
-            action="room", value=value, schedule_id=schedule_id
+            action="room",
+            value=value,
+            schedule_id=schedule_id,
+            keyboard_type=keyboard_type,
         ),
     )
     builder.button(
-        text="Удалить",
+        text="Тип занятия",
         callback_data=keyboard_factory.ScheduleEditingCallbackFactory(
-            action="delete", value=value, schedule_id=schedule_id
+            action="lesson_type",
+            value=value,
+            schedule_id=schedule_id,
+            keyboard_type=keyboard_type,
         ),
     )
     builder.button(
-        text="Назад",
+        text="🗑 Удалить",
         callback_data=keyboard_factory.ScheduleEditingCallbackFactory(
-            action="back", value=value, schedule_id=schedule_id
-        ),
-    )
-    builder.adjust(3)
-    return builder.as_markup()
-
-
-def get_editing(user_id: int, schedule: list, value: int):
-    builder = InlineKeyboardBuilder()
-    day = UserDatabase(user_id).day
-    for i in schedule:
-        builder.button(
-            text=str(i),
-            callback_data=keyboard_factory.ScheduleEditingCallbackFactory(
-                action="lesson", schedule_id=i, value=value
-            ),
-        )
-    builder.adjust(2)
-    rows = [len(row) for row in builder.as_markup().inline_keyboard]
-    rows.extend([1, 1])
-    builder.button(
-        text="Добавить",
-        callback_data=keyboard_factory.ScheduleEditingCallbackFactory(
-            action="add_new", day=day, value=value
-        ),
-    )
-    builder.button(
-        text="Назад",
-        callback_data=keyboard_factory.ScheduleEditingCallbackFactory(
-            action="cancel", day=day, value=value
-        ),
-    )
-    builder.adjust(*rows)
-    return builder.as_markup()
-
-
-def add_new_lesson(user_id: int, value: int):
-    day = UserDatabase(user_id).day
-    builder = InlineKeyboardBuilder()
-    builder.button(
-        text="тоже отмена",
-        callback_data=keyboard_factory.ScheduleEditingCallbackFactory(
-            action="cancel", day=day, value=value
-        ),
-    )
-    builder.button(
-        text="Назад",
-        callback_data=keyboard_factory.ScheduleEditingCallbackFactory(
-            action="cancel", day=day, value=value
-        ),
-    )
-
-
-def edit_time(schedule_id: int, value: int):
-
-    builder = InlineKeyboardBuilder()
-    builder.button(
-        text="08:30",
-        callback_data=keyboard_factory.ScheduleEditingCallbackFactory(
-            action="time_edit", edit="0", schedule_id=schedule_id, value=value
-        ),
-    )
-    builder.button(
-        text="10:10",
-        callback_data=keyboard_factory.ScheduleEditingCallbackFactory(
-            action="time_edit", edit="1", schedule_id=schedule_id, value=value
-        ),
-    )
-    builder.button(
-        text="12:00",
-        callback_data=keyboard_factory.ScheduleEditingCallbackFactory(
-            action="time_edit", edit="2", schedule_id=schedule_id, value=value
-        ),
-    )
-    builder.button(
-        text="13:40",
-        callback_data=keyboard_factory.ScheduleEditingCallbackFactory(
-            action="time_edit", edit="3", schedule_id=schedule_id, value=value
-        ),
-    )
-    builder.button(
-        text="15:20",
-        callback_data=keyboard_factory.ScheduleEditingCallbackFactory(
-            action="time_edit", edit="4", schedule_id=schedule_id, value=value
-        ),
-    )
-    builder.button(
-        text="17:00",
-        callback_data=keyboard_factory.ScheduleEditingCallbackFactory(
-            action="time_edit", edit="5", schedule_id=schedule_id, value=value
-        ),
-    )
-    builder.button(
-        text="18:40",
-        callback_data=keyboard_factory.ScheduleEditingCallbackFactory(
-            action="time_edit", edit="6", schedule_id=schedule_id, value=value
-        ),
-    )
-    builder.button(
-        text="Назад",
-        callback_data=keyboard_factory.ScheduleEditingCallbackFactory(
-            action="back", value=value, schedule_id=schedule_id
-        ),
-    )
-    builder.adjust(4)
-    return builder.as_markup()
-
-
-def edit_day(schedule_id: int, value: int):
-
-    builder = InlineKeyboardBuilder()
-    builder.button(
-        text="Пн",
-        callback_data=keyboard_factory.ScheduleEditingCallbackFactory(
-            action="day_edit", day=1, schedule_id=schedule_id, value=value
-        ),
-    )
-    builder.button(
-        text="Вт",
-        callback_data=keyboard_factory.ScheduleEditingCallbackFactory(
-            action="day_edit", day=2, schedule_id=schedule_id, value=value
-        ),
-    )
-    builder.button(
-        text="Ср",
-        callback_data=keyboard_factory.ScheduleEditingCallbackFactory(
-            action="day_edit", day=3, schedule_id=schedule_id, value=value
-        ),
-    )
-    builder.button(
-        text="Чт",
-        callback_data=keyboard_factory.ScheduleEditingCallbackFactory(
-            action="day_edit", day=4, schedule_id=schedule_id, value=value
-        ),
-    )
-    builder.button(
-        text="Пт",
-        callback_data=keyboard_factory.ScheduleEditingCallbackFactory(
-            action="day_edit", day=5, schedule_id=schedule_id, value=value
-        ),
-    )
-    builder.button(
-        text="Сб",
-        callback_data=keyboard_factory.ScheduleEditingCallbackFactory(
-            action="day_edit", day=6, schedule_id=schedule_id, value=value
-        ),
-    )
-    builder.button(
-        text="Назад",
-        callback_data=keyboard_factory.ScheduleEditingCallbackFactory(
-            action="back", value=value, schedule_id=schedule_id
-        ),
-    )
-    builder.adjust(3)
-    return builder.as_markup()
-
-
-def edit_week(schedule_id: int, week: int, value: int):
-    builder = InlineKeyboardBuilder()
-    if week == 1:
-        builder.button(
-            text="Знаменатель",
-            callback_data=keyboard_factory.ScheduleEditingCallbackFactory(
-                action="week_edit", edit="2", schedule_id=schedule_id, value=value
-            ),
-        )
-    else:
-        builder.button(
-            text="Числитель",
-            callback_data=keyboard_factory.ScheduleEditingCallbackFactory(
-                action="week_edit", edit="1", schedule_id=schedule_id, value=value
-            ),
-        )
-    builder.button(
-        text="Назад",
-        callback_data=keyboard_factory.ScheduleEditingCallbackFactory(
-            action="back", edit="1", value=value, schedule_id=schedule_id
-        ),
-    )
-    builder.adjust(1)
-    return builder.as_markup()
-
-
-def edit_lesson_type(schedule_id: int, value: int):
-    builder = InlineKeyboardBuilder()
-    builder.button(
-        text="Лекция",
-        callback_data=keyboard_factory.ScheduleEditingCallbackFactory(
-            action="type_edit", edit="л", schedule_id=schedule_id, value=value
-        ),
-    )
-    builder.button(
-        text="Практика",
-        callback_data=keyboard_factory.ScheduleEditingCallbackFactory(
-            action="type_edit", edit="пр", schedule_id=schedule_id, value=value
-        ),
-    )
-    builder.button(
-        text="Лабораторная",
-        callback_data=keyboard_factory.ScheduleEditingCallbackFactory(
-            action="type_edit", edit="лаб", schedule_id=schedule_id, value=value
-        ),
-    )
-    builder.button(
-        text="Курсовой проект",
-        callback_data=keyboard_factory.ScheduleEditingCallbackFactory(
-            action="type_edit", edit="курс", schedule_id=schedule_id, value=value
+            action="delete",
+            value=value,
+            schedule_id=schedule_id,
+            keyboard_type=keyboard_type,
         ),
     )
     builder.adjust(3)
     rows = [len(row) for row in builder.as_markup().inline_keyboard]
     rows.append(1)
     builder.button(
-        text="Назад",
+        text="⬅️ Назад",
         callback_data=keyboard_factory.ScheduleEditingCallbackFactory(
-            action="back", value=value, schedule_id=schedule_id
+            action="back",
+            value=value,
+            schedule_id=schedule_id,
+            keyboard_type=keyboard_type,
         ),
     )
     builder.adjust(*rows)
     return builder.as_markup()
 
 
-def edit_teacher(schedule_id: int, value: int):
+def get_editing(user_id: int, schedule_ids: list, value: int, keyboard_type: str):
+    builder = InlineKeyboardBuilder()
+    day = UserDatabase(user_id).day
+    for i in schedule_ids:
+        builder.button(
+            text=str(i),
+            callback_data=keyboard_factory.ScheduleEditingCallbackFactory(
+                action="lesson", schedule_id=i, value=value, keyboard_type=keyboard_type
+            ),
+        )
+    builder.adjust(2)
+    rows = [len(row) for row in builder.as_markup().inline_keyboard]
+    rows.extend([1, 1])
+    builder.button(
+        text="📝 Добавить",
+        callback_data=keyboard_factory.ScheduleEditingCallbackFactory(
+            action="add_new", day=day, value=value, keyboard_type=keyboard_type
+        ),
+    )
+    builder.button(
+        text="⬅️ Назад",
+        callback_data=keyboard_factory.ScheduleEditingCallbackFactory(
+            action="cancel", day=day, value=value, keyboard_type=keyboard_type
+        ),
+    )
+    builder.adjust(*rows)
+    return builder.as_markup()
+
+
+def add_new_lesson(user_id: int, value: int, keyboard_type: str):
+    # TODO: Сделать добавление новых занятий
+    day = UserDatabase(user_id).day
+    builder = InlineKeyboardBuilder()
+    builder.button(
+        text="тоже отмена",
+        callback_data=keyboard_factory.ScheduleEditingCallbackFactory(
+            action="cancel", day=day, value=value, keyboard_type=keyboard_type
+        ),
+    )
+    builder.button(
+        text="⬅️ Назад",
+        callback_data=keyboard_factory.ScheduleEditingCallbackFactory(
+            action="cancel", day=day, value=value, keyboard_type=keyboard_type
+        ),
+    )
+
+
+def edit_time(schedule_id: int, value: int, keyboard_type: str):
+
+    builder = InlineKeyboardBuilder()
+    builder.button(
+        text="08:30",
+        callback_data=keyboard_factory.ScheduleEditingCallbackFactory(
+            action="time_edit",
+            edit="0",
+            schedule_id=schedule_id,
+            value=value,
+            keyboard_type=keyboard_type,
+        ),
+    )
+    builder.button(
+        text="10:10",
+        callback_data=keyboard_factory.ScheduleEditingCallbackFactory(
+            action="time_edit",
+            edit="1",
+            schedule_id=schedule_id,
+            value=value,
+            keyboard_type=keyboard_type,
+        ),
+    )
+    builder.button(
+        text="12:00",
+        callback_data=keyboard_factory.ScheduleEditingCallbackFactory(
+            action="time_edit",
+            edit="2",
+            schedule_id=schedule_id,
+            value=value,
+            keyboard_type=keyboard_type,
+        ),
+    )
+    builder.button(
+        text="13:40",
+        callback_data=keyboard_factory.ScheduleEditingCallbackFactory(
+            action="time_edit",
+            edit="3",
+            schedule_id=schedule_id,
+            value=value,
+            keyboard_type=keyboard_type,
+        ),
+    )
+    builder.button(
+        text="15:20",
+        callback_data=keyboard_factory.ScheduleEditingCallbackFactory(
+            action="time_edit",
+            edit="4",
+            schedule_id=schedule_id,
+            value=value,
+            keyboard_type=keyboard_type,
+        ),
+    )
+    builder.button(
+        text="17:00",
+        callback_data=keyboard_factory.ScheduleEditingCallbackFactory(
+            action="time_edit",
+            edit="5",
+            schedule_id=schedule_id,
+            value=value,
+            keyboard_type=keyboard_type,
+        ),
+    )
+    builder.button(
+        text="18:40",
+        callback_data=keyboard_factory.ScheduleEditingCallbackFactory(
+            action="time_edit",
+            edit="6",
+            schedule_id=schedule_id,
+            value=value,
+            keyboard_type=keyboard_type,
+        ),
+    )
+    builder.adjust(4)
+    rows = [len(row) for row in builder.as_markup().inline_keyboard]
+    rows.append(1)
+    builder.button(
+        text="⬅️ Назад",
+        callback_data=keyboard_factory.ScheduleEditingCallbackFactory(
+            action="back",
+            value=value,
+            schedule_id=schedule_id,
+            keyboard_type=keyboard_type,
+        ),
+    )
+    builder.adjust(*rows)
+    return builder.as_markup()
+
+
+def edit_day(schedule_id: int, value: int, keyboard_type: str):
+
+    builder = InlineKeyboardBuilder()
+    builder.button(
+        text="Пн",
+        callback_data=keyboard_factory.ScheduleEditingCallbackFactory(
+            action="day_edit",
+            day=1,
+            schedule_id=schedule_id,
+            value=value,
+            keyboard_type=keyboard_type,
+        ),
+    )
+    builder.button(
+        text="Вт",
+        callback_data=keyboard_factory.ScheduleEditingCallbackFactory(
+            action="day_edit",
+            day=2,
+            schedule_id=schedule_id,
+            value=value,
+            keyboard_type=keyboard_type,
+        ),
+    )
+    builder.button(
+        text="Ср",
+        callback_data=keyboard_factory.ScheduleEditingCallbackFactory(
+            action="day_edit",
+            day=3,
+            schedule_id=schedule_id,
+            value=value,
+            keyboard_type=keyboard_type,
+        ),
+    )
+    builder.button(
+        text="Чт",
+        callback_data=keyboard_factory.ScheduleEditingCallbackFactory(
+            action="day_edit",
+            day=4,
+            schedule_id=schedule_id,
+            value=value,
+            keyboard_type=keyboard_type,
+        ),
+    )
+    builder.button(
+        text="Пт",
+        callback_data=keyboard_factory.ScheduleEditingCallbackFactory(
+            action="day_edit",
+            day=5,
+            schedule_id=schedule_id,
+            value=value,
+            keyboard_type=keyboard_type,
+        ),
+    )
+    builder.button(
+        text="Сб",
+        callback_data=keyboard_factory.ScheduleEditingCallbackFactory(
+            action="day_edit",
+            day=6,
+            schedule_id=schedule_id,
+            value=value,
+            keyboard_type=keyboard_type,
+        ),
+    )
+    builder.button(
+        text="⬅️ Назад",
+        callback_data=keyboard_factory.ScheduleEditingCallbackFactory(
+            action="back",
+            value=value,
+            schedule_id=schedule_id,
+            keyboard_type=keyboard_type,
+        ),
+    )
+    builder.adjust(3)
+    return builder.as_markup()
+
+
+def edit_week(schedule_id: int, week: int, value: int, keyboard_type: str):
+    builder = InlineKeyboardBuilder()
+    if week == 1:
+        builder.button(
+            text="Знаменатель",
+            callback_data=keyboard_factory.ScheduleEditingCallbackFactory(
+                action="week_edit",
+                edit="2",
+                schedule_id=schedule_id,
+                value=value,
+                keyboard_type=keyboard_type,
+            ),
+        )
+    else:
+        builder.button(
+            text="Числитель",
+            callback_data=keyboard_factory.ScheduleEditingCallbackFactory(
+                action="week_edit",
+                edit="1",
+                schedule_id=schedule_id,
+                value=value,
+                keyboard_type=keyboard_type,
+            ),
+        )
+    builder.button(
+        text="⬅️ Назад",
+        callback_data=keyboard_factory.ScheduleEditingCallbackFactory(
+            action="back",
+            edit="1",
+            value=value,
+            schedule_id=schedule_id,
+            keyboard_type=keyboard_type,
+        ),
+    )
+    builder.adjust(1)
+    return builder.as_markup()
+
+
+def edit_lesson_type(schedule_id: int, value: int, keyboard_type: str):
+    builder = InlineKeyboardBuilder()
+    builder.button(
+        text="Лекция",
+        callback_data=keyboard_factory.ScheduleEditingCallbackFactory(
+            action="type_edit",
+            edit="л",
+            schedule_id=schedule_id,
+            value=value,
+            keyboard_type=keyboard_type,
+        ),
+    )
+    builder.button(
+        text="Практика",
+        callback_data=keyboard_factory.ScheduleEditingCallbackFactory(
+            action="type_edit",
+            edit="пр",
+            schedule_id=schedule_id,
+            value=value,
+            keyboard_type=keyboard_type,
+        ),
+    )
+    builder.button(
+        text="Лабораторная",
+        callback_data=keyboard_factory.ScheduleEditingCallbackFactory(
+            action="type_edit",
+            edit="лаб",
+            schedule_id=schedule_id,
+            value=value,
+            keyboard_type=keyboard_type,
+        ),
+    )
+    builder.button(
+        text="Курсовой проект",
+        callback_data=keyboard_factory.ScheduleEditingCallbackFactory(
+            action="type_edit",
+            edit="курс",
+            schedule_id=schedule_id,
+            value=value,
+            keyboard_type=keyboard_type,
+        ),
+    )
+    builder.adjust(3)
+    rows = [len(row) for row in builder.as_markup().inline_keyboard]
+    rows.append(1)
+    builder.button(
+        text="⬅️ Назад",
+        callback_data=keyboard_factory.ScheduleEditingCallbackFactory(
+            action="back",
+            value=value,
+            schedule_id=schedule_id,
+            keyboard_type=keyboard_type,
+        ),
+    )
+    builder.adjust(*rows)
+    return builder.as_markup()
+
+
+def edit_teacher(schedule_id: int, value: int, keyboard_type: str):
 
     builder = InlineKeyboardBuilder()
 
@@ -534,60 +661,108 @@ def edit_teacher(schedule_id: int, value: int):
                 edit=teacher,
                 value=value,
                 schedule_id=schedule_id,
+                keyboard_type=keyboard_type,
             ),
         )
 
     builder.adjust(2)
     rows = [len(row) for row in builder.as_markup().inline_keyboard]
-    rows.append(1)
+    rows.extend([1, 1])
+    # TODO: Добавить кнопку "Другой"
     builder.button(
-        text="Назад",
+        text="✏️ Другой",
         callback_data=keyboard_factory.ScheduleEditingCallbackFactory(
-            action="back", value=value, schedule_id=schedule_id
+            action="custom_teacher",
+            value=value,
+            schedule_id=schedule_id,
+            keyboard_type=keyboard_type,
+        ),
+    )
+    builder.button(
+        text="⬅️ Назад",
+        callback_data=keyboard_factory.ScheduleEditingCallbackFactory(
+            action="back",
+            value=value,
+            schedule_id=schedule_id,
+            keyboard_type=keyboard_type,
         ),
     )
     builder.adjust(*rows)
     return builder.as_markup()
 
 
-def edit_group(schedule_id: int, value: int):
+def edit_group(schedule_id: int, value: int, keyboard_type: str):
     builder = InlineKeyboardBuilder()
     for group in config.groups:
         builder.button(
             text=group,
             callback_data=keyboard_factory.ScheduleEditingCallbackFactory(
-                action="group_edit", edit=group, value=value, schedule_id=schedule_id
+                action="group_edit",
+                edit=group,
+                value=value,
+                schedule_id=schedule_id,
+                keyboard_type=keyboard_type,
             ),
         )
     builder.adjust(3)
     rows = [len(row) for row in builder.as_markup().inline_keyboard]
-    rows.append(1)
+    rows.extend([1, 1])
+    # TODO: Добавить кнопку "Другая"
     builder.button(
-        text="Назад",
+        text="✏️ Другая",
         callback_data=keyboard_factory.ScheduleEditingCallbackFactory(
-            action="back", value=value, schedule_id=schedule_id
+            action="custom_group",
+            value=value,
+            schedule_id=schedule_id,
+            keyboard_type=keyboard_type,
+        ),
+    )
+    builder.button(
+        text="⬅️ Назад",
+        callback_data=keyboard_factory.ScheduleEditingCallbackFactory(
+            action="back",
+            value=value,
+            schedule_id=schedule_id,
+            keyboard_type=keyboard_type,
         ),
     )
     builder.adjust(*rows)
     return builder.as_markup()
 
 
-def edit_room(schedule_id: int, value: int):
+def edit_room(schedule_id: int, value: int, keyboard_type: str):
     builder = InlineKeyboardBuilder()
     for room in config.rooms:
         builder.button(
             text=str(room),
             callback_data=keyboard_factory.ScheduleEditingCallbackFactory(
-                action="room_edit", edit=room, value=value, schedule_id=schedule_id
+                action="room_edit",
+                edit=room,
+                value=value,
+                schedule_id=schedule_id,
+                keyboard_type=keyboard_type,
             ),
         )
     builder.adjust(3)
     rows = [len(row) for row in builder.as_markup().inline_keyboard]
-    rows.append(1)
+    rows.extend([1, 1])
+    # TODO: Добавить кнопку "Другая"
     builder.button(
-        text="Назад",
+        text="✏️ Другая",
         callback_data=keyboard_factory.ScheduleEditingCallbackFactory(
-            action="back", value=value, schedule_id=schedule_id
+            action="custom_room",
+            value=value,
+            schedule_id=schedule_id,
+            keyboard_type=keyboard_type,
+        ),
+    )
+    builder.button(
+        text="⬅️ Назад",
+        callback_data=keyboard_factory.ScheduleEditingCallbackFactory(
+            action="back",
+            value=value,
+            schedule_id=schedule_id,
+            keyboard_type=keyboard_type,
         ),
     )
     builder.adjust(*rows)
