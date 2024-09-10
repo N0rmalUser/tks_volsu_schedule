@@ -1,16 +1,16 @@
 # TKS VOLSU SCHEDULE BOT
 # Copyright (C) 2024 N0rmalUser
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
@@ -90,11 +90,11 @@ def get_date_for_day(day: int, week: int) -> str:
 
 @sql_kit(config.SCHEDULE_DB)
 def get_group_schedule(
-        day: int,
-        week: int,
-        group_name: str,
-        editing: bool = False,
-        cursor: sqlite3.Cursor = None,
+    day: int,
+    week: int,
+    group_name: str,
+    editing: bool = False,
+    cursor: sqlite3.Cursor = None,
 ):
     """Возвращает отформатированное расписание для указанной группы на указанный день и неделю"""
     week_type = "Числитель" if week == 1 else "Знаменатель"
@@ -155,11 +155,11 @@ def get_group_schedule(
 
 @sql_kit(config.SCHEDULE_DB)
 def get_teacher_schedule(
-        day: int,
-        week: int,
-        teacher_name: str,
-        editing: bool = False,
-        cursor: sqlite3.Cursor = None,
+    day: int,
+    week: int,
+    teacher_name: str,
+    editing: bool = False,
+    cursor: sqlite3.Cursor = None,
 ):
     """Возвращает отформатированное расписание для указанного преподавателя на указанный день и неделю. Если преподаватель обучается в какой-либо группе (указывается в config.py), то возвращает расписание для этой группы, смешанное с расписанием преподавателя."""
 

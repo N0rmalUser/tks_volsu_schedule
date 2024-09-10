@@ -1,16 +1,16 @@
 # TKS VOLSU SCHEDULE BOT
 # Copyright (C) 2024 N0rmalUser
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
@@ -407,6 +407,7 @@ def add_group(schedule_id: int, value: int, keyboard_type: str):
 
 
 def add_teacher(schedule_id: int, value: int, keyboard_type: str):
+
     builder = InlineKeyboardBuilder()
     for teacher in config.TEACHERS:
         builder.button(
@@ -486,6 +487,7 @@ def add_room(schedule_id: int, value: int, keyboard_type: str):
 
 
 def edit_time(schedule_id: int, value: int, keyboard_type: str):
+
     builder = InlineKeyboardBuilder()
     times = ["08:30", "10:10", "12:00", "13:40", "15:20", "17:00", "18:40"]
     for i in times:
@@ -516,6 +518,7 @@ def edit_time(schedule_id: int, value: int, keyboard_type: str):
 
 
 def edit_day(schedule_id: int, value: int, keyboard_type: str):
+
     builder = InlineKeyboardBuilder()
     days = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб"]
     for i in days:
@@ -581,6 +584,7 @@ def edit_week(schedule_id: int, week: int, value: int, keyboard_type: str):
 
 
 def edit_teacher(schedule_id: int, value: int, keyboard_type: str):
+
     builder = InlineKeyboardBuilder()
 
     for teacher in config.TEACHERS:

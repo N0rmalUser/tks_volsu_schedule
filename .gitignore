@@ -1,8 +1,9 @@
 .idea/
 __pycache__/
 
+config.toml
+
+**.log
 **.db
 **.docx
 **.xlsx
-
-

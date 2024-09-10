@@ -1,16 +1,16 @@
 # TKS VOLSU SCHEDULE BOT
 # Copyright (C) 2024 N0rmalUser
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
@@ -91,14 +91,14 @@ async def func(callback: CallbackQuery, entity_id: int, kb_type: str):
 
 @router.callback_query(DayCallbackFactory.filter(F.action == "schedule_editing"))
 async def schedule_editing_handler(
-        callback: CallbackQuery, callback_data: DayCallbackFactory
+    callback: CallbackQuery, callback_data: DayCallbackFactory
 ) -> None:
     await func(callback, callback_data.value, kb_type=callback_data.keyboard_type)
 
 
 @router.callback_query(ScheduleEditingCallbackFactory.filter(F.action == "lesson"))
 async def lesson_handler(
-        callback: CallbackQuery, callback_data: ScheduleEditingCallbackFactory
+    callback: CallbackQuery, callback_data: ScheduleEditingCallbackFactory
 ) -> None:
     from bot.misc.text_maker import get_time_symbol
 
@@ -133,7 +133,7 @@ async def lesson_handler(
 
 @router.callback_query(ScheduleEditingCallbackFactory.filter(F.action == "time"))
 async def time_handler(
-        callback: CallbackQuery, callback_data: ScheduleEditingCallbackFactory
+    callback: CallbackQuery, callback_data: ScheduleEditingCallbackFactory
 ) -> None:
     keyboard = kb.edit_time(
         schedule_id=callback_data.schedule_id,
@@ -146,7 +146,7 @@ async def time_handler(
 
 @router.callback_query(ScheduleEditingCallbackFactory.filter(F.action == "time_edit"))
 async def time_edit_handler(
-        callback: CallbackQuery, callback_data: ScheduleEditingCallbackFactory
+    callback: CallbackQuery, callback_data: ScheduleEditingCallbackFactory
 ) -> None:
     times = ["8:30", "10:10", "12:00", "13:40", "15:20", "17:00", "18:40"]
     Schedule().edit_time(
@@ -157,7 +157,7 @@ async def time_edit_handler(
 
 @router.callback_query(ScheduleEditingCallbackFactory.filter(F.action == "day"))
 async def day_handler(
-        callback: CallbackQuery, callback_data: ScheduleEditingCallbackFactory
+    callback: CallbackQuery, callback_data: ScheduleEditingCallbackFactory
 ) -> None:
     keyboard = kb.edit_day(
         schedule_id=callback_data.schedule_id,
@@ -170,7 +170,7 @@ async def day_handler(
 
 @router.callback_query(ScheduleEditingCallbackFactory.filter(F.action == "day_edit"))
 async def day_edit_handler(
-        callback: CallbackQuery, callback_data: ScheduleEditingCallbackFactory
+    callback: CallbackQuery, callback_data: ScheduleEditingCallbackFactory
 ) -> None:
     days = ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота"]
     Schedule().edit_day(schedule_id=callback_data.schedule_id, day=days[callback_data.day - 1])
@@ -189,7 +189,7 @@ async def day_edit_handler(
 
 @router.callback_query(ScheduleEditingCallbackFactory.filter(F.action == "week_edit"))
 async def week_edit_handler(
-        callback: CallbackQuery, callback_data: ScheduleEditingCallbackFactory
+    callback: CallbackQuery, callback_data: ScheduleEditingCallbackFactory
 ) -> None:
     Schedule().edit_week(
         schedule_id=callback_data.schedule_id,
@@ -200,7 +200,7 @@ async def week_edit_handler(
 
 @router.callback_query(ScheduleEditingCallbackFactory.filter(F.action == "lesson_type"))
 async def lesson_type_handler(
-        callback: CallbackQuery, callback_data: ScheduleEditingCallbackFactory
+    callback: CallbackQuery, callback_data: ScheduleEditingCallbackFactory
 ) -> None:
     schedule_id = callback_data.schedule_id
     value = callback_data.value
@@ -214,7 +214,7 @@ async def lesson_type_handler(
 
 @router.callback_query(ScheduleEditingCallbackFactory.filter(F.action == "type_edit"))
 async def lesson_type_handler(
-        callback: CallbackQuery, callback_data: ScheduleEditingCallbackFactory
+    callback: CallbackQuery, callback_data: ScheduleEditingCallbackFactory
 ) -> None:
     Schedule().edit_lesson_type(
         schedule_id=callback_data.schedule_id, lesson_type=callback_data.edit
@@ -224,7 +224,7 @@ async def lesson_type_handler(
 
 @router.callback_query(ScheduleEditingCallbackFactory.filter(F.action == "teacher"))
 async def teacher_handler(
-        callback: CallbackQuery, callback_data: ScheduleEditingCallbackFactory
+    callback: CallbackQuery, callback_data: ScheduleEditingCallbackFactory
 ) -> None:
     await callback.message.edit_reply_markup(
         reply_markup=kb.edit_teacher(
@@ -238,7 +238,7 @@ async def teacher_handler(
 
 @router.callback_query(ScheduleEditingCallbackFactory.filter(F.action == "teacher_edit"))
 async def week_edit_handler(
-        callback: CallbackQuery, callback_data: ScheduleEditingCallbackFactory
+    callback: CallbackQuery, callback_data: ScheduleEditingCallbackFactory
 ) -> None:
     Schedule().edit_teacher(
         schedule_id=callback_data.schedule_id,
@@ -249,7 +249,7 @@ async def week_edit_handler(
 
 @router.callback_query(ScheduleEditingCallbackFactory.filter(F.action == "group"))
 async def group_handler(
-        callback: CallbackQuery, callback_data: ScheduleEditingCallbackFactory
+    callback: CallbackQuery, callback_data: ScheduleEditingCallbackFactory
 ) -> None:
     keyboard = kb.edit_group(
         schedule_id=callback_data.schedule_id,
@@ -262,7 +262,7 @@ async def group_handler(
 
 @router.callback_query(ScheduleEditingCallbackFactory.filter(F.action == "group_edit"))
 async def week_edit_handler(
-        callback: CallbackQuery, callback_data: ScheduleEditingCallbackFactory
+    callback: CallbackQuery, callback_data: ScheduleEditingCallbackFactory
 ) -> None:
     Schedule().edit_group(schedule_id=callback_data.schedule_id, group=callback_data.edit)
     await func(callback, callback_data.value, callback_data.keyboard_type)
@@ -270,7 +270,7 @@ async def week_edit_handler(
 
 @router.callback_query(ScheduleEditingCallbackFactory.filter(F.action == "room"))
 async def room_handler(
-        callback: CallbackQuery, callback_data: ScheduleEditingCallbackFactory
+    callback: CallbackQuery, callback_data: ScheduleEditingCallbackFactory
 ) -> None:
     await callback.message.edit_reply_markup(
         reply_markup=kb.edit_room(
@@ -284,7 +284,7 @@ async def room_handler(
 
 @router.callback_query(ScheduleEditingCallbackFactory.filter(F.action == "room_edit"))
 async def week_edit_handler(
-        callback: CallbackQuery, callback_data: ScheduleEditingCallbackFactory
+    callback: CallbackQuery, callback_data: ScheduleEditingCallbackFactory
 ) -> None:
     Schedule().edit_room(schedule_id=callback_data.schedule_id, room=callback_data.edit)
     await func(callback, callback_data.value, callback_data.keyboard_type)
@@ -292,7 +292,7 @@ async def week_edit_handler(
 
 @router.callback_query(ScheduleEditingCallbackFactory.filter(F.action == "add_new"))
 async def add_new_handler(
-        callback: CallbackQuery, callback_data: ScheduleEditingCallbackFactory
+    callback: CallbackQuery, callback_data: ScheduleEditingCallbackFactory
 ) -> None:
     await callback.message.edit_text(
         "Сначала выберите время, когда будет проводится занятие",
@@ -306,7 +306,7 @@ async def add_new_handler(
 
 @router.callback_query(ScheduleConstructorCallbackFactory.filter(F.action == "add_new_day"))
 async def add_new_day_handler(
-        callback: CallbackQuery, callback_data: ScheduleEditingCallbackFactory
+    callback: CallbackQuery, callback_data: ScheduleEditingCallbackFactory
 ) -> None:
     await callback.message.edit_text(
         "Теперь день",
@@ -320,8 +320,8 @@ async def add_new_day_handler(
 
 @router.callback_query(ScheduleConstructorCallbackFactory.filter(F.action == "add_new_week"))
 async def add_new_week_handler(
-        callback: CallbackQuery,
-        callback_data: ScheduleEditingCallbackFactory,
+    callback: CallbackQuery,
+    callback_data: ScheduleEditingCallbackFactory,
 ) -> None:
     await callback.message.edit_text(
         "Теперь выберите неделю",
@@ -335,7 +335,7 @@ async def add_new_week_handler(
 
 @router.callback_query(ScheduleConstructorCallbackFactory.filter(F.action == "add_new_type"))
 async def add_new_lesson_type_handler(
-        callback: CallbackQuery, callback_data: ScheduleEditingCallbackFactory
+    callback: CallbackQuery, callback_data: ScheduleEditingCallbackFactory
 ) -> None:
     await callback.message.edit_text(
         "Теперь выберите тип занятия",
@@ -350,9 +350,9 @@ async def add_new_lesson_type_handler(
 
 @router.callback_query(ScheduleConstructorCallbackFactory.filter(F.action == "add_new_lesson"))
 async def add_new_lesson_handler(
-        callback: CallbackQuery,
-        callback_data: ScheduleEditingCallbackFactory,
-        state: FSMContext,
+    callback: CallbackQuery,
+    callback_data: ScheduleEditingCallbackFactory,
+    state: FSMContext,
 ) -> None:
     from bot.misc.states import NewSchedule
 
@@ -371,9 +371,9 @@ async def add_new_lesson_handler(
 
 @router.callback_query(ScheduleConstructorCallbackFactory.filter(F.action == "add_new_group"))
 async def add_new_group_handler(
-        callback: CallbackQuery,
-        callback_data: ScheduleEditingCallbackFactory,
-        state: FSMContext,
+    callback: CallbackQuery,
+    callback_data: ScheduleEditingCallbackFactory,
+    state: FSMContext,
 ) -> None:
     from bot.misc.states import NewSchedule
 
@@ -393,9 +393,9 @@ async def add_new_group_handler(
 
 @router.callback_query(ScheduleConstructorCallbackFactory.filter(F.action == "add_new_teacher"))
 async def add_new_teacher_handler(
-        callback: CallbackQuery,
-        callback_data: ScheduleEditingCallbackFactory,
-        state: FSMContext,
+    callback: CallbackQuery,
+    callback_data: ScheduleEditingCallbackFactory,
+    state: FSMContext,
 ) -> None:
     from bot.misc.states import NewSchedule
 
@@ -415,9 +415,9 @@ async def add_new_teacher_handler(
 
 @router.callback_query(ScheduleConstructorCallbackFactory.filter(F.action == "add_new_room"))
 async def add_new_room_handler(
-        callback: CallbackQuery,
-        callback_data: ScheduleEditingCallbackFactory,
-        state: FSMContext,
+    callback: CallbackQuery,
+    callback_data: ScheduleEditingCallbackFactory,
+    state: FSMContext,
 ) -> None:
     from bot.misc.states import NewSchedule
 
@@ -436,7 +436,7 @@ async def add_new_room_handler(
 
 @router.callback_query(ScheduleConstructorCallbackFactory.filter(F.action == "add_new_end"))
 async def add_new_end_handler(
-        callback: CallbackQuery, callback_data: ScheduleEditingCallbackFactory
+    callback: CallbackQuery, callback_data: ScheduleEditingCallbackFactory
 ) -> None:
     if callback_data.keyboard_type == "teacher":
         text = text_maker.get_teacher_schedule(
@@ -482,9 +482,9 @@ async def add_new_end_handler(
 
 @router.callback_query(ScheduleConstructorCallbackFactory.filter(F.action == "back"))
 async def back_handler(
-        callback: CallbackQuery,
-        callback_data: ScheduleEditingCallbackFactory,
-        state: FSMContext,
+    callback: CallbackQuery,
+    callback_data: ScheduleEditingCallbackFactory,
+    state: FSMContext,
 ):
     if callback_data.previous == "add_new":
         await add_new_handler(callback, callback_data)
@@ -557,7 +557,7 @@ async def cancel_handler(callback: CallbackQuery, callback_data: ScheduleEditing
 
 @router.callback_query(ScheduleConstructorCallbackFactory.filter(F.action == "delete"))
 async def delete_handler(
-        callback: CallbackQuery, callback_data: ScheduleEditingCallbackFactory
+    callback: CallbackQuery, callback_data: ScheduleEditingCallbackFactory
 ) -> None:
     Schedule().delete_schedule(schedule_id=callback_data.schedule_id)
     await func(callback, callback_data.value, callback_data.keyboard_type)
@@ -565,7 +565,7 @@ async def delete_handler(
 
 @router.callback_query(ScheduleEditingCallbackFactory.filter(F.action == "cancel"))
 async def cancel_handler(
-        callback: CallbackQuery, callback_data: ScheduleEditingCallbackFactory
+    callback: CallbackQuery, callback_data: ScheduleEditingCallbackFactory
 ) -> None:
     value = callback_data.value
     week = UserDatabase(callback.from_user.id).week
@@ -615,6 +615,6 @@ async def cancel_handler(
 
 @router.callback_query(ScheduleEditingCallbackFactory.filter(F.action == "back"))
 async def back_handler(
-        callback: CallbackQuery, callback_data: ScheduleEditingCallbackFactory
+    callback: CallbackQuery, callback_data: ScheduleEditingCallbackFactory
 ) -> None:
     await func(callback, callback_data.value, callback_data.keyboard_type)
