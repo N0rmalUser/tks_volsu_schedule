@@ -40,39 +40,22 @@ async def ignore_handler(callback: CallbackQuery) -> None:
 
 @router.callback_query(DayCallbackFactory.filter(F.action == "day"))
 async def day_handler(callback: CallbackQuery, callback_data: DayCallbackFactory) -> None:
-    """Обработчик нажатия на день недели."""
-    await process_schedule(
-        callback=callback,
-        callback_data=callback_data,
-        week=callback_data.week,
-        day=callback_data.day,
-    )
+    """Функция, обрабатывающая нажатие кнопки дня недели. Отправляет расписание на этот день для преподавателей, групп и аудиторий."""
 
+    from bot.bot import bot
+    from bot.config import ADMIN_CHAT_ID
 
-@router.callback_query(DayCallbackFactory.filter(F.action == "week"))
-async def week_handler(callback: CallbackQuery, callback_data: DayCallbackFactory) -> None:
-    """Обработчик нажатия на неделю."""
-    week = 1 if int(callback_data.week) != 2 else 2
-    await process_schedule(
-        callback=callback, callback_data=callback_data, week=week, day=callback_data.day
-    )
-
-
-async def process_schedule(
-    callback: CallbackQuery, callback_data: DayCallbackFactory, week: int, day: int
-) -> None:
-    """Обработчик расписания для преподавателей, групп и аудиторий."""
-
-    keyboard_type = callback_data.keyboard_type
-    value = callback_data.value
+    keyboard_type: str = callback_data.keyboard_type
+    value: int = callback_data.value
+    week: int = callback_data.week
+    day: int = callback_data.day
 
     user = UserDatabase(callback.from_user.id)
 
     if callback_data.day == user.day:
         await callback.answer()
         return
-
-    user.day = day
+    user.day = callback_data.day
     user.week = week
     text = "Ошибка. Напишите админу /admin"
 
@@ -80,12 +63,57 @@ async def process_schedule(
         text = text_maker.get_teacher_schedule(
             day=day, week=week, teacher_name=Schedule().get_teacher_name(value)
         )
-        user.teacher = value
     elif keyboard_type == "group":
         text = text_maker.get_group_schedule(
             day=day, week=week, group_name=Schedule().get_group_name(value)
         )
-        user.group = value
+    elif keyboard_type == "room":
+        text = text_maker.get_room_schedule(
+            day=day, week=week, room_name=Schedule().get_room_name(value)
+        )
+
+    if user.type == "teacher":
+        week_kb = kb.get_days_teacher(
+            callback.from_user.id, keyboard_type=keyboard_type, week=week, value=value
+        )
+    else:
+        week_kb = kb.get_days(
+            callback.from_user.id, keyboard_type=keyboard_type, week=week, value=value
+        )
+
+    await callback.message.edit_text(text, reply_markup=week_kb)
+    await callback.answer()
+
+    if user.tracking:
+        await bot.send_message(ADMIN_CHAT_ID, message_thread_id=user.topic_id, text=callback.data)
+
+
+@router.callback_query(DayCallbackFactory.filter(F.action == "week"))
+async def week_handler(callback: CallbackQuery, callback_data: DayCallbackFactory) -> None:
+    """Функция, обрабатывающая нажатие кнопки недели. Отправляет расписание на следующую неделю для преподавателей, групп и аудиторий, сохраняя день."""
+
+    keyboard_type = callback_data.keyboard_type
+    value: int = callback_data.value
+    week = 1 if int(callback_data.week) != 2 else 2
+    day = callback_data.day
+
+    user = UserDatabase(callback.from_user.id)
+
+    if callback_data.day == str(user.day):
+        await callback.answer()
+        return
+    user.set_day = callback_data.day
+    user.week = week
+    text = "Ошибка. Напишите админу /admin"
+
+    if keyboard_type == "teacher":
+        text = text_maker.get_teacher_schedule(
+            day=day, week=week, teacher_name=Schedule().get_teacher_name(value)
+        )
+    elif keyboard_type == "group":
+        text = text_maker.get_group_schedule(
+            day=day, week=week, group_name=Schedule().get_group_name(value)
+        )
     elif keyboard_type == "room":
         text = text_maker.get_room_schedule(
             day=day, week=week, room_name=Schedule().get_room_name(value)
@@ -103,6 +131,7 @@ async def process_schedule(
     await callback.message.edit_text(text, reply_markup=week_kb)
     await callback.answer()
     await process_track(user, callback.data)
+
 
 
 @router.callback_query(ChangeCallbackFactory.filter(F.action == "room"))
