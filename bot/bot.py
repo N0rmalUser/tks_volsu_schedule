@@ -87,8 +87,12 @@ async def start_message(msg: Message, menu, keyboard) -> None:
     )
     await msg.answer("Выбери себя в списке", reply_markup=keyboard)
 
-    if user.topic_id:
-        return
+    if not msg.from_user.is_bot and not user.topic_id:
+        await topic_create(msg)
+
+
+async def topic_create(msg: Message) -> None:
+    user = UserDatabase(msg.from_user.id)
     if msg.from_user.username:
         topic_name = f"{msg.from_user.username} {msg.from_user.id}"
     else:
