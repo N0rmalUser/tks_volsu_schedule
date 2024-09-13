@@ -179,7 +179,7 @@ async def handle_topic_command_info(msg: Message, command: CommandObject = None)
         if start.message_thread_id:
             await start.edit_text(
                 utils.user_info(UserDatabase(topic_id=msg.message_thread_id).tg_id()),
-                parse_mode="MarkdownV2",
+                parse_mode="HTML",
             )
         else:
             await start.edit_text(utils.get_all_users_info())

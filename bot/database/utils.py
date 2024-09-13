@@ -54,21 +54,20 @@ def user_info(user_id: int):
     ).days
     return f"""
 Информация о пользователе:
-`user_type:``  ``{user.type}`
-`username:``   `{user.username}
-`fullname:``   ``{user.fullname}`
-`start_date:`` ``{user.start_date}`
-`last_date:``  ``{user.last_date}`
-`            `{-days_until} дней назад
-`inviter_id:`` ``{user.inviter_id}`
-`blocked``     ``{user.blocked}`
-`banned``      ``{user.banned}`
+<code>user type:  </code> <code>{user.type}</code>
+<code>username:   </code> <code>{user.username}</code>
+<code>fullname:   </code> <code>{user.fullname}</code>
+<code>start date: </code> <code>{user.start_date}</code>
+<code>last_date:  </code> <code>{user.last_date}</code>
+<code>            </code> <code>{days_until} дней назад</code>
 
-`tracking``     ``{user.tracking}`
-`teacher``      ``{user.teacher}`
-`group``        ``{user.group.replace("-", "")}`
-"""
-
+<code>inviter id: </code> <code>{user.inviter_id}</code>
+<code>blocked:    </code> <code>{user.blocked}</code>
+<code>banned:     </code> <code>{user.banned}</code>
+<code>tracking:   </code> <code>{user.tracking}</code>
+<code>teacher:    </code> <code>{user.teacher}</code>
+<code>group:      </code> <code>{user.group.replace("-", "") if user.group else "None"}</code>
+    """
 
 @sql_kit(USERS_DB)
 def all_user_ids(cursor: sqlite3.Cursor) -> list:
