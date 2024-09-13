@@ -143,7 +143,7 @@ async def handle_topic_command_track(msg: Message, command: CommandObject) -> No
     start = await msg.answer("Подождите...")
 
     if start.message_thread_id:
-        user = UserDatabase(topic_id=v.message_thread_id)
+        user = UserDatabase(topic_id=msg.message_thread_id)
         if command == "start":
             user.tracking = True
         elif command == "stop":
