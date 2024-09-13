@@ -35,7 +35,7 @@ from typing import Any, Awaitable, Callable, Dict
 
 from aiogram import BaseMiddleware
 from aiogram.exceptions import TelegramBadRequest, TelegramNetworkError, TelegramRetryAfter
-from aiogram.types import CallbackQuery, Message, Update
+from aiogram.types import Message, Update
 
 from bot.database.user import UserDatabase
 
@@ -50,7 +50,6 @@ class BanUsersMiddleware(BaseMiddleware):
         data: Dict[str, Any],
     ) -> Any:
         user = UserDatabase(data["event_from_user"].id)
-
         if user.exists():
             if not user.banned:
                 return await handler(event, data)
@@ -58,22 +57,26 @@ class BanUsersMiddleware(BaseMiddleware):
             return await handler(event, data)
 
 
-class IgnoreMessageNotModifiedMiddleware(BaseMiddleware):
-    """Мидлварь, игнорирующая ошибку "message is not modified" при попытке изменить сообщение"""
+class TopicCreatorMiddleware(BaseMiddleware):
+    """Мидлварь, создающий топик пользователя, если он не создан"""
 
     async def __call__(
         self,
-        handler: Callable[[CallbackQuery, Dict[str, Any]], Awaitable[Any]],
-        event: CallbackQuery,
+        handler: Callable[[Update, Dict[str, Any]], Awaitable[Any]],
+        event: Update,
         data: Dict[str, Any],
     ) -> Any:
-        try:
+        user = UserDatabase(data["event_from_user"].id)
+        if (event.message and not event.message.from_user.is_bot) or (
+            event.callback_query and not event.callback_query.from_user.is_bot
+        ):
+            if not user.topic_id:
+                from bot.bot import topic_create
+
+                if msg := (event.message or event.callback_query):
+                    await topic_create(msg)
             return await handler(event, data)
-        except TelegramBadRequest as e:
-            print("1")
-            if "message is not modified" in str(e):
-                await event.answer("Выбран тот же день")
-                return
+        return
 
 
 class CallbackTelegramErrorsMiddleware(BaseMiddleware):

@@ -65,7 +65,7 @@ async def main() -> None:
     )
 
     dp.update.middleware(middlewares.BanUsersMiddleware())
-    dp.callback_query.middleware(middlewares.IgnoreMessageNotModifiedMiddleware())
+    dp.update.middleware(middlewares.TopicCreatorMiddleware())
     dp.callback_query.middleware(middlewares.CallbackTelegramErrorsMiddleware())
 
     await bot.delete_webhook(drop_pending_updates=True)
