@@ -32,7 +32,6 @@ def sql_kit(db=":memory:"):
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
-            print(db)
             conn = sqlite3.connect(db)
             try:
                 result = func(*args, **kwargs, cursor=conn.cursor())

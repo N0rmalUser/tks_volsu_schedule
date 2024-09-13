@@ -17,6 +17,7 @@
 from aiogram import F, Router
 from aiogram.types import CallbackQuery
 
+from bot.bot import process_track
 from bot.database.schedule import Schedule
 from bot.database.user import UserDatabase
 from bot.markups import user_markups as kb
@@ -39,22 +40,39 @@ async def ignore_handler(callback: CallbackQuery) -> None:
 
 @router.callback_query(DayCallbackFactory.filter(F.action == "day"))
 async def day_handler(callback: CallbackQuery, callback_data: DayCallbackFactory) -> None:
-    """Функция, обрабатывающая нажатие кнопки дня недели. Отправляет расписание на этот день для преподавателей, групп и аудиторий."""
+    """Обработчик нажатия на день недели."""
+    await process_schedule(
+        callback=callback,
+        callback_data=callback_data,
+        week=callback_data.week,
+        day=callback_data.day,
+    )
 
-    from bot.bot import bot
-    from bot.config import ADMIN_CHAT_ID
 
-    keyboard_type: str = callback_data.keyboard_type
-    value: int = callback_data.value
-    week: int = callback_data.week
-    day: int = callback_data.day
+@router.callback_query(DayCallbackFactory.filter(F.action == "week"))
+async def week_handler(callback: CallbackQuery, callback_data: DayCallbackFactory) -> None:
+    """Обработчик нажатия на неделю."""
+    week = 1 if int(callback_data.week) != 2 else 2
+    await process_schedule(
+        callback=callback, callback_data=callback_data, week=week, day=callback_data.day
+    )
+
+
+async def process_schedule(
+    callback: CallbackQuery, callback_data: DayCallbackFactory, week: int, day: int
+) -> None:
+    """Обработчик расписания для преподавателей, групп и аудиторий."""
+
+    keyboard_type = callback_data.keyboard_type
+    value = callback_data.value
 
     user = UserDatabase(callback.from_user.id)
 
     if callback_data.day == user.day:
         await callback.answer()
         return
-    user.day = callback_data.day
+
+    user.day = day
     user.week = week
     text = "Ошибка. Напишите админу /admin"
 
@@ -62,10 +80,12 @@ async def day_handler(callback: CallbackQuery, callback_data: DayCallbackFactory
         text = text_maker.get_teacher_schedule(
             day=day, week=week, teacher_name=Schedule().get_teacher_name(value)
         )
+        user.teacher = value
     elif keyboard_type == "group":
         text = text_maker.get_group_schedule(
             day=day, week=week, group_name=Schedule().get_group_name(value)
         )
+        user.group = value
     elif keyboard_type == "room":
         text = text_maker.get_room_schedule(
             day=day, week=week, room_name=Schedule().get_room_name(value)
@@ -82,73 +102,12 @@ async def day_handler(callback: CallbackQuery, callback_data: DayCallbackFactory
 
     await callback.message.edit_text(text, reply_markup=week_kb)
     await callback.answer()
-
-    if user.tracking:
-        await bot.send_message(ADMIN_CHAT_ID, message_thread_id=user.topic_id, text=callback.data)
-
-
-@router.callback_query(DayCallbackFactory.filter(F.action == "week"))
-async def week_handler(callback: CallbackQuery, callback_data: DayCallbackFactory) -> None:
-    """Функция, обрабатывающая нажатие кнопки недели. Отправляет расписание на следующую неделю для преподавателей, групп и аудиторий, сохраняя день."""
-
-    from bot.bot import bot
-    from bot.config import ADMIN_CHAT_ID
-
-    keyboard_type = callback_data.keyboard_type
-    value: int = callback_data.value
-    week = 1 if int(callback_data.week) != 2 else 2
-    day = callback_data.day
-
-    user = UserDatabase(callback.from_user.id)
-
-    if callback_data.day == str(user.day):
-        await callback.answer()
-        return
-    user.set_day = callback_data.day
-    user.week = week
-    text = "Ошибка. Напишите админу /admin"
-
-    if keyboard_type == "teacher":
-        text = text_maker.get_teacher_schedule(
-            day=day, week=week, teacher_name=Schedule().get_teacher_name(value)
-        )
-    elif keyboard_type == "group":
-        text = text_maker.get_group_schedule(
-            day=day, week=week, group_name=Schedule().get_group_name(value)
-        )
-    elif keyboard_type == "room":
-        text = text_maker.get_room_schedule(
-            day=day, week=week, room_name=Schedule().get_room_name(value)
-        )
-
-    if user.type == "teacher":
-        week_kb = kb.get_days_teacher(
-            callback.from_user.id, keyboard_type=keyboard_type, week=week, value=value
-        )
-    else:
-        week_kb = kb.get_days(
-            callback.from_user.id, keyboard_type=keyboard_type, week=week, value=value
-        )
-
-    await callback.message.edit_text(text, reply_markup=week_kb)
-    await callback.answer()
-
-    if user.tracking:
-        await bot.send_message(ADMIN_CHAT_ID, message_thread_id=user.topic_id, text=callback.data)
-
-    await callback.message.edit_text(text, reply_markup=week_kb)
-    await callback.answer()
-
-    if user.tracking:
-        await bot.send_message(ADMIN_CHAT_ID, message_thread_id=user.topic_id, text=callback.data)
+    await process_track(user, callback.data)
 
 
 @router.callback_query(ChangeCallbackFactory.filter(F.action == "room"))
 async def room_handler(callback: CallbackQuery, callback_data: ChangeCallbackFactory) -> None:
     """Функция, обрабатывающая нажатие кнопки аудитории. Отправляет расписание на этот день для аудитории."""
-
-    from bot.bot import bot
-    from bot.config import ADMIN_CHAT_ID
 
     user = UserDatabase(callback.from_user.id)
     user.set_today_date()
@@ -176,9 +135,7 @@ async def room_handler(callback: CallbackQuery, callback_data: ChangeCallbackFac
         reply_markup=week_kb,
     )
     await callback.answer()
-
-    if user.tracking:
-        await bot.send_message(ADMIN_CHAT_ID, message_thread_id=user.topic_id, text=callback.data)
+    await process_track(user, callback.data)
 
 
 @router.callback_query(ChangeCallbackFactory.filter(F.action == "teacher"))
@@ -186,9 +143,6 @@ async def teacher_handler(callback: CallbackQuery, callback_data: ChangeCallback
     """Функция, обрабатывающая нажатие кнопки преподавателя. Отправляет расписание на этот день для преподавателя.
     Если преподаватель является учеником (указывается в config.toml), отправляет расписание его групп, смешанное с занятиями, которые он сам проводит
     """
-
-    from bot.bot import bot
-    from bot.config import ADMIN_CHAT_ID
 
     user = UserDatabase(callback.from_user.id)
     user.set_today_date()
@@ -217,16 +171,12 @@ async def teacher_handler(callback: CallbackQuery, callback_data: ChangeCallback
         reply_markup=week_kb,
     )
     await callback.answer()
-    if user.tracking:
-        await bot.send_message(ADMIN_CHAT_ID, message_thread_id=user.topic_id, text=callback.data)
+    await process_track(user, callback.data)
 
 
 @router.callback_query(ChangeCallbackFactory.filter(F.action == "group"))
 async def group_handler(callback: CallbackQuery, callback_data: ChangeCallbackFactory) -> None:
     """Функция, обрабатывающая нажатие кнопки группы. Отправляет расписание на этот день для группы."""
-
-    from bot.bot import bot
-    from bot.config import ADMIN_CHAT_ID
 
     user = UserDatabase(callback.from_user.id)
     user.set_today_date()
@@ -256,40 +206,31 @@ async def group_handler(callback: CallbackQuery, callback_data: ChangeCallbackFa
         reply_markup=week_kb,
     )
     await callback.answer()
+    await process_track(user, callback.data)
 
-    if user.tracking:
-        await bot.send_message(ADMIN_CHAT_ID, message_thread_id=user.topic_id, text=callback.data)
+
+async def process_default_change(
+    callback: CallbackQuery, callback_data: ChangeCallbackFactory
+) -> None:
+    """Обработчик изменения значения по умолчанию (teacher/group)."""
+
+    user = UserDatabase(callback.from_user.id)
+    user.default = callback_data.value
+
+    await callback.message.edit_text(f"Default изменён на {callback_data.value}")
+    await callback.answer()
+    await process_track(user, callback.data)
 
 
 @router.callback_query(DefaultChangeCallbackFactory.filter(F.action == "default_teacher"))
 async def default_teacher_handler(
     callback: CallbackQuery, callback_data: ChangeCallbackFactory
 ) -> None:
-    from bot.bot import bot
-    from bot.config import ADMIN_CHAT_ID
-
-    user = UserDatabase(callback.from_user.id)
-    user.default = callback_data.value
-
-    await callback.message.edit_text(f"Default изменён на {callback_data.value}")
-    await callback.answer()
-
-    if user.tracking:
-        await bot.send_message(ADMIN_CHAT_ID, message_thread_id=user.topic_id, text=callback.data)
+    await process_default_change(callback, callback_data)
 
 
 @router.callback_query(DefaultChangeCallbackFactory.filter(F.action == "default_group"))
 async def default_group_handler(
     callback: CallbackQuery, callback_data: ChangeCallbackFactory
 ) -> None:
-    from bot.bot import bot
-    from bot.config import ADMIN_CHAT_ID
-
-    user = UserDatabase(callback.from_user.id)
-    user.default = callback_data.value
-
-    await callback.message.edit_text(f"Default изменён на {callback_data.value}")
-    await callback.answer()
-
-    if user.tracking:
-        await bot.send_message(ADMIN_CHAT_ID, message_thread_id=user.topic_id, text=callback.data)
+    await process_default_change(callback, callback_data)

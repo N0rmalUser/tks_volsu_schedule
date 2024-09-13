@@ -35,7 +35,7 @@ import logging
 from aiogram import Bot, Dispatcher
 from aiogram.client.session.aiohttp import AiohttpSession
 from aiogram.fsm.storage.memory import MemoryStorage
-from aiogram.types import Message
+from aiogram.types import InlineKeyboardMarkup, Message, ReplyKeyboardMarkup
 from aiogram.utils.deep_linking import create_start_link
 
 from bot import middlewares
@@ -96,7 +96,7 @@ async def topic_create(msg: Message) -> None:
     if msg.from_user.username:
         topic_name = f"{msg.from_user.username} {msg.from_user.id}"
     else:
-        topic_name = f"{msg.from_user.full_name} {str(msg.from_user.id)}"
+        topic_name = f"{msg.from_user.full_name} {msg.from_user.id}"
     result = (
         await bot.create_forum_topic(
             ADMIN_CHAT_ID, topic_name, icon_custom_emoji_id="5312016608254762256"
@@ -114,12 +114,21 @@ async def topic_create(msg: Message) -> None:
         f"Пригласил: <code>{inviter if inviter else 'Никто'}</code>\n"
         f"Тип пользователя: {user.type}"
     )
-    await bot.send_message(
-        ADMIN_CHAT_ID,
-        message_thread_id=topic_id,
-        text=user_info,
-        reply_markup=kb.admin_menu,
-        parse_mode="HTML",
-    )
+    user.tracking = True
+    await process_track(user, user_info, kb.admin_menu)
     user.tracking = False
     logging.info(f"Создан топик имени {msg.from_user.id} @{msg.from_user.username}")
+
+
+async def process_track(
+    user: UserDatabase,
+    text: str,
+    keyboard: ReplyKeyboardMarkup | InlineKeyboardMarkup | None = None,
+) -> None:
+    try:
+        if user.tracking:
+            await bot.send_message(
+                ADMIN_CHAT_ID, message_thread_id=user.topic_id, text=text, reply_markup=keyboard
+            )
+    except Exception as e:
+        logging.error("Ошибка при трекинге:\n" + str(e))

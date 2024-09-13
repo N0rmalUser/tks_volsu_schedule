@@ -127,18 +127,14 @@ async def help_handler(msg: Message) -> None:
 async def admin_handler(msg: Message) -> None:
     """Обработчик команды /admin. Пересылает сообщение админу и включает слежку за действиями пользователя."""
 
-    from bot.bot import bot
+    from bot.bot import process_track
 
-    await bot.send_message(
-        ADMIN_CHAT_ID,
-        message_thread_id=UserDatabase(msg.from_user.id).topic_id,
-        text="Юзверь просит помощи админа!",
-    )
-    logging.warning(f"Юзверь {msg.from_user.id} @{msg.from_user.username} просит помощи админа")
     user = UserDatabase(msg.from_user.id)
+    user.tracking = True
+    logging.warning(f"Юзверь {msg.from_user.id} @{msg.from_user.username} просит помощи админа")
+    await process_track(user, "Юзверь просит помощи админа!")
     await msg.forward(chat_id=ADMIN_CHAT_ID, message_thread_id=user.topic_id)
     await msg.answer("Модератор скоро напишет вам, ожидайте. Пока можете описать проблему.")
-    user.tracking = True
     logging.info(f"{msg.from_user.id} написал админу")
 
 
