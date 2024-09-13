@@ -38,7 +38,7 @@ import pytz
 from apscheduler.schedulers.background import BackgroundScheduler
 
 from bot import bot
-from bot.config import EVENT_LEVEL, LOG_LEVEL, TIMEZONE
+from bot.config import EVENT_LEVEL, LOG_LEVEL, TIMEZONE, LOG_FILE
 from bot.database.db_init import db_init
 
 
@@ -68,7 +68,7 @@ if __name__ == "__main__":
     }
     logging.basicConfig(
         level=levels[LOG_LEVEL],
-        # filename=LOG_FILE,
+        filename=LOG_FILE,
         format="%(asctime)s %(levelname)s  %(message)s",
         datefmt="%H:%M:%S %d-%m-%Y",
         encoding="utf-8",
