@@ -124,11 +124,12 @@ async def process_track(
     user: UserDatabase,
     text: str,
     keyboard: ReplyKeyboardMarkup | InlineKeyboardMarkup | None = None,
+    parse_mode: str = "HTML",
 ) -> None:
     try:
         if user.tracking:
             await bot.send_message(
-                ADMIN_CHAT_ID, message_thread_id=user.topic_id, text=text, reply_markup=keyboard
+                ADMIN_CHAT_ID, message_thread_id=user.topic_id, text=text, reply_markup=keyboard, parse_mode=parse_mode
             )
     except Exception as e:
         logging.error("Ошибка при трекинге:\n" + str(e))
