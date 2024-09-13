@@ -140,28 +140,28 @@ async def handle_topic_command_track(msg: Message, command: CommandObject) -> No
         return
 
     command = str(command.args).lower()
-    resp = await msg.answer("Подождите...")
+    start = await msg.answer("Подождите...")
 
-    if resp.message_thread_id:
-        user = UserDatabase(topic_id=resp.message_thread_id)
+    if start.message_thread_id:
+        user = UserDatabase(topic_id=v.message_thread_id)
         if command == "start":
             user.tracking = True
         elif command == "stop":
             user.tracking = False
         elif command == "status":
             pass
-        await resp.edit_text(f"Трекинг {'включен' if user.tracking else 'выключен'}")
+        await start.edit_text(f"Трекинг {'включен' if user.tracking else 'выключен'}")
     else:
         if command == "start":
             await utils.tracking_manage(True)
-            await resp.edit_text("Трекинг включен для всех пользователей")
+            await start.edit_text("Трекинг включен для всех пользователей")
         elif command == "stop":
             await utils.tracking_manage(False)
-            await resp.edit_text("Трекинг выключен для всех пользователей")
+            await start.edit_text("Трекинг выключен для всех пользователей")
         elif command == "status":
             users = await utils.get_tracked_users()
             tracked = "\n".join([str(user) for user in users])
-            await resp.edit_text(
+            await start.edit_text(
                 f"Трекаются: \n" + tracked if users else "Никто не трекается",
                 parse_mode="MarkdownV2",
             )
@@ -185,6 +185,30 @@ async def handle_topic_command_info(msg: Message, command: CommandObject = None)
             await start.edit_text(utils.get_all_users_info())
     else:
         await start.edit_text(utils.user_info(int(command.args)), parse_mode="MarkdownV2")
+
+
+@router.message(
+    Command("teacher"),
+    ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID),
+)
+async def handle_topic_command_teacher(msg: Message) -> None:
+    start = await msg.answer("Изменяю тип пользователя...")
+    if start.message_thread_id:
+        user = UserDatabase(topic_id=msg.message_thread_id)
+        user.type = "teacher"
+        await start.edit_text("Тип пользователя изменён на `teacher`")
+
+
+@router.message(
+    Command("student"),
+    ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID),
+)
+async def handle_topic_command_student(msg: Message) -> None:
+    start = await msg.answer("Изменяю тип пользователя...")
+    if start.message_thread_id:
+        user = UserDatabase(topic_id=msg.message_thread_id)
+        user.type = "student"
+        await start.edit_text("Тип пользователя изменён на `student`")
 
 
 @router.message(
