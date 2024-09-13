@@ -92,7 +92,8 @@ class CallbackTelegramErrorsMiddleware(BaseMiddleware):
             await handler(event, data)
         except TelegramBadRequest as e:
             logging.error("TelegramBadRequest")
-            # logging.exception(e)
+            if "message is not modified" not in str(e):
+                logging.exception(e)
         except TelegramNetworkError as e:
             logging.error("TelegramNetworkError")
         except TelegramRetryAfter as e:
