@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "tks-volsu-schedule"
-version = "1.0.0"
+version = "1.0.1"
 description = "Бот, показывающий расписание для студентов, преподавателей и кабинетов кафедры ТКС ВолГУ"
 authors = ["N0rmalUser <vova.okunev25@gmail.com>"]
 license = "GPL-3.0"
