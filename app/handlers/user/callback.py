@@ -131,7 +131,7 @@ async def week_handler(callback: CallbackQuery, callback_data: DayCallbackFactor
 
     await callback.message.edit_text(text, reply_markup=week_kb)
     await callback.answer()
-    await process_track(user=user, text=callback.data, bot=callback_data.bot)
+    await process_track(user=user, text=callback.data, bot=callback.bot)
 
 
 @router.callback_query(ChangeCallbackFactory.filter(F.action == "room"))
@@ -164,7 +164,7 @@ async def room_handler(callback: CallbackQuery, callback_data: ChangeCallbackFac
         reply_markup=week_kb,
     )
     await callback.answer()
-    await process_track(user=user, text=callback.data, bot=callback_data.bot)
+    await process_track(user=user, text=callback.data, bot=callback.bot)
 
 
 @router.callback_query(ChangeCallbackFactory.filter(F.action == "teacher"))
@@ -200,7 +200,7 @@ async def teacher_handler(callback: CallbackQuery, callback_data: ChangeCallback
         reply_markup=week_kb,
     )
     await callback.answer()
-    await process_track(user=user, text=callback.data, bot=callback_data.bot)
+    await process_track(user=user, text=callback.data, bot=callback.bot)
 
 
 @router.callback_query(ChangeCallbackFactory.filter(F.action == "group"))
@@ -235,7 +235,7 @@ async def group_handler(callback: CallbackQuery, callback_data: ChangeCallbackFa
         reply_markup=week_kb,
     )
     await callback.answer()
-    await process_track(user=user, text=callback.data, bot=callback_data.bot)
+    await process_track(user=user, text=callback.data, bot=callback.bot)
 
 
 async def process_default_change(
@@ -248,7 +248,7 @@ async def process_default_change(
 
     await callback.message.edit_text(f"Default изменён на {callback_data.value}")
     await callback.answer()
-    await process_track(user=user, text=callback.data, bot=callback_data.bot)
+    await process_track(user=user, text=callback.data, bot=callback.bot)
 
 
 @router.callback_query(DefaultChangeCallbackFactory.filter(F.action == "default_teacher"))
