@@ -5,8 +5,8 @@ WORKDIR /tks_schedule
 
 RUN apt-get update && apt-get install -y ca-certificates iputils-ping && update-ca-certificates
 
-COPY bot bot
-COPY bot/config.py config.py
+COPY app app
+COPY app/config.py config.py
 COPY main.py main.py
 COPY config.toml config.toml
 COPY pyproject.toml pyproject.toml
