@@ -32,10 +32,8 @@
 
 import asyncio
 import logging
-from datetime import datetime, timedelta
-
+from datetime import datetime
 import pytz
-from apscheduler.schedulers.background import BackgroundScheduler
 
 from app import bot
 from app.config import EVENT_LEVEL, LOG_FILE, LOG_LEVEL, TIMEZONE
@@ -54,7 +52,7 @@ if __name__ == "__main__":
     }
     logging.basicConfig(
         level=levels[LOG_LEVEL],
-        # filename=LOG_FILE,
+        filename=LOG_FILE,
         format="%(asctime)s %(levelname)s  %(message)s",
         datefmt="%H:%M:%S %d-%m-%Y",
         encoding="utf-8",
