@@ -17,8 +17,8 @@
 import re
 import sqlite3
 
-from bot import config
-from bot.database.utils import sql_kit
+from app import config
+from app.database.utils import sql_kit
 
 
 def time_to_minutes(time_str: str) -> int:

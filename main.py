@@ -37,15 +37,15 @@ from datetime import datetime, timedelta
 import pytz
 from apscheduler.schedulers.background import BackgroundScheduler
 
-from bot import bot
-from bot.config import EVENT_LEVEL, LOG_LEVEL, TIMEZONE, LOG_FILE
-from bot.database.db_init import db_init
+from app import bot
+from app.config import EVENT_LEVEL, LOG_FILE, LOG_LEVEL, TIMEZONE
+from app.database.db_init import db_init
 
 
 def start_scheduler():
     """Запускает планировщик задач, который обновляет статистику активности пользователей каждый час."""
 
-    from bot.database.activity import update_user_activity_stats
+    from app.database.activity import update_user_activity_stats
 
     scheduler = BackgroundScheduler()
     next_hour = (datetime.now(pytz.timezone(TIMEZONE)) + timedelta(hours=1)).replace(
@@ -68,12 +68,14 @@ if __name__ == "__main__":
     }
     logging.basicConfig(
         level=levels[LOG_LEVEL],
-        filename=LOG_FILE,
+        # filename=LOG_FILE,
         format="%(asctime)s %(levelname)s  %(message)s",
         datefmt="%H:%M:%S %d-%m-%Y",
         encoding="utf-8",
     )
     logging.getLogger("aiogram.event").setLevel(levels[EVENT_LEVEL])
+    logging.getLogger("apscheduler.scheduler").setLevel(levels[EVENT_LEVEL])
+
     db_init()
     start_scheduler()
     asyncio.run(bot.main())

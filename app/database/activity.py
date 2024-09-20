@@ -36,8 +36,8 @@ from datetime import datetime, timedelta
 
 import pytz
 
-from bot.config import ACTIVITIES_DB, TIMEZONE, USERS_DB
-from bot.database.utils import sql_kit
+from app.config import ACTIVITIES_DB, TIMEZONE, USERS_DB
+from app.database.utils import sql_kit
 
 
 @sql_kit(USERS_DB)

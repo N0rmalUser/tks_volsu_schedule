@@ -21,7 +21,7 @@ import openpyxl
 import pandas as pd
 from progress.bar import Bar
 
-from bot.database.schedule import Schedule
+from app.database.schedule import Schedule
 
 days = {
     "ПН": "Понедельник",

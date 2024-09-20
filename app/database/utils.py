@@ -18,8 +18,8 @@ import sqlite3
 from datetime import datetime
 from functools import wraps
 
-from bot.config import USERS_DB
-from bot.database.user import UserDatabase
+from app.config import USERS_DB
+from app.database.user import UserDatabase
 
 
 def sql_kit(db=":memory:"):
@@ -68,6 +68,7 @@ def user_info(user_id: int):
 <code>teacher:    </code> <code>{user.teacher}</code>
 <code>group:      </code> <code>{user.group.replace("-", "") if user.group else "None"}</code>
     """
+
 
 @sql_kit(USERS_DB)
 def all_user_ids(cursor: sqlite3.Cursor) -> list:

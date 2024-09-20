@@ -18,16 +18,16 @@ from aiogram import F, Router
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery
 
-from bot.database.schedule import Schedule
-from bot.database.user import UserDatabase
-from bot.markups import edit_markups as kb
-from bot.markups import user_markups as def_kb
-from bot.markups.keyboard_factory import (
+from app.database.schedule import Schedule
+from app.database.user import UserDatabase
+from app.markups import edit_markups as kb
+from app.markups import user_markups as def_kb
+from app.markups.keyboard_factory import (
     DayCallbackFactory,
     ScheduleConstructorCallbackFactory,
     ScheduleEditingCallbackFactory,
 )
-from bot.misc import text_maker
+from app.misc import text_maker
 
 router = Router()
 
@@ -100,7 +100,9 @@ async def schedule_editing_handler(
 async def lesson_handler(
     callback: CallbackQuery, callback_data: ScheduleEditingCallbackFactory
 ) -> None:
-    from bot.misc.text_maker import get_time_symbol
+    import re
+
+    from app.misc.text_maker import get_lesson_label, get_time_symbol
 
     keyboard = kb.get_editing_menu(
         schedule_id=callback_data.schedule_id,
@@ -112,10 +114,6 @@ async def lesson_handler(
         schedule_id=callback_data.schedule_id
     )
     text = f"{day}       {week}\n{teacher}\n\n"
-
-    import re
-
-    from bot.misc.text_maker import get_lesson_label
 
     label = get_lesson_label(str(re.search(r"\(([^)]*)\)", subject)))
     subject = re.sub(r"\([^)]*\)", "", subject)
@@ -354,7 +352,7 @@ async def add_new_lesson_handler(
     callback_data: ScheduleEditingCallbackFactory,
     state: FSMContext,
 ) -> None:
-    from bot.misc.states import NewSchedule
+    from app.misc.states import NewSchedule
 
     await callback.message.edit_text(
         "Теперь напишите название дисциплины",
@@ -375,7 +373,7 @@ async def add_new_group_handler(
     callback_data: ScheduleEditingCallbackFactory,
     state: FSMContext,
 ) -> None:
-    from bot.misc.states import NewSchedule
+    from app.misc.states import NewSchedule
 
     await state.clear()
     await callback.message.edit_text(
@@ -397,7 +395,7 @@ async def add_new_teacher_handler(
     callback_data: ScheduleEditingCallbackFactory,
     state: FSMContext,
 ) -> None:
-    from bot.misc.states import NewSchedule
+    from app.misc.states import NewSchedule
 
     await state.clear()
     await callback.message.edit_text(
@@ -419,7 +417,7 @@ async def add_new_room_handler(
     callback_data: ScheduleEditingCallbackFactory,
     state: FSMContext,
 ) -> None:
-    from bot.misc.states import NewSchedule
+    from app.misc.states import NewSchedule
 
     await callback.message.edit_text(
         "Теперь выберите аудиторию или напишите ее номер слитно с корпусом (Например: 1-19М)",

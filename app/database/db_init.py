@@ -16,8 +16,8 @@
 
 import sqlite3
 
-from bot.config import ACTIVITIES_DB, SCHEDULE_DB, USERS_DB
-from bot.database.utils import sql_kit
+from app.config import ACTIVITIES_DB, SCHEDULE_DB, USERS_DB
+from app.database.utils import sql_kit
 
 
 @sql_kit(USERS_DB)

@@ -21,10 +21,10 @@ from aiogram.filters import Command, CommandObject, CommandStart
 from aiogram.types import Message
 from pytz import timezone as tz
 
-from bot.config import ADMIN_CHAT_ID, TIMEZONE
-from bot.database.user import UserDatabase
-from bot.filters import ChatTypeIdFilter
-from bot.markups import user_markups as kb
+from app.config import ADMIN_CHAT_ID, TIMEZONE
+from app.database.user import UserDatabase
+from app.filters import ChatTypeIdFilter
+from app.markups import user_markups as kb
 
 router = Router()
 
@@ -55,7 +55,7 @@ async def start_deep_handler(msg: Message, command: CommandObject) -> None:
         user.week = 1
         user.tracking = False
 
-        from bot.bot import start_message
+        from app.bot import start_message
 
         await start_message(msg, menu, keyboard)
     except Exception:
@@ -82,7 +82,7 @@ async def start_handler(msg: Message) -> None:
         else (kb.student_menu, kb.get_groups())
     )
 
-    from bot.bot import start_message
+    from app.bot import start_message
 
     await start_message(msg, menu, keyboard)
 
@@ -127,12 +127,12 @@ async def help_handler(msg: Message) -> None:
 async def admin_handler(msg: Message) -> None:
     """Обработчик команды /admin. Пересылает сообщение админу и включает слежку за действиями пользователя."""
 
-    from bot.bot import process_track
+    from app.bot import process_track
 
     user = UserDatabase(msg.from_user.id)
     user.tracking = True
     logging.warning(f"Юзверь {msg.from_user.id} @{msg.from_user.username} просит помощи админа")
-    await process_track(user, "Юзверь просит помощи админа!")
+    await process_track(user=user, text="Юзверь просит помощи админа!", bot=msg.bot)
     await msg.forward(chat_id=ADMIN_CHAT_ID, message_thread_id=user.topic_id)
     await msg.answer("Модератор скоро напишет вам, ожидайте. Пока можете описать проблему.")
     logging.info(f"{msg.from_user.id} написал админу")
@@ -152,13 +152,13 @@ async def default_handler(msg: Message) -> None:
 async def handler(msg: Message) -> None:
     """Обработчик сообщений от пользователя. Отправляет расписание на сегодня, если пользователь выбрал преподавателя, группу или кабинет."""
 
-    from bot.misc import text_maker
+    from app.misc import text_maker
 
     user_id = msg.from_user.id
     user = UserDatabase(user_id)
     if msg.content_type == "text":
         if msg.text == "Расписание на сегодня":
-            from bot.database.schedule import Schedule
+            from app.database.schedule import Schedule
 
             user.set_today_date()
             default = user.default

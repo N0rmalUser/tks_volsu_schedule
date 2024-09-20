@@ -17,16 +17,16 @@
 from aiogram import F, Router
 from aiogram.types import CallbackQuery
 
-from bot.bot import process_track
-from bot.database.schedule import Schedule
-from bot.database.user import UserDatabase
-from bot.markups import user_markups as kb
-from bot.markups.keyboard_factory import (
+from app.bot import process_track
+from app.database.schedule import Schedule
+from app.database.user import UserDatabase
+from app.markups import user_markups as kb
+from app.markups.keyboard_factory import (
     ChangeCallbackFactory,
     DayCallbackFactory,
     DefaultChangeCallbackFactory,
 )
-from bot.misc import text_maker
+from app.misc import text_maker
 
 router = Router()
 
@@ -42,8 +42,7 @@ async def ignore_handler(callback: CallbackQuery) -> None:
 async def day_handler(callback: CallbackQuery, callback_data: DayCallbackFactory) -> None:
     """Функция, обрабатывающая нажатие кнопки дня недели. Отправляет расписание на этот день для преподавателей, групп и аудиторий."""
 
-    from bot.bot import bot
-    from bot.config import ADMIN_CHAT_ID
+    from app.config import ADMIN_CHAT_ID
 
     keyboard_type: str = callback_data.keyboard_type
     value: int = callback_data.value
@@ -85,7 +84,9 @@ async def day_handler(callback: CallbackQuery, callback_data: DayCallbackFactory
     await callback.answer()
 
     if user.tracking:
-        await bot.send_message(ADMIN_CHAT_ID, message_thread_id=user.topic_id, text=callback.data)
+        await callback.bot.send_message(
+            ADMIN_CHAT_ID, message_thread_id=user.topic_id, text=callback.data
+        )
 
 
 @router.callback_query(DayCallbackFactory.filter(F.action == "week"))
@@ -130,8 +131,7 @@ async def week_handler(callback: CallbackQuery, callback_data: DayCallbackFactor
 
     await callback.message.edit_text(text, reply_markup=week_kb)
     await callback.answer()
-    await process_track(user, callback.data)
-
+    await process_track(user=user, text=callback.data, bot=callback_data.bot)
 
 
 @router.callback_query(ChangeCallbackFactory.filter(F.action == "room"))
@@ -164,7 +164,7 @@ async def room_handler(callback: CallbackQuery, callback_data: ChangeCallbackFac
         reply_markup=week_kb,
     )
     await callback.answer()
-    await process_track(user, callback.data)
+    await process_track(user=user, text=callback.data, bot=callback_data.bot)
 
 
 @router.callback_query(ChangeCallbackFactory.filter(F.action == "teacher"))
@@ -200,7 +200,7 @@ async def teacher_handler(callback: CallbackQuery, callback_data: ChangeCallback
         reply_markup=week_kb,
     )
     await callback.answer()
-    await process_track(user, callback.data)
+    await process_track(user=user, text=callback.data, bot=callback_data.bot)
 
 
 @router.callback_query(ChangeCallbackFactory.filter(F.action == "group"))
@@ -235,7 +235,7 @@ async def group_handler(callback: CallbackQuery, callback_data: ChangeCallbackFa
         reply_markup=week_kb,
     )
     await callback.answer()
-    await process_track(user, callback.data)
+    await process_track(user=user, text=callback.data, bot=callback_data.bot)
 
 
 async def process_default_change(
@@ -248,7 +248,7 @@ async def process_default_change(
 
     await callback.message.edit_text(f"Default изменён на {callback_data.value}")
     await callback.answer()
-    await process_track(user, callback.data)
+    await process_track(user=user, text=callback.data, bot=callback_data.bot)
 
 
 @router.callback_query(DefaultChangeCallbackFactory.filter(F.action == "default_teacher"))

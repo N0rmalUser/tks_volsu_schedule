@@ -37,7 +37,7 @@ from aiogram import BaseMiddleware
 from aiogram.exceptions import TelegramBadRequest, TelegramNetworkError, TelegramRetryAfter
 from aiogram.types import Message, Update
 
-from bot.database.user import UserDatabase
+from app.database.user import UserDatabase
 
 
 class BanUsersMiddleware(BaseMiddleware):
@@ -71,7 +71,7 @@ class TopicCreatorMiddleware(BaseMiddleware):
             event.callback_query and not event.callback_query.from_user.is_bot
         ):
             if not user.topic_id:
-                from bot.bot import topic_create
+                from app.bot import topic_create
 
                 if msg := (event.message or event.callback_query):
                     await topic_create(msg)
@@ -92,7 +92,7 @@ class CallbackTelegramErrorsMiddleware(BaseMiddleware):
             await handler(event, data)
         except TelegramBadRequest as e:
             logging.error("TelegramBadRequest")
-            if "message is not modified" not in str(e):
+            if not any(err in str(e) for err in ["message is not modified", "query is too old"]):
                 logging.exception(e)
         except TelegramNetworkError as e:
             logging.error("TelegramNetworkError")

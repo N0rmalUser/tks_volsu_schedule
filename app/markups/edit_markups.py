@@ -16,9 +16,9 @@
 
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-from bot import config
-from bot.database.user import UserDatabase
-from bot.markups import keyboard_factory
+from app import config
+from app.database.user import UserDatabase
+from app.markups import keyboard_factory
 
 
 def get_editing_menu(schedule_id: int, week: int, value: int, keyboard_type: str):

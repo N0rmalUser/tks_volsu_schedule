@@ -16,7 +16,7 @@
 
 import sqlite3
 
-from bot.config import COLLEGE_CONST, SCHEDULE_DB, STUDENTS
+from app.config import COLLEGE_CONST, SCHEDULE_DB, STUDENTS
 
 
 class Schedule:

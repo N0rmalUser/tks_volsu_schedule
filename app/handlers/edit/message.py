@@ -18,9 +18,9 @@ from aiogram import Router
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
-from bot.filters import ChatTypeIdFilter
-from bot.markups import edit_markups as kb
-from bot.misc.states import NewSchedule
+from app.filters import ChatTypeIdFilter
+from app.markups import edit_markups as kb
+from app.misc.states import NewSchedule
 
 router = Router()
 
@@ -32,7 +32,7 @@ async def lesson_handler(msg: Message, state: FSMContext) -> None:
     _, value, _, schedule_id, keyboard_type, _ = data.get("callback_data")
     callback = data.get("callback")
     keyboard = kb.add_group(schedule_id[1], value[1], keyboard_type[1])
-    from bot.database.schedule import Schedule
+    from app.database.schedule import Schedule
 
     subject_id = Schedule().add_subject(msg.text)
     await callback.message.edit_text("Теперь группу", reply_markup=keyboard)
@@ -45,7 +45,7 @@ async def teacher_handler(msg: Message, state: FSMContext) -> None:
     data = await state.get_data()
     _, value, _, schedule_id, keyboard_type, _ = data.get("callback_data")
     keyboard = kb.add_group(schedule_id[1], value[1], keyboard_type[1])
-    from bot.database.schedule import Schedule
+    from app.database.schedule import Schedule
 
     teacher_id = Schedule().add_teacher(msg.text)
     await data.get("callback").message.edit_text("Теперь группу", reply_markup=keyboard)
@@ -58,7 +58,7 @@ async def group_handler(msg: Message, state: FSMContext) -> None:
     data = await state.get_data()
     _, value, _, schedule_id, keyboard_type, _ = data.get("callback_data")
     keyboard = kb.add_teacher(schedule_id[1], value[1], keyboard_type[1])
-    from bot.database.schedule import Schedule
+    from app.database.schedule import Schedule
 
     group_id = Schedule().add_group(msg.text)
     await data.get("callback").message.edit_text("Теперь преподавателя", reply_markup=keyboard)

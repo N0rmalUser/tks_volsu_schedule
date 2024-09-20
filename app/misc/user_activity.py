@@ -22,8 +22,8 @@ import pandas as pd
 from lets_plot import *
 from pytz import timezone as tz
 
-import bot.database.activity as db
-from bot.config import TIMEZONE
+import app.database.activity as db
+from app.config import TIMEZONE
 
 
 def plot_user_activity_by_hours(date_string=None):

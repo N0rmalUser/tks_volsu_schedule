@@ -38,19 +38,16 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.types import InlineKeyboardMarkup, Message, ReplyKeyboardMarkup
 from aiogram.utils.deep_linking import create_start_link
 
-from bot import middlewares
-from bot.config import ADMIN_CHAT_ID, BOT_TOKEN
-from bot.database.user import UserDatabase
-from bot.handlers import admin, edit, user
-from bot.markups import admin_markups as kb
-
-bot: Bot
+from app import middlewares
+from app.config import ADMIN_CHAT_ID, BOT_TOKEN
+from app.database.user import UserDatabase
+from app.handlers import admin, edit, user
+from app.markups import admin_markups as kb
 
 
 async def main() -> None:
     """Функция запуска бота. Удаляет веб хуки и стартует polling."""
 
-    global bot
     session = AiohttpSession()
     bot = Bot(token=BOT_TOKEN, session=session)
     dp = Dispatcher(storage=MemoryStorage())
@@ -75,11 +72,9 @@ async def main() -> None:
 async def start_message(msg: Message, menu, keyboard) -> None:
     """Отправляет сообщение при старте бота. Создаёт топик пользователя. Отправляет ссылку для приглашения и меню."""
 
-    global bot
-
     user = UserDatabase(msg.from_user.id)
     link = await create_start_link(
-        bot, f"{msg.from_user.id}={UserDatabase(msg.from_user.id).type}", encode=True
+        msg.bot, f"{msg.from_user.id}={UserDatabase(msg.from_user.id).type}", encode=True
     )
     await msg.answer(
         f"Привет, {msg.from_user.full_name}\n" f"Вот ссылка для приглашения: {link}",
@@ -98,11 +93,11 @@ async def topic_create(msg: Message) -> None:
     else:
         topic_name = f"{msg.from_user.full_name} {msg.from_user.id}"
     result = (
-        await bot.create_forum_topic(
+        await msg.bot.create_forum_topic(
             ADMIN_CHAT_ID, topic_name, icon_custom_emoji_id="5312016608254762256"
         )
         if user.type == "teacher"
-        else await bot.create_forum_topic(ADMIN_CHAT_ID, topic_name)
+        else await msg.bot.create_forum_topic(ADMIN_CHAT_ID, topic_name)
     )
     topic_id = result.message_thread_id
     user.topic_id = topic_id
@@ -115,7 +110,7 @@ async def topic_create(msg: Message) -> None:
         f"Тип пользователя: {user.type}"
     )
     user.tracking = True
-    await process_track(user, user_info, kb.admin_menu)
+    await process_track(user=user, text=user_info, bot=msg.bot, keyboard=kb.admin_menu)
     user.tracking = False
     logging.info(f"Создан топик имени {msg.from_user.id} @{msg.from_user.username}")
 
@@ -123,13 +118,18 @@ async def topic_create(msg: Message) -> None:
 async def process_track(
     user: UserDatabase,
     text: str,
+    bot: Bot,
     keyboard: ReplyKeyboardMarkup | InlineKeyboardMarkup | None = None,
     parse_mode: str = "HTML",
 ) -> None:
     try:
         if user.tracking:
             await bot.send_message(
-                ADMIN_CHAT_ID, message_thread_id=user.topic_id, text=text, reply_markup=keyboard, parse_mode=parse_mode
+                ADMIN_CHAT_ID,
+                message_thread_id=user.topic_id,
+                text=text,
+                reply_markup=keyboard,
+                parse_mode=parse_mode,
             )
     except Exception as e:
         logging.error("Ошибка при трекинге:\n" + str(e))

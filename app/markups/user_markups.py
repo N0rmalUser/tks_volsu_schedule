@@ -17,9 +17,10 @@
 from aiogram.types import KeyboardButton, ReplyKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-from bot import config
-from bot.database.user import UserDatabase
-from bot.markups import keyboard_factory
+from app import config
+from app.database.schedule import Schedule
+from app.database.user import UserDatabase
+from app.markups import keyboard_factory
 
 student_menu = [
     [KeyboardButton(text="Расписание на сегодня")],
@@ -42,7 +43,7 @@ teacher_menu = ReplyKeyboardMarkup(keyboard=teacher_menu, resize_keyboard=True)
 def get_teachers():
     """Возвращает клавиатуру с преподавателями, указанными в config.toml."""
 
-    from bot.database.schedule import Schedule
+    from app.database.schedule import Schedule
 
     builder = InlineKeyboardBuilder()
     for teacher in config.TEACHERS:
@@ -59,7 +60,7 @@ def get_teachers():
 def get_groups():
     """Возвращает клавиатуру с группами, указанными в config.toml."""
 
-    from bot.database.schedule import Schedule
+    from app.database.schedule import Schedule
 
     builder = InlineKeyboardBuilder()
     for group in config.GROUPS:
@@ -76,7 +77,7 @@ def get_groups():
 def get_rooms():
     """Возвращает клавиатуру с аудиториями, указанными в config.toml."""
 
-    from bot.database.schedule import Schedule
+    from app.database.schedule import Schedule
 
     builder = InlineKeyboardBuilder()
     for room in config.ROOMS:
@@ -92,8 +93,6 @@ def get_rooms():
 
 def get_default_teachers():
     """Возвращает клавиатуру с преподавателями, указанными в config.toml."""
-
-    from bot.database.schedule import Schedule
 
     builder = InlineKeyboardBuilder()
     for teacher in config.ALL_PERSONAL:
@@ -115,8 +114,6 @@ def get_default_teachers():
 
 def get_default_groups():
     """Возвращает клавиатуру с группами, указанными в config.toml."""
-
-    from bot.database.schedule import Schedule
 
     builder = InlineKeyboardBuilder()
     for group in config.GROUPS:
@@ -193,8 +190,6 @@ def get_days(user_id: int, keyboard_type: str, week: int, value: int):
 
 def get_days_teacher(user_id: int, keyboard_type: str, week: int, value: int):
     """Возвращает клавиатуру с днями недели и кнопкой смены недели."""
-
-    from bot.database.user import UserDatabase
 
     builder = InlineKeyboardBuilder()
     for day in ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб"]:

@@ -33,7 +33,7 @@
 from aiogram import types
 from aiogram.filters import BaseFilter
 
-from bot.config import ADMIN_CHAT_ID
+from app.config import ADMIN_CHAT_ID
 
 
 class ChatTypeIdFilter(BaseFilter):

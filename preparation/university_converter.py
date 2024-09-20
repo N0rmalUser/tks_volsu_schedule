@@ -20,9 +20,9 @@ import re
 from docx import Document
 from progress.bar import Bar
 
-from bot import config
-from bot.database.db_init import schedule_db_init
-from bot.database.schedule import Schedule
+from app import config
+from app.database.db_init import schedule_db_init
+from app.database.schedule import Schedule
 
 
 def set_default():

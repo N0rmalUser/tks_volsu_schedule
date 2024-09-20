@@ -20,7 +20,7 @@ from datetime import datetime
 import pytz
 from aiogram.types import Message
 
-from bot.config import NUMERATOR, TIMEZONE, USERS_DB
+from app.config import NUMERATOR, TIMEZONE, USERS_DB
 
 
 class UserDatabase:

@@ -20,13 +20,13 @@ from aiogram import F, Router
 from aiogram.filters import Command, CommandObject
 from aiogram.types import FSInputFile, Message
 
-from bot.config import ACTIVITIES_DB, ADMIN_CHAT_ID, LOG_FILE, SCHEDULE_DB, USERS_DB
-from bot.database import activity as db
-from bot.database import utils
-from bot.database.user import UserDatabase
-from bot.filters import ChatTypeIdFilter
-from bot.markups import admin_markups as kb
-from bot.misc import user_activity
+from app.config import ACTIVITIES_DB, ADMIN_CHAT_ID, LOG_FILE, SCHEDULE_DB, USERS_DB
+from app.database import activity as db
+from app.database import utils
+from app.database.user import UserDatabase
+from app.filters import ChatTypeIdFilter
+from app.markups import admin_markups as kb
+from app.misc import user_activity
 
 router = Router()
 
@@ -73,12 +73,10 @@ async def handle_topic_command_track(msg: Message) -> None:
 )
 async def ban_command_handler(msg: Message) -> None:
     """Банит пользователя. Изменяет значение столбца banned в базе данных."""
-    from bot.bot import bot
-
     user = UserDatabase(topic_id=msg.message_thread_id)
     user.banned = True
     await msg.answer("Мы его забанили!!!")
-    await bot.send_message(user.tg_id(), "За нарушение правил, тебя забанили")
+    await msg.bot.send_message(user.tg_id(), "За нарушение правил, тебя забанили")
     logging.info(f"Забанен юзверь {user.tg_id()}")
 
 
@@ -89,12 +87,10 @@ async def ban_command_handler(msg: Message) -> None:
 async def ban_command_handler(msg: Message) -> None:
     """Разбанивает пользователя. Изменяет значение столбца banned в базе данных."""
 
-    from bot.bot import bot
-
     user = UserDatabase(topic_id=msg.message_thread_id)
     user.banned = False
     await msg.answer("Мы его разбанили!!!")
-    await bot.send_message(user.tg_id(), "Амнистия! Тебя разбанили")
+    await msg.bot.send_message(user.tg_id(), "Амнистия! Тебя разбанили")
     logging.info(f"Разбанен юзверь {user.tg_id()}")
 
 
@@ -218,7 +214,7 @@ async def handle_topic_command_student(msg: Message) -> None:
 async def file_handler(msg: Message):
     """Ловит документы и заменяет файл schedule.db, users.db, activities.db на полученные."""
 
-    from bot.bot import bot
+    from app.bot import bot
 
     file_name = msg.document.file_name
     file_map = {
@@ -258,23 +254,22 @@ async def handle_topic_message(msg: Message) -> None:
         if "/" in msg.text[0]:
             await msg.answer("Нет такой команды, но я тебя спас, не бойся")
         else:
-            from bot.bot import bot
-            from bot.database.user import UserDatabase
+            from app.database.user import UserDatabase
 
             if msg.message_thread_id is not None:
-                await bot.send_message(
+                await msg.bot.send_message(
                     UserDatabase(topic_id=msg.message_thread_id).tg_id(), text=msg.text
                 )
             else:
                 from asyncio import sleep
 
-                from bot.database.utils import all_user_ids
+                from app.database.utils import all_user_ids
 
                 user_ids = all_user_ids()
                 for user_id in user_ids:
                     if not UserDatabase(user_id).blocked:
                         try:
-                            await bot.send_message(user_id, msg.text)
+                            await msg.bot.send_message(user_id, msg.text)
                         except Exception as e:
                             logging.error(
                                 f"Не удалось отправить сообщение пользователю {user_id}: {e}"
