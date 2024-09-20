@@ -26,35 +26,44 @@ from app.database import utils
 from app.database.user import UserDatabase
 from app.filters import ChatTypeIdFilter
 from app.markups import admin_markups as kb
-from app.misc import user_activity
 
 router = Router()
 
 
 @router.message(
-    Command("days_stat"),
+    Command("month_stat"),
     ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID),
 )
-async def handle_send_daily_plot(msg: Message) -> None:
+async def handle_send_daily_plot(msg: Message, command: CommandObject = None) -> None:
     """Отправляет график количества пользователей по дням."""
 
-    db.update_user_activity_stats()
-    user_activity.html_plot_user_activity_by_days()
-    # await msg.answer_photo(FSInputFile("data/user_activity_by_days.png"))
-    await msg.answer_document(FSInputFile("data/user_activity_by_days.html"))
+    from datetime import datetime
+
+    from app.misc import user_activity
+
+    month = (
+        datetime.strptime(command.args, "%d.%m.%Y") if command.args else datetime.now()
+    ).strftime("%Y-%m-%d")
+    user_activity.plot_activity_for_month(db.get_activity_for_month(month), month)
+    await msg.answer_document(FSInputFile("data/activity_for_month.html"))
 
 
 @router.message(
-    Command("hours_stat"),
+    Command("day_stat"),
     ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID),
 )
 async def handle_send_hourly_plot(msg: Message, command: CommandObject = None) -> None:
     """Отправляет график количества пользователей по часам для определённого дня."""
 
-    db.update_user_activity_stats()
-    user_activity.html_plot_user_activity_by_hours(command.args)
-    # await msg.answer_photo(FSInputFile("data/user_activity_by_hours.png"))
-    await msg.answer_document(FSInputFile("data/user_activity_by_hours.html"))
+    from datetime import datetime
+
+    from app.misc import user_activity
+
+    date = (
+        datetime.strptime(command.args, "%d.%m.%Y") if command.args else datetime.now()
+    ).strftime("%Y-%m-%d")
+    user_activity.plot_activity_for_day(db.get_activity_for_day(str(date)), date)
+    await msg.answer_document(FSInputFile("data/activity_for_day.html"))
 
 
 @router.message(
@@ -62,8 +71,6 @@ async def handle_send_hourly_plot(msg: Message, command: CommandObject = None) -
     ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID),
 )
 async def handle_topic_command_track(msg: Message) -> None:
-    """Отправляет меню админа."""
-
     await msg.answer("Меню админа", reply_markup=kb.admin_menu)
 
 
@@ -214,8 +221,6 @@ async def handle_topic_command_student(msg: Message) -> None:
 async def file_handler(msg: Message):
     """Ловит документы и заменяет файл schedule.db, users.db, activities.db на полученные."""
 
-    from app.bot import bot
-
     file_name = msg.document.file_name
     file_map = {
         "schedule.db": {
@@ -234,8 +239,8 @@ async def file_handler(msg: Message):
 
     if file_name in file_map:
         file_id = msg.document.file_id
-        file_info = await bot.get_file(file_id)
-        downloaded_file = await bot.download_file(file_info.file_path)
+        file_info = await msg.bot.get_file(file_id)
+        downloaded_file = await msg.bot.download_file(file_info.file_path)
         with open(file_map[file_name]["path"], "wb") as new_file:
             new_file.write(downloaded_file.read())
         logging.info(file_map[file_name]["message"])

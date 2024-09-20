@@ -37,6 +37,7 @@ from aiogram import BaseMiddleware
 from aiogram.exceptions import TelegramBadRequest, TelegramNetworkError, TelegramRetryAfter
 from aiogram.types import Message, Update
 
+from app.database.activity import log_user_activity
 from app.database.user import UserDatabase
 
 
@@ -98,3 +99,16 @@ class CallbackTelegramErrorsMiddleware(BaseMiddleware):
             logging.error("TelegramNetworkError")
         except TelegramRetryAfter as e:
             logging.error("TelegramRetryAfter 25 секунд")
+
+
+class UserActivityMiddleware(BaseMiddleware):
+    """Мидлварь, логирующая ивенты от пользователей в бд"""
+
+    async def __call__(
+        self,
+        handler: Callable[[Update, Dict[str, Any]], Awaitable[Any]],
+        event: Update,
+        data: Dict[str, Any],
+    ) -> Any:
+        log_user_activity(user_id=data["event_from_user"].id)
+        return await handler(event, data)

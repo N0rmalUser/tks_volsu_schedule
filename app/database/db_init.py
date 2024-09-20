@@ -119,22 +119,20 @@ def schedule_db_init(cursor: sqlite3.Cursor):
 def activity_db_init(cursor: sqlite3.Cursor):
     cursor.execute(
         """
-        CREATE TABLE IF NOT EXISTS User_Activity_Stats (
+        CREATE TABLE IF NOT EXISTS daily_activity (
+            user_ids TEXT,
             date TEXT,
-            hour INTEGER,
-            user_count INTEGER,
-            PRIMARY KEY (date, hour)
+            PRIMARY KEY (user_ids, date)
         );
     """
     )
 
     cursor.execute(
         """
-        CREATE TABLE IF NOT EXISTS User_Unique_Activity (
-            date TEXT,
-            hour INTEGER,
-            user_id INTEGER,
-            PRIMARY KEY (date, hour, user_id)
+        CREATE TABLE IF NOT EXISTS hourly_activity (
+            user_ids TEXT,
+            datetime TEXT,
+            PRIMARY KEY (user_ids, datetime)
         );
     """
     )

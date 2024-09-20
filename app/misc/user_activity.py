@@ -14,150 +14,50 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-from datetime import datetime, timedelta
 from math import ceil
 
-import matplotlib.pyplot as plt
 import pandas as pd
 from lets_plot import *
-from pytz import timezone as tz
-
-import app.database.activity as db
-from app.config import TIMEZONE
+from pandas import DataFrame
 
 
-def plot_user_activity_by_hours(date_string=None):
-    """Строит и сохраняет график активности пользователей по часам за определённый день по часам."""
-
-    df = pd.DataFrame(db.fetch_user_activity_stats(), columns=["date", "hour", "user_count"])
-
-    selected_date = (
-        datetime.strptime(date_string, "%d.%m.%y").date()
-        if date_string
-        else datetime.now(tz(TIMEZONE)).date()
-    )
-
-    df["date"] = pd.to_datetime(df["date"], format="%d-%m-%Y").dt.date
-    df_selected_date = df[df["date"] == selected_date]
-
-    hourly_activity = (
-        df_selected_date.groupby("hour")["user_count"].sum().reindex(range(24), fill_value=0)
-    )
-    max_value = ceil(hourly_activity.max() / 10) * 10
-
-    plt.figure(figsize=(11, 5))
-    hourly_activity.plot(kind="bar")
-    plt.xlabel("Часы")
-    plt.ylabel("Количество юзверей")
-    date_label = selected_date.strftime("%d.%m.%Y")
-    plt.title(f"Активность юзверей на {date_label} по часам")
-    plt.yticks(range(0, max_value + 10, 10))
-    plt.xticks(range(24), [f"{h:02d}:00" for h in range(24)], rotation=45)
-    for i, v in enumerate(hourly_activity):
-        if v != 0:
-            plt.text(i, v + 0.5, str(v), ha="center", va="bottom")
-    plt.tight_layout()
-
-    plt.savefig("data/user_activity_by_hours.png")
-    plt.close()
-
-
-def html_plot_user_activity_by_hours(date_string=None):
-    """Строит и сохраняет график активности пользователей по дням за последние 30 дней."""
-
+def plot_activity_for_day(df: pd.DataFrame, date: str):
     LetsPlot.setup_html(no_js=True)
-    df = pd.DataFrame(db.fetch_user_activity_stats(), columns=["date", "hour", "user_count"])
-    selected_date = (
-        datetime.strptime(date_string, "%d.%m.%y").date()
-        if date_string
-        else datetime.now(tz(TIMEZONE)).date()
-    )
-    df["date"] = pd.to_datetime(df["date"], format="%d-%m-%Y").dt.date
-    df_selected_date = df[df["date"] == selected_date].copy()
-    df_selected_date["hour"] = (
-        df_selected_date["hour"].astype(str).apply(lambda x: f"{int(x):02d}:00")
-    )
-    hourly_activity = (
-        df_selected_date.groupby("hour")["user_count"]
-        .sum()
-        .reindex([f"{h:02d}:00" for h in range(24)], fill_value=0)
-    )
+    df["Hour"] = pd.to_datetime(df["Hour"], format="%Y-%m-%d %H:%M").dt.strftime("%H")
+
+    y_max = ceil(df["User Count"].max() / 10) * 10
     background = element_rect(fill="#14181e")
     (
-        ggplot(hourly_activity.reset_index(), aes(x="hour", y="user_count"))
+        ggplot(df, aes(x="Hour", y="User Count"))
         + ggsize(1000, 500)
         + geom_bar(stat="identity", fill="blue")
-        + ggtitle("Активность юзверей по часам", str(selected_date))
+        + ggtitle(f"Активность пользователей по часам на {date}")
         + xlab("Время")
-        + ylab("Количество юзверей")
-        + scale_y_continuous(breaks=list(range(0, ceil(hourly_activity.max()) * 10)))
+        + ylab("Количество пользователей")
+        + scale_y_continuous(limits=[0, y_max], breaks=list(range(0, y_max + 1, 10)))
         + flavor_high_contrast_dark()
         + theme(
-            axis_text_x=element_text(hjust=1, angle=45),
             panel_grid_major_x="blank",
             plot_background=background,
             plot_title=element_text(),
         )
-    ).to_html("data/user_activity_by_hours.html")
+    ).to_html("data/activity_for_day.html")
 
 
-def plot_user_activity_by_days():
-    """Строит и сохраняет график активности пользователей по дням за последние 30 дней."""
-
-    df = pd.DataFrame(db.fetch_user_activity_stats(), columns=["date", "hour", "user_count"])
-    today = datetime.now(tz(TIMEZONE)).date()
-    df["date"] = pd.to_datetime(df["date"], format="%d-%m-%Y")
-
-    date_range = [today - timedelta(days=i) for i in range(29, -1, -1)]
-    daily_activity = df.groupby("date")["user_count"].sum().reindex(date_range, fill_value=0)
-    max_value = ceil(daily_activity.max() / 10) * 10
-
-    plt.figure(figsize=(11, 5))
-
-    daily_activity.plot(kind="bar")
-    plt.xlabel("Дата")
-    plt.ylabel("Количество юзверей")
-    plt.title("Активность юзверей по дням")
-    plt.yticks(range(0, max_value + 10, 10))
-    plt.xticks(rotation=45)
-
-    date_labels = [date.strftime("%d-%m") for date in daily_activity.index]
-    plt.xticks(range(len(date_labels)), date_labels, rotation=45)
-
-    for i, v in enumerate(daily_activity):
-        if v != 0:
-            plt.text(i, v, str(v), ha="center", va="bottom")
-    plt.tight_layout()
-
-    plt.savefig("data/user_activity_by_days.png")
-    plt.close()
-
-
-def html_plot_user_activity_by_days():
-    """Строит и сохраняет график активности пользователей по дням за последние 30 дней."""
-
+def plot_activity_for_month(df: DataFrame, month: str):
     LetsPlot.setup_html(no_js=True)
-    df = pd.DataFrame(db.fetch_user_activity_stats(), columns=["date", "hour", "user_count"])
-    today = datetime.now(tz(TIMEZONE)).date()
-    df["date"] = pd.to_datetime(df["date"], format="%d-%m-%Y")
+    df["Date"] = pd.to_datetime(df["Date"], format="%Y-%m-%d")
 
-    date_range = [today - timedelta(days=i) for i in range(29, -1, -1)]
-    daily_activity = df.groupby("date")["user_count"].sum().reindex(date_range, fill_value=0)
-    daily_activity.index = pd.DatetimeIndex(daily_activity.index).strftime("%d-%m")
-
+    y_max = ceil(df["User Count"].max() / 10) * 10
     background = element_rect(fill="#14181e")
-
     (
-        ggplot(daily_activity.reset_index(), aes(x="date", y="user_count"))
+        ggplot(df, aes(x="Date", y="User Count"))
         + ggsize(1000, 500)
         + geom_bar(stat="identity", fill="blue")
-        + ggtitle(
-            "Активность юзверей по дням",
-            f"С {date_range[0].strftime('%d-%m-%Y')} по {date_range[-1].strftime('%d-%m-%Y')}",
-        )
+        + ggtitle(f"Активность пользователей по дням  {month}")
         + xlab("Дата")
-        + ylab("Количество юзверей")
-        + scale_y_continuous(breaks=list(range(0, ceil(daily_activity.max()) * 10)))
+        + ylab("Количество пользователей")
+        + scale_y_continuous(limits=[0, y_max], breaks=list(range(0, y_max + 1, 10)))
         + flavor_high_contrast_dark()
         + theme(
             axis_text_x=element_text(angle=70, hjust=1),
@@ -165,4 +65,4 @@ def html_plot_user_activity_by_days():
             plot_background=background,
             plot_title=element_text(),
         )
-    ).to_html("data/user_activity_by_days.html")
+    ).to_html("data/activity_for_month.html")
