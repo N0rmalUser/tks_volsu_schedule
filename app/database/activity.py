@@ -65,6 +65,49 @@ def get_activity_for_day(date_str: str, cursor: sqlite3.Cursor):
 
 
 @sql_kit(ACTIVITIES_DB)
+def get_user_activity_for_month(
+    user_id: str, date_str: str, cursor: sqlite3.Cursor
+) -> pd.DataFrame:
+    """Возвращает статистику активности пользователя за день по часам."""
+
+    date = datetime.strptime(date_str, "%Y-%m-%d")
+    daily_data = {}
+    date_range = range(29, -1, -1)
+    for i in date_range:
+        day = date - timedelta(days=i)
+        date_str = day.strftime("%Y-%m-%d")
+        cursor.execute("SELECT user_ids FROM daily_activity WHERE date = ?", (date_str,))
+        result = cursor.fetchone()
+
+        if result:
+            user_ids = result[0].split(",")
+            daily_data[date_str] = 1 if str(user_id) in user_ids else 0
+            print(daily_data)
+        else:
+            daily_data[date_str] = 0
+    return pd.DataFrame(list(daily_data.items()), columns=["Date", "User Count"])
+
+
+@sql_kit(ACTIVITIES_DB)
+def get_user_activity_for_day(user_id: str, date_str: str, cursor: sqlite3.Cursor):
+    """Возвращает статистику активности пользователя за месяц по дням."""
+
+    date = datetime.strptime(date_str, "%Y-%m-%d")
+    hourly_data = {}
+    for hour in range(24):
+        hour_str = (date + timedelta(hours=hour)).strftime("%Y-%m-%d %H:00")
+        cursor.execute("SELECT user_ids FROM hourly_activity WHERE datetime = ?", (hour_str,))
+        result = cursor.fetchone()
+
+        if result:
+            user_ids = result[0].split(",")
+            hourly_data[hour_str] = 1 if str(user_id) in user_ids else 0
+        else:
+            hourly_data[hour_str] = 0
+    return pd.DataFrame(list(hourly_data.items()), columns=["Hour", "User Count"])
+
+
+@sql_kit(ACTIVITIES_DB)
 def get_top_users_by_days(
     period: str = "all",
     month_str: str | None = None,

@@ -44,7 +44,14 @@ async def handle_send_daily_plot(msg: Message, command: CommandObject = None) ->
     month = (
         datetime.strptime(command.args, "%d.%m.%Y") if command.args else datetime.now()
     ).strftime("%Y-%m-%d")
-    user_activity.plot_activity_for_month(db.get_activity_for_month(month), month)
+    if msg.message_thread_id:
+        activity = db.get_user_activity_for_month(
+            user_id=UserDatabase(topic_id=msg.message_thread_id).tg_id(),
+            date_str=month,
+        )
+    else:
+        activity = db.get_activity_for_month(date_str=month)
+    user_activity.plot_activity_for_month(activity, month)
     await msg.answer_document(FSInputFile("data/activity_for_month.html"))
 
 
@@ -62,7 +69,13 @@ async def handle_send_hourly_plot(msg: Message, command: CommandObject = None) -
     date = (
         datetime.strptime(command.args, "%d.%m.%Y") if command.args else datetime.now()
     ).strftime("%Y-%m-%d")
-    user_activity.plot_activity_for_day(db.get_activity_for_day(str(date)), date)
+    if msg.message_thread_id:
+        activity = db.get_user_activity_for_day(
+            user_id=UserDatabase(topic_id=msg.message_thread_id).tg_id(), date_str=date
+        )
+    else:
+        activity = db.get_activity_for_day(date_str=date)
+    user_activity.plot_activity_for_day(activity, date)
     await msg.answer_document(FSInputFile("data/activity_for_day.html"))
 
 
@@ -192,15 +205,15 @@ async def handle_topic_command_track(msg: Message, command: CommandObject) -> No
 async def handle_topic_command_info(msg: Message, command: CommandObject = None) -> None:
     """Присылает информацию о пользователе или о всех пользователях в зависимости от топика"""
 
-    start = await msg.answer("Собираю статистику")
+    start = await msg.answer(text="Собираю статистику")
     if command.args is None:
         if start.message_thread_id:
             await start.edit_text(
-                utils.user_info(UserDatabase(topic_id=msg.message_thread_id).tg_id()),
+                text=utils.user_info(UserDatabase(topic_id=msg.message_thread_id).tg_id()),
                 parse_mode="HTML",
             )
         else:
-            await start.edit_text(utils.get_all_users_info())
+            await start.edit_text(text=utils.get_all_users_info())
     else:
         await start.edit_text(utils.user_info(int(command.args)), parse_mode="MarkdownV2")
 
