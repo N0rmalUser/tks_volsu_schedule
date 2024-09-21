@@ -22,7 +22,7 @@ admin_menu = [
         KeyboardButton(text="/track stop"),
         KeyboardButton(text="/track status"),
     ],
-    [KeyboardButton(text="/month_stat"), KeyboardButton(text="/day_stat")],
+    [KeyboardButton(text="/month"), KeyboardButton(text="/day")],
     [KeyboardButton(text="/dump"), KeyboardButton(text="/info")],
 ]
 
