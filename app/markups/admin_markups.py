@@ -18,7 +18,7 @@ from aiogram.types import KeyboardButton, ReplyKeyboardMarkup
 
 admin_menu = [
     [
-        KeyboardButton(text="/track start"),
+        KeyboardButton(text="/log"),
         KeyboardButton(text="/track stop"),
         KeyboardButton(text="/track status"),
     ],

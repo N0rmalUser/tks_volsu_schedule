@@ -132,6 +132,21 @@ async def dump_handler(msg: Message) -> None:
 
 
 @router.message(
+    Command("log"),
+    ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID),
+)
+async def dump_handler(msg: Message) -> None:
+    """Отправляет базу данных пользователей и логи в админский чат."""
+
+    try:
+        await msg.answer_document(FSInputFile(LOG_FILE), caption="Вот ваш лог")
+        open(LOG_FILE, "w").write("")
+        logging.info("Выгружены и отчищены логи")
+    except Exception as e:
+        logging.error("Ошибка при отчистке логов", e)
+
+
+@router.message(
     Command("track"),
     ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID),
 )
