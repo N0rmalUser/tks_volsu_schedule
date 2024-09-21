@@ -31,7 +31,7 @@ router = Router()
 
 
 @router.message(
-    Command("month_stat"),
+    Command("month"),
     ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID),
 )
 async def handle_send_daily_plot(msg: Message, command: CommandObject = None) -> None:
@@ -49,7 +49,7 @@ async def handle_send_daily_plot(msg: Message, command: CommandObject = None) ->
 
 
 @router.message(
-    Command("day_stat"),
+    Command("day"),
     ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID),
 )
 async def handle_send_hourly_plot(msg: Message, command: CommandObject = None) -> None:
