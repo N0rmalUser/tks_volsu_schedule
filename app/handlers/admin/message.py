@@ -21,7 +21,6 @@ from aiogram.filters import Command, CommandObject
 from aiogram.types import FSInputFile, Message
 
 from app.config import ACTIVITIES_DB, ADMIN_CHAT_ID, LOG_FILE, SCHEDULE_DB, USERS_DB
-from app.database import activity as db
 from app.database import utils
 from app.database.user import UserDatabase
 from app.filters import ChatTypeIdFilter
@@ -39,6 +38,7 @@ async def handle_send_daily_plot(msg: Message, command: CommandObject = None) ->
 
     from datetime import datetime
 
+    from app.database import activity as db
     from app.misc import user_activity
 
     month = (
@@ -51,7 +51,9 @@ async def handle_send_daily_plot(msg: Message, command: CommandObject = None) ->
         )
     else:
         activity = db.get_activity_for_month(date_str=month)
-    user_activity.plot_activity_for_month(activity, month)
+    user_activity.plot_activity_for_month(
+        activity, datetime.strptime(month, "%Y-%m-%d").strftime("%d %B %Y")
+    )
     await msg.answer_document(FSInputFile("data/activity_for_month.html"))
 
 
@@ -64,6 +66,7 @@ async def handle_send_hourly_plot(msg: Message, command: CommandObject = None) -
 
     from datetime import datetime
 
+    from app.database import activity as db
     from app.misc import user_activity
 
     date = (
@@ -75,7 +78,9 @@ async def handle_send_hourly_plot(msg: Message, command: CommandObject = None) -
         )
     else:
         activity = db.get_activity_for_day(date_str=date)
-    user_activity.plot_activity_for_day(activity, date)
+    user_activity.plot_activity_for_day(
+        activity, datetime.strptime(date, "%Y-%m-%d").strftime("%d %B %Y")
+    )
     await msg.answer_document(FSInputFile("data/activity_for_day.html"))
 
 
