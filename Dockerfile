@@ -3,10 +3,10 @@ LABEL authors="N0rmalUser"
 
 WORKDIR /tks_schedule
 
-RUN apt-get update && apt-get install -y ca-certificates iputils-ping && update-ca-certificates
+RUN apt-get update && apt-get install -y ca-certificates iputils-ping && update-ca-certificates && apt-get install -y locales
+RUN localedef -i ru_RU -f UTF-8 ru_RU.UTF-8 || true
 
 COPY app app
-COPY app/config.py config.py
 COPY main.py main.py
 COPY config.toml config.toml
 COPY pyproject.toml pyproject.toml
