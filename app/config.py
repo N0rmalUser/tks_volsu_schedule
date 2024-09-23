@@ -14,7 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+import locale
 import os
+import platform
 
 import toml
 
@@ -51,3 +53,7 @@ COLLEGE_TEACHERS: list = list(config["college"]["teachers"].keys())
 COLLEGE_TEACHERS_ID: list = list(config["college"]["teachers"].values())
 
 TIMEZONE: str = config["date"]["timezone"]
+
+locale.setlocale(
+    locale.LC_TIME, "Russian_Russia.1251" if platform.system() == "Windows" else "ru_RU.UTF-8"
+)
