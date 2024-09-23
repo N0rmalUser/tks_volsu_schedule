@@ -21,11 +21,9 @@ from app.bot import process_track
 from app.database.schedule import Schedule
 from app.database.user import UserDatabase
 from app.markups import user_markups as kb
-from app.markups.keyboard_factory import (
-    ChangeCallbackFactory,
-    DayCallbackFactory,
-    DefaultChangeCallbackFactory,
-)
+from app.markups.keyboard_factory import (ChangeCallbackFactory,
+                                          DayCallbackFactory,
+                                          DefaultChangeCallbackFactory)
 from app.misc import text_maker
 
 router = Router()

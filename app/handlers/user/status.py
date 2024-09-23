@@ -15,7 +15,8 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from aiogram import Router
-from aiogram.filters.chat_member_updated import KICKED, MEMBER, ChatMemberUpdatedFilter
+from aiogram.filters.chat_member_updated import (KICKED, MEMBER,
+                                                 ChatMemberUpdatedFilter)
 from aiogram.types import ChatMemberUpdated
 
 from app.bot import process_track
