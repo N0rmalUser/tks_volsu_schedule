@@ -48,6 +48,8 @@ def sql_kit(db=":memory:"):
 def user_info(user_id: int):
     """Возвращает информацию о пользователе, подготовленную к отправке админу"""
 
+    from app.config import GROUPS, TEACHERS
+
     user = UserDatabase(user_id)
     days_until = (
         datetime.strptime(user.last_date, "%d-%m-%Y %H:%M:%S").date() - datetime.today().date()
@@ -65,8 +67,8 @@ def user_info(user_id: int):
 <code>blocked:    </code> <code>{user.blocked}</code>
 <code>banned:     </code> <code>{user.banned}</code>
 <code>tracking:   </code> <code>{user.tracking}</code>
-<code>teacher:    </code> <code>{user.teacher}</code>
-<code>group:      </code> <code>{user.group.replace("-", "") if user.group else "None"}</code>
+<code>teacher:    </code> <code>{TEACHERS[int(user.teacher) - 1]} if user.teacher else "None"</code>
+<code>group:      </code> <code>{GROUPS[int(user.group) - 1].replace("-", "") if user.group else "None"}</code>
     """
 
 
