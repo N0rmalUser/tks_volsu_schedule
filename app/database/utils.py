@@ -67,7 +67,7 @@ def user_info(user_id: int):
 <code>blocked:    </code> <code>{user.blocked}</code>
 <code>banned:     </code> <code>{user.banned}</code>
 <code>tracking:   </code> <code>{user.tracking}</code>
-<code>teacher:    </code> <code>{TEACHERS[int(user.teacher) - 1]} if user.teacher else "None"</code>
+<code>teacher:    </code> <code>{TEACHERS[int(user.teacher) - 1] if user.teacher else "None"}</code>
 <code>group:      </code> <code>{GROUPS[int(user.group) - 1].replace("-", "") if user.group else "None"}</code>
     """
 
