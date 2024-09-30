@@ -242,12 +242,12 @@ class UserDatabase:
         self.__conn.commit()
 
     @property
-    def teacher(self) -> str:
+    def teacher(self) -> int:
         """Возвращает преподавателя пользователя из базы данных"""
 
         self.__cursor.execute(
             """
-            SELECT teacher_name FROM Temp_Data
+            SELECT teacher_id FROM Temp_Data
             WHERE user_id = ?
             """,
             (self.__user_id,),
@@ -256,26 +256,26 @@ class UserDatabase:
         return result[0] if result else None
 
     @teacher.setter
-    def teacher(self, teacher_name: str) -> None:
+    def teacher(self, teacher_id: str) -> None:
         """Устанавливает преподавателя пользователя в базе данных"""
 
         self.__cursor.execute(
             """
-            INSERT INTO Temp_Data(user_id, teacher_name)
+            INSERT INTO Temp_Data(user_id, teacher_id)
             VALUES(?, ?) ON CONFLICT(user_id) DO UPDATE
-            SET teacher_name=excluded.teacher_name;
+            SET teacher_id=excluded.teacher_id;
             """,
-            (self.__user_id, teacher_name),
+            (self.__user_id, teacher_id),
         )
         self.__conn.commit()
 
     @property
-    def group(self) -> str:
+    def group(self) -> int:
         """Возвращает группу пользователя из базы данных"""
 
         self.__cursor.execute(
             """
-            SELECT group_name FROM Temp_Data
+            SELECT group_id FROM Temp_Data
             WHERE user_id = ?
             """,
             (self.__user_id,),
@@ -284,16 +284,16 @@ class UserDatabase:
         return result[0] if result else None
 
     @group.setter
-    def group(self, group_name: str) -> None:
+    def group(self, group_id: str) -> None:
         """Устанавливает группу пользователя в базе данных"""
 
         self.__cursor.execute(
             """
-            INSERT INTO Temp_Data(user_id, group_name)
+            INSERT INTO Temp_Data(user_id, group_id)
             VALUES(?, ?) ON CONFLICT(user_id) DO UPDATE
-            SET group_name=excluded.group_name;
+            SET group_id=excluded.group_id;
             """,
-            (self.__user_id, group_name),
+            (self.__user_id, group_id),
         )
         self.__conn.commit()
 

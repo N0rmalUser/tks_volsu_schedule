@@ -48,8 +48,8 @@ def user_db_init(cursor: sqlite3.Cursor):
             tracking BOOLEAN DEFAULT false,
             week INTEGER,
             day INTEGER,
-            teacher_name TEXT,
-            group_name TEXT,
+            teacher_id INTEGER,
+            group_id INTEGER,
             FOREIGN KEY (user_id) REFERENCES User_Info(user_id)
         )
     """
