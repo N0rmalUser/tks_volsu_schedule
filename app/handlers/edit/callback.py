@@ -22,9 +22,11 @@ from app.database.schedule import Schedule
 from app.database.user import UserDatabase
 from app.markups import edit_markups as kb
 from app.markups import user_markups as def_kb
-from app.markups.keyboard_factory import (DayCallbackFactory,
-                                          ScheduleConstructorCallbackFactory,
-                                          ScheduleEditingCallbackFactory)
+from app.markups.keyboard_factory import (
+    DayCallbackFactory,
+    ScheduleConstructorCallbackFactory,
+    ScheduleEditingCallbackFactory,
+)
 from app.misc import text_maker
 
 router = Router()

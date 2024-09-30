@@ -19,8 +19,7 @@ import logging
 from typing import Any, Awaitable, Callable, Dict
 
 from aiogram import BaseMiddleware
-from aiogram.exceptions import (TelegramBadRequest, TelegramNetworkError,
-                                TelegramRetryAfter)
+from aiogram.exceptions import TelegramBadRequest, TelegramNetworkError, TelegramRetryAfter
 from aiogram.types import Message, Update
 
 from app.database.activity import log_user_activity

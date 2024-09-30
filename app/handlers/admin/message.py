@@ -20,8 +20,7 @@ from aiogram import F, Router
 from aiogram.filters import Command, CommandObject
 from aiogram.types import FSInputFile, Message
 
-from app.config import (ACTIVITIES_DB, ADMIN_CHAT_ID, LOG_FILE, SCHEDULE_DB,
-                        USERS_DB)
+from app.config import ACTIVITIES_DB, ADMIN_CHAT_ID, LOG_FILE, SCHEDULE_DB, USERS_DB
 from app.database import utils
 from app.database.user import UserDatabase
 from app.filters import ChatTypeIdFilter
