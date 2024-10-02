@@ -54,7 +54,7 @@ async def handle_send_daily_plot(msg: Message, command: CommandObject = None) ->
     user_activity.plot_activity_for_month(
         activity, datetime.strptime(month, "%Y-%m-%d").strftime("%d %B %Y")
     )
-    await msg.answer_document(FSInputFile("data/activity_for_month.html"))
+    await msg.answer_document(FSInputFile(PLOT_PATH / "activity_for_month.html"))
 
 
 @router.message(
@@ -81,7 +81,7 @@ async def handle_send_hourly_plot(msg: Message, command: CommandObject = None) -
     user_activity.plot_activity_for_day(
         activity, datetime.strptime(date, "%Y-%m-%d").strftime("%d %B %Y")
     )
-    await msg.answer_document(FSInputFile("data/activity_for_day.html"))
+    await msg.answer_document(FSInputFile(PLOT_PATH / "activity_for_day.html"))
 
 
 @router.message(

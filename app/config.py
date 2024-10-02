@@ -15,26 +15,20 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import locale
-import os
 import platform
+from pathlib import Path
 
 import toml
 
-config = toml.load(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "config.toml")))
+root_path = Path(__file__).parent.parent.resolve()
+
+config = toml.load(root_path / "config.toml")
 
 NUMERATOR: int = config["date"]["numerator"]
 
 BOT_TOKEN: str = config["bot"]["token"]
 ADMIN_CHAT_ID: int = config["bot"]["admin_chat_id"]
 ADMIN_ID: int = config["bot"]["admin_id"]
-
-ACTIVITIES_DB: str = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "..", "data", "activities.db")
-)
-SCHEDULE_DB: str = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "..", "data", "schedule.db")
-)
-USERS_DB: str = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "data", "users.db"))
 
 LOG_FILE: str = config["logging"]["logfile"]
 
