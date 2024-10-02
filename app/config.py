@@ -48,6 +48,21 @@ COLLEGE_TEACHERS_ID: list = list(config["college"]["teachers"].values())
 
 TIMEZONE: str = config["date"]["timezone"]
 
+DATA_PATH: Path = root_path / "data"
+ACTIVITIES_DB: Path = DATA_PATH / "db" / "activities.db"
+SCHEDULE_DB: Path = DATA_PATH / "db" / "schedule.db"
+USERS_DB: Path = DATA_PATH / "db" / "users.db"
+
+SCHEDULE_PATH: Path = DATA_PATH / "schedule"
+SCHEDULE_TEMPLATE_PATH: Path = SCHEDULE_PATH / "template.xlsx"
+GROUPS_SCHEDULE_PATH: Path = SCHEDULE_PATH / "groups"
+TEACHERS_SHEETS_PATH: Path = SCHEDULE_PATH / "teachers"
+ROOMS_SHEETS_PATH: Path = SCHEDULE_PATH / "rooms"
+COLLEGE_SHEETS_PATH: Path = SCHEDULE_PATH / "college"
+ZIP_FILE_PATH: Path = SCHEDULE_PATH / "schedules.zip"
+
+PLOT_PATH: Path = DATA_PATH / "plot"
+
 locale.setlocale(
     locale.LC_TIME, "Russian_Russia.1251" if platform.system() == "Windows" else "ru_RU.UTF-8"
 )
