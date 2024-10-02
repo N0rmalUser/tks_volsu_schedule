@@ -19,6 +19,8 @@ from math import ceil
 import pandas as pd
 from lets_plot import *
 
+from app.config import PLOT_PATH
+
 
 def plot_activity_for_day(df: pd.DataFrame, date: str):
     LetsPlot.setup_html(no_js=True)

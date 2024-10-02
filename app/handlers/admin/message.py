@@ -20,7 +20,19 @@ from aiogram import F, Router
 from aiogram.filters import Command, CommandObject
 from aiogram.types import FSInputFile, Message
 
-from app.config import ACTIVITIES_DB, ADMIN_CHAT_ID, LOG_FILE, SCHEDULE_DB, USERS_DB
+from app.config import (
+    ACTIVITIES_DB,
+    ADMIN_CHAT_ID,
+    ADMIN_ID,
+    COLLEGE_SHEETS_PATH,
+    COLLEGE_TEACHERS,
+    GROUPS_SCHEDULE_PATH,
+    LOG_FILE,
+    PLOT_PATH,
+    SCHEDULE_DB,
+    USERS_DB,
+    ZIP_FILE_PATH,
+)
 from app.database import utils
 from app.database.user import UserDatabase
 from app.filters import ChatTypeIdFilter
@@ -165,6 +177,57 @@ async def dump_handler(msg: Message) -> None:
 
 
 @router.message(
+    Command("schedule"),
+    ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID),
+)
+async def schedule_handler(msg: Message) -> None:
+    import os
+    import zipfile
+
+    try:
+        with zipfile.ZipFile(ZIP_FILE_PATH, "a", zipfile.ZIP_DEFLATED) as zipf:
+            for file in [f for f in os.listdir(COLLEGE_SHEETS_PATH) if f.endswith(".xlsx")]:
+                file_path = COLLEGE_SHEETS_PATH / file
+                zipf.write(file_path, os.path.relpath(file_path, COLLEGE_SHEETS_PATH))
+            for file in [f for f in os.listdir(GROUPS_SCHEDULE_PATH) if f.endswith(".docx")]:
+                file_path = GROUPS_SCHEDULE_PATH / file
+                zipf.write(file_path, os.path.relpath(file_path, GROUPS_SCHEDULE_PATH))
+
+        await msg.answer_document(FSInputFile(ZIP_FILE_PATH), caption="Вот ваш архив расписаний")
+        os.remove(ZIP_FILE_PATH)
+        logging.info("Выгружен и очищен архив расписаний")
+    except Exception as e:
+        logging.error("Ошибка при обработке архива расписаний", exc_info=e)
+
+
+@router.message(
+    Command("college"),
+    ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID),
+)
+async def college_handler(_: Message) -> None:
+    import aiohttp
+
+    async with aiohttp.ClientSession() as session:
+        for teacher in COLLEGE_TEACHERS.values():
+            await session.post(
+                url="https://app.volsu.ru/api/bot/select-teacher",
+                json={"teacherId": teacher, "telegramId": ADMIN_ID, "start": "download"},
+            )
+    logging.info("Расписание преподавателей колледжа успешно скачано")
+
+
+@router.message(
+    Command("update"),
+    ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID),
+)
+async def college_handler(_: Message) -> None:
+    from app.misc import schedule_parser
+
+    schedule_parser.college_schedule_parser()
+    schedule_parser.university_schedule_parser()
+
+
+@router.message(
     Command("track"),
     ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID),
 )
@@ -257,31 +320,42 @@ async def file_handler(msg: Message):
     file_name = msg.document.file_name
     file_map = {
         "schedule.db": {
-            "path": SCHEDULE_DB.replace("/tks_schedule/", ""),
+            "path": SCHEDULE_DB,
             "message": "Заменили расписание",
         },
         "users.db": {
-            "path": USERS_DB.replace("/tks_schedule/", ""),
+            "path": USERS_DB,
             "message": "Заменили базу данных пользователей",
         },
         "activities.db": {
-            "path": ACTIVITIES_DB.replace("/tks_schedule/", ""),
+            "path": ACTIVITIES_DB,
             "message": "Заменили базу данных активности пользователей",
+        },
+        ".xlsx": {
+            "path": COLLEGE_SHEETS_PATH,
+            "message": f"Заменил файл {file_name}",
+        },
+        ".docx": {
+            "path": GROUPS_SCHEDULE_PATH,
+            "message": f"Заменил файл {file_name}",
         },
     }
 
-    if file_name in file_map:
+    key = next((key for key in file_map if key in file_name), None)
+
+    if key:
         file_id = msg.document.file_id
         file_info = await msg.bot.get_file(file_id)
         downloaded_file = await msg.bot.download_file(file_info.file_path)
-        with open(file_map[file_name]["path"], "wb") as new_file:
+
+        with open(file_map[key]["path"] / file_name, "wb") as new_file:
             new_file.write(downloaded_file.read())
-        logging.info(file_map[file_name]["message"])
-        await msg.answer(file_map[file_name]["message"])
+
+        logging.info(file_map[key]["message"])
+        await msg.answer(file_map[key]["message"])
     else:
         await msg.answer("Этот файл нельзя заменить")
         logging.info(f"{msg.from_user.id} пытался заменить файл {file_name}")
-        await msg.forward(ADMIN_CHAT_ID)
 
 
 @router.message(ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID))
