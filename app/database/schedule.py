@@ -469,5 +469,13 @@ class Schedule:
         self.__cursor.execute("SELECT RoomID FROM Rooms WHERE RoomName = ?", (room_name,))
         return self.__cursor.fetchone()[0]
 
+    def clear_university(self) -> None:
+        self.__cursor.execute(f"DELETE FROM Schedule")
+        self.__cursor.execute(f"DELETE FROM sqlite_sequence WHERE name='Schedule'")
+
+    def clear_college(self) -> None:
+        self.__cursor.execute(f"DELETE FROM CollegeSchedule")
+        self.__cursor.execute(f"DELETE FROM sqlite_sequence WHERE name='CollegeSchedule'")
+
     def __del__(self):
         self.__conn.close()
