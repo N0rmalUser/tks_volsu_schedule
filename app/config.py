@@ -43,7 +43,7 @@ STUDENTS = config["university"]["students"]
 ALL_PERSONAL = sorted(set(TEACHERS) | set(STUDENTS.keys()))
 
 COLLEGE_CONST: int = config["college"]["id_const"]
-COLLEGE_TEACHERS: list = list(config["college"]["teachers"].keys())
+COLLEGE_TEACHERS: dict[str, str] = config["college"]["teachers"]
 COLLEGE_TEACHERS_ID: list = list(config["college"]["teachers"].values())
 
 TIMEZONE: str = config["date"]["timezone"]
