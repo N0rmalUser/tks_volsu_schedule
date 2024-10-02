@@ -45,7 +45,7 @@ def plot_activity_for_day(df: pd.DataFrame, date: str):
             plot_background=element_rect(fill="#122634"),
             plot_title=element_text(),
         )
-    ).to_html("data/activity_for_day.html")
+    ).to_html(PLOT_PATH / "activity_for_day.html")
 
 
 def plot_activity_for_month(df: pd.DataFrame, month: str):
@@ -71,4 +71,4 @@ def plot_activity_for_month(df: pd.DataFrame, month: str):
             plot_background=element_rect(fill="#122634"),
             plot_title=element_text(),
         )
-    ).to_html("data/activity_for_month.html")
+    ).to_html(PLOT_PATH / "activity_for_month.html")
