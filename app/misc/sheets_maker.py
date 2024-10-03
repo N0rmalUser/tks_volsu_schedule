@@ -24,7 +24,7 @@ from openpyxl.styles import Border, Side
 from app.config import SCHEDULE_DB, SCHEDULE_TEMPLATE_PATH, TEACHERS_SHEETS_PATH
 
 
-def get_teacher_schedule_sheet(teacher_name: str) -> str:
+def teacher(teacher_name: str) -> str:
     days = ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота"]
     times = ["08", "10", "12", "13", "15", "17", "18"]
 
