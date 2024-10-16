@@ -256,7 +256,7 @@ class UserDatabase:
         return result[0] if result else None
 
     @teacher.setter
-    def teacher(self, teacher_id: str) -> None:
+    def teacher(self, teacher_id: int) -> None:
         """Устанавливает преподавателя пользователя в базе данных"""
 
         self.__cursor.execute(
