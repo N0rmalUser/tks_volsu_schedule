@@ -21,7 +21,7 @@ import pandas as pd
 from pytz import timezone as tz
 
 from app.config import ACTIVITIES_DB, TIMEZONE
-from app.database.utils import sql_kit
+from app.database import sql_kit
 
 
 @sql_kit(ACTIVITIES_DB)
@@ -82,7 +82,6 @@ def get_user_activity_for_month(
         if result:
             user_ids = result[0].split(",")
             daily_data[date_str] = 1 if str(user_id) in user_ids else 0
-            print(daily_data)
         else:
             daily_data[date_str] = 0
     return pd.DataFrame(list(daily_data.items()), columns=["Date", "User Count"])
