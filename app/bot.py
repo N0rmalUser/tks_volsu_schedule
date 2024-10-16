@@ -25,7 +25,7 @@ from aiogram.utils.deep_linking import create_start_link
 from app import middlewares
 from app.config import ADMIN_CHAT_ID, BOT_TOKEN
 from app.database.user import UserDatabase
-from app.handlers import admin, edit, user
+from app.handlers import admin, user
 from app.markups import admin_markups as kb
 
 
@@ -40,15 +40,13 @@ async def main() -> None:
         user.callback.router,
         user.message.router,
         user.status.router,
-        edit.callback.router,
-        edit.message.router,
         admin.message.router,
     )
 
     dp.update.middleware(middlewares.BanUsersMiddleware())
     dp.update.middleware(middlewares.TopicCreatorMiddleware())
     dp.update.middleware(middlewares.UserActivityMiddleware())
-    dp.callback_query.middleware(middlewares.CallbackTelegramErrorsMiddleware())
+    # dp.callback_query.middleware(middlewares.CallbackTelegramErrorsMiddleware())
 
     await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types(), polling_timeout=60)
@@ -95,7 +93,7 @@ async def topic_create(msg: Message) -> None:
         f"Тип пользователя: {user.type}"
     )
     user.tracking = True
-    await process_track(user=user, text=user_info, bot=msg.bot, keyboard=kb.admin_menu)
+    await process_track(user=user, text=user_info, bot=msg.bot, keyboard=kb.admin_menu())
     user.tracking = False
     logging.info(f"Создан топик имени {msg.from_user.id} @{msg.from_user.username}")
 

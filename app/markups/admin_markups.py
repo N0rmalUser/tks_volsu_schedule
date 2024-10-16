@@ -14,16 +14,49 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-from aiogram.types import KeyboardButton, ReplyKeyboardMarkup
+from aiogram.types import (
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+    KeyboardButton,
+    ReplyKeyboardMarkup,
+)
 
-admin_menu = [
-    [
-        KeyboardButton(text="/log"),
-        KeyboardButton(text="/track stop"),
-        KeyboardButton(text="/track status"),
-    ],
-    [KeyboardButton(text="/month"), KeyboardButton(text="/day")],
-    [KeyboardButton(text="/dump"), KeyboardButton(text="/info")],
-]
 
-admin_menu = ReplyKeyboardMarkup(keyboard=admin_menu, resize_keyboard=True)
+def admin_menu():
+    return ReplyKeyboardMarkup(
+        keyboard=[
+            [
+                KeyboardButton(text="/log"),
+                KeyboardButton(text="/track stop"),
+                KeyboardButton(text="/track status"),
+            ],
+            [
+                KeyboardButton(text="/college"),
+                KeyboardButton(text="/update"),
+                KeyboardButton(text="/dump")],
+            [
+                KeyboardButton(text="/month"),
+                KeyboardButton(text="/day"),
+                KeyboardButton(text="/info")],
+        ],
+        resize_keyboard=True,
+    )
+
+
+def cancel_sending():
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text="❌ Отменить отправку", callback_data="cancel_sending")]
+        ]
+    )
+
+
+def message_confirm():
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(text="✅ Подтвердить", callback_data="confirm_send"),
+            ],
+            [InlineKeyboardButton(text="❌ Отменить", callback_data="cancel_send")],
+        ]
+    )
