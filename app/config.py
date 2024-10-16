@@ -54,7 +54,6 @@ SCHEDULE_DB: Path = DATA_PATH / "db" / "schedule.db"
 USERS_DB: Path = DATA_PATH / "db" / "users.db"
 
 SCHEDULE_PATH: Path = DATA_PATH / "schedule"
-SCHEDULE_TEMPLATE_PATH: Path = SCHEDULE_PATH / "template.xlsx"
 GROUPS_SCHEDULE_PATH: Path = SCHEDULE_PATH / "groups"
 TEACHERS_SHEETS_PATH: Path = SCHEDULE_PATH / "teachers"
 ROOMS_SHEETS_PATH: Path = SCHEDULE_PATH / "rooms"

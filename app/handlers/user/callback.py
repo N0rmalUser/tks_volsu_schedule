@@ -15,9 +15,10 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from aiogram import F, Router
-from aiogram.types import CallbackQuery
+from aiogram.types import CallbackQuery, FSInputFile
 
 from app.bot import process_track
+from app.config import GROUPS, ROOMS, TEACHERS, GROUPS_SCHEDULE_PATH
 from app.database.schedule import Schedule
 from app.database.user import UserDatabase
 from app.markups import user_markups as kb
@@ -27,6 +28,7 @@ from app.markups.keyboard_factory import (
     DefaultChangeCallbackFactory,
 )
 from app.misc import text_maker
+from app.misc.sheets_maker import room, teacher
 
 router = Router()
 
@@ -71,16 +73,12 @@ async def day_handler(callback: CallbackQuery, callback_data: DayCallbackFactory
             day=day, week=week, room_name=Schedule().get_room_name(value)
         )
 
-    if user.type == "teacher":
-        week_kb = kb.get_days_teacher(
+    await callback.message.edit_text(
+        text,
+        reply_markup=kb.get_days(
             callback.from_user.id, keyboard_type=keyboard_type, week=week, value=value
-        )
-    else:
-        week_kb = kb.get_days(
-            callback.from_user.id, keyboard_type=keyboard_type, week=week, value=value
-        )
-
-    await callback.message.edit_text(text, reply_markup=week_kb)
+        ),
+    )
     await callback.answer()
 
     if user.tracking:
@@ -120,16 +118,12 @@ async def week_handler(callback: CallbackQuery, callback_data: DayCallbackFactor
             day=day, week=week, room_name=Schedule().get_room_name(value)
         )
 
-    if user.type == "teacher":
-        week_kb = kb.get_days_teacher(
+    await callback.message.edit_text(
+        text,
+        reply_markup=kb.get_days(
             callback.from_user.id, keyboard_type=keyboard_type, week=week, value=value
-        )
-    else:
-        week_kb = kb.get_days(
-            callback.from_user.id, keyboard_type=keyboard_type, week=week, value=value
-        )
-
-    await callback.message.edit_text(text, reply_markup=week_kb)
+        ),
+    )
     await callback.answer()
     await process_track(user=user, text=callback.data, bot=callback.bot)
 
@@ -141,27 +135,18 @@ async def room_handler(callback: CallbackQuery, callback_data: ChangeCallbackFac
     user = UserDatabase(callback.from_user.id)
     user.set_today_date()
 
-    if user.type == "teacher":
-        week_kb = kb.get_days_teacher(
-            callback.from_user.id,
-            keyboard_type="room",
-            week=user.week,
-            value=callback_data.value,
-        )
-    else:
-        week_kb = kb.get_days(
-            callback.from_user.id,
-            keyboard_type="room",
-            week=user.week,
-            value=callback_data.value,
-        )
     await callback.message.edit_text(
         text_maker.get_room_schedule(
             day=user.day,
             week=user.week,
             room_name=Schedule().get_room_name(callback_data.value),
         ),
-        reply_markup=week_kb,
+        reply_markup=kb.get_days(
+            callback.from_user.id,
+            keyboard_type="room",
+            week=user.week,
+            value=callback_data.value,
+        ),
     )
     await callback.answer()
     await process_track(user=user, text=callback.data, bot=callback.bot)
@@ -177,27 +162,18 @@ async def teacher_handler(callback: CallbackQuery, callback_data: ChangeCallback
     user.set_today_date()
     user.teacher = callback_data.value
 
-    if user.type == "teacher":
-        week_kb = kb.get_days_teacher(
-            callback.from_user.id,
-            keyboard_type="teacher",
-            week=user.week,
-            value=callback_data.value,
-        )
-    else:
-        week_kb = kb.get_days(
-            callback.from_user.id,
-            keyboard_type="teacher",
-            week=user.week,
-            value=callback_data.value,
-        )
     await callback.message.edit_text(
         text_maker.get_teacher_schedule(
             day=user.day,
             week=user.week,
             teacher_name=Schedule().get_teacher_name(callback_data.value),
         ),
-        reply_markup=week_kb,
+        reply_markup=kb.get_days(
+            callback.from_user.id,
+            keyboard_type="teacher",
+            week=user.week,
+            value=callback_data.value,
+        ),
     )
     await callback.answer()
     await process_track(user=user, text=callback.data, bot=callback.bot)
@@ -211,31 +187,35 @@ async def group_handler(callback: CallbackQuery, callback_data: ChangeCallbackFa
     user.set_today_date()
     user.group = callback_data.value
 
-    if user.type == "teacher":
-        week_kb = kb.get_days_teacher(
-            callback.from_user.id,
-            keyboard_type="group",
-            week=user.week,
-            value=callback_data.value,
-        )
-    else:
-        week_kb = kb.get_days(
-            callback.from_user.id,
-            keyboard_type="group",
-            week=user.week,
-            value=callback_data.value,
-        )
-
     await callback.message.edit_text(
         text_maker.get_group_schedule(
             day=user.day,
             week=user.week,
             group_name=Schedule().get_group_name(callback_data.value),
         ),
-        reply_markup=week_kb,
+        reply_markup=kb.get_days(
+            callback.from_user.id,
+            keyboard_type="group",
+            week=user.week,
+            value=callback_data.value,
+        ),
     )
     await callback.answer()
     await process_track(user=user, text=callback.data, bot=callback.bot)
+
+
+@router.callback_query(ChangeCallbackFactory.filter(F.action == "spreadsheet"))
+async def spreadsheet_handler(
+    callback: CallbackQuery, callback_data: ChangeCallbackFactory
+) -> None:
+    if callback_data.value == 1:
+        ...
+    elif callback_data.value == 2:
+        ...
+    elif callback_data.value == 3:
+        ...
+    else:
+        await callback.answer("Произошла ошибка, напишите админу /admin")
 
 
 async def process_default_change(
@@ -263,3 +243,54 @@ async def default_group_handler(
     callback: CallbackQuery, callback_data: ChangeCallbackFactory
 ) -> None:
     await process_default_change(callback, callback_data)
+
+
+@router.callback_query(ChangeCallbackFactory.filter(F.action == "teacher_sheet"))
+async def teacher_sheet_handler(
+    callback: CallbackQuery, callback_data: ChangeCallbackFactory
+) -> None:
+    if not callback_data.value:
+        await callback.message.edit_text(
+            "Выберите преподавателя", reply_markup=kb.get_sheet_teachers(callback.from_user.id)
+        )
+        return
+    if callback_data.value == 9999:
+        for teacher_name in TEACHERS:
+            await callback.message.answer_document(FSInputFile(teacher(teacher_name)))
+    else:
+        await callback.message.answer_document(
+            FSInputFile(teacher(Schedule().get_teacher_name(callback_data.value)))
+        )
+    await callback.answer()
+
+
+@router.callback_query(ChangeCallbackFactory.filter(F.action == "group_sheet"))
+async def group_sheet_handler(
+    callback: CallbackQuery, callback_data: ChangeCallbackFactory
+) -> None:
+    if not callback_data.value:
+        await callback.message.edit_text("Выберите группу", reply_markup=kb.get_sheet_groups(callback.from_user.id))
+        return
+    if callback_data.value == 9999:
+        for group in GROUPS:
+            await callback.message.answer_document(FSInputFile(GROUPS_SCHEDULE_PATH / f"{group}.docx"))
+    else:
+        await callback.message.answer_document(FSInputFile(GROUPS_SCHEDULE_PATH / f"{Schedule().get_group_name(callback_data.value)}.docx"))
+    await callback.answer()
+
+
+@router.callback_query(ChangeCallbackFactory.filter(F.action == "room_sheet"))
+async def room_sheet_handler(
+    callback: CallbackQuery, callback_data: ChangeCallbackFactory
+) -> None:
+    if not callback_data.value:
+        await callback.message.edit_text("Выберите аудиторию", reply_markup=kb.get_sheet_rooms())
+        return
+    if callback_data.value == 9999:
+        for room_name in ROOMS:
+            await callback.message.answer_document(FSInputFile(room(room_name)))
+    else:
+        await callback.message.answer_document(
+            FSInputFile(room(Schedule().get_room_name(callback_data.value)))
+        )
+    await callback.answer()
