@@ -42,10 +42,10 @@ async def start_deep_handler(msg: Message, command: CommandObject) -> None:
         user.inviter = int(args[0])
         if args[1] == "teacher":
             user.user_type = "teacher"
-            menu, keyboard = kb.teacher_menu, kb.get_teachers()
+            menu, keyboard = kb.teacher_menu(), kb.get_teachers()
         else:
             user.user_type = "student"
-            menu, keyboard = kb.student_menu, kb.get_groups()
+            menu, keyboard = kb.student_menu(), kb.get_groups()
         if user.start_date is None:
             user.start_date = msg.date.astimezone(tz(TIMEZONE)).strftime("%d-%m-%Y %H:%M:%S")
             user.username = f"@{msg.from_user.username}"
@@ -77,9 +77,9 @@ async def start_handler(msg: Message) -> None:
     user.week = 1
     user.tracking = False
     menu, keyboard = (
-        (kb.teacher_menu, kb.get_teachers())
+        (kb.teacher_menu(), kb.get_teachers())
         if user.type == "teacher"
-        else (kb.student_menu, kb.get_groups())
+        else (kb.student_menu(), kb.get_groups())
     )
 
     from app.bot import start_message
@@ -138,6 +138,16 @@ async def admin_handler(msg: Message) -> None:
     logging.info(f"{msg.from_user.id} написал админу")
 
 
+@router.message(Command("spreadsheet"), ChatTypeIdFilter(chat_type=["private"]))
+async def admin_handler(msg: Message) -> None:
+    """Обработчик команды /spreadsheet. Присылает пользователю файл с расписанием выбранной группы/преподавателя"""
+
+    await msg.answer(
+        "Выберите, какой тип расписания вы хотите скачать.",
+        reply_markup=kb.get_sheets(msg.from_user.id),
+    )
+
+
 @router.message(Command("default"), ChatTypeIdFilter(chat_type=["private"]))
 async def default_handler(msg: Message) -> None:
     """Устанавливает пользователю преподавателя или группу по-умолчанию"""
@@ -164,11 +174,7 @@ async def handler(msg: Message) -> None:
             default = user.default
 
             if default is None:
-                entity_id = (
-                    Schedule().get_teacher_id(user.teacher)
-                    if user.type == "teacher"
-                    else user.group
-                )
+                entity_id = user.teacher if user.type == "teacher" else user.group
             else:
                 entity_id = Schedule().get_teacher_id(default)
 
@@ -178,7 +184,7 @@ async def handler(msg: Message) -> None:
                 )
                 return
             if user.type == "teacher":
-                week_kb = kb.get_days_teacher(user_id, "teacher", user.week, value=entity_id)
+                week_kb = kb.get_days(user_id, "teacher", user.week, value=entity_id)
                 await msg.answer(
                     text_maker.get_teacher_schedule(
                         day=user.day,
