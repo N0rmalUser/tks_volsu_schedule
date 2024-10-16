@@ -18,6 +18,7 @@ import logging
 
 from aiogram import F, Router
 from aiogram.filters import Command, CommandObject
+from aiogram.fsm.context import FSMContext
 from aiogram.types import FSInputFile, Message
 
 from app.config import (
@@ -30,10 +31,9 @@ from app.config import (
     LOG_FILE,
     PLOT_PATH,
     SCHEDULE_DB,
-    USERS_DB,
-    ZIP_FILE_PATH,
+    USERS_DB
 )
-from app.database import utils
+from app.database import get_all_users_info, get_tracked_users, tracking_manage, user_info
 from app.database.user import UserDatabase
 from app.filters import ChatTypeIdFilter
 from app.markups import admin_markups as kb
@@ -52,11 +52,10 @@ async def handle_send_daily_plot(msg: Message, command: CommandObject = None) ->
 
     from app.database import activity as db
     from app.misc import user_activity
-
     month = (
         datetime.strptime(command.args, "%d.%m.%Y") if command.args else datetime.now()
     ).strftime("%Y-%m-%d")
-    if msg.message_thread_id:
+    if msg.message_thread_id and msg.message_thread_id != 1: # TODO: Починить топики
         activity = db.get_user_activity_for_month(
             user_id=UserDatabase(topic_id=msg.message_thread_id).tg_id(),
             date_str=month,
@@ -101,7 +100,7 @@ async def handle_send_hourly_plot(msg: Message, command: CommandObject = None) -
     ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID),
 )
 async def handle_topic_command_track(msg: Message) -> None:
-    await msg.answer("Меню админа", reply_markup=kb.admin_menu)
+    await msg.answer("Меню админа", reply_markup=kb.admin_menu())
 
 
 @router.message(
@@ -177,54 +176,40 @@ async def dump_handler(msg: Message) -> None:
 
 
 @router.message(
-    Command("schedule"),
-    ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID),
-)
-async def schedule_handler(msg: Message) -> None:
-    import os
-    import zipfile
-
-    try:
-        with zipfile.ZipFile(ZIP_FILE_PATH, "a", zipfile.ZIP_DEFLATED) as zipf:
-            for file in [f for f in os.listdir(COLLEGE_SHEETS_PATH) if f.endswith(".xlsx")]:
-                file_path = COLLEGE_SHEETS_PATH / file
-                zipf.write(file_path, os.path.relpath(file_path, COLLEGE_SHEETS_PATH))
-            for file in [f for f in os.listdir(GROUPS_SCHEDULE_PATH) if f.endswith(".docx")]:
-                file_path = GROUPS_SCHEDULE_PATH / file
-                zipf.write(file_path, os.path.relpath(file_path, GROUPS_SCHEDULE_PATH))
-
-        await msg.answer_document(FSInputFile(ZIP_FILE_PATH), caption="Вот ваш архив расписаний")
-        os.remove(ZIP_FILE_PATH)
-        logging.info("Выгружен и очищен архив расписаний")
-    except Exception as e:
-        logging.error("Ошибка при обработке архива расписаний", exc_info=e)
-
-
-@router.message(
     Command("college"),
     ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID),
 )
-async def college_handler(_: Message) -> None:
+async def college_handler(msg: Message) -> None:
     import aiohttp
-
-    async with aiohttp.ClientSession() as session:
-        for teacher in COLLEGE_TEACHERS.values():
-            await session.post(
-                url="https://app.volsu.ru/api/bot/select-teacher",
-                json={"teacherId": teacher, "telegramId": ADMIN_ID, "start": "download"},
-            )
-    logging.info("Расписание преподавателей колледжа успешно скачано")
+    try:
+        async with aiohttp.ClientSession() as session:
+            for teacher in COLLEGE_TEACHERS.values():
+                await session.post(
+                    url="https://app.volsu.ru/api/bot/select-teacher",
+                    json={"teacherId": teacher, "telegramId": ADMIN_ID, "start": "download"},
+                )
+        logging.info("Расписание преподавателей колледжа успешно скачано")
+    except Exception as e:
+        await msg.answer("Ошибка вытаскивания расписания из колледжского бота")
+        logging.error(e)
 
 
 @router.message(
     Command("update"),
     ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID),
 )
-async def college_handler(_: Message) -> None:
+async def update_handler(msg: Message) -> None:
     from app.misc import schedule_parser
 
-    schedule_parser.college_schedule_parser()
-    schedule_parser.university_schedule_parser()
+    start = await msg.answer("Подождите...")
+    try:
+        schedule_parser.college_schedule_parser()
+        schedule_parser.university_schedule_parser()
+        await start.edit_text("База данных расписания обновлена")
+        logging.info("База данных расписания обновлена")
+    except Exception as e:
+        await start.edit_text("Ошибка обновления базы данных расписания")
+        logging.error(e)
 
 
 @router.message(
@@ -252,13 +237,13 @@ async def handle_topic_command_track(msg: Message, command: CommandObject) -> No
         await start.edit_text(f"Трекинг {'включен' if user.tracking else 'выключен'}")
     else:
         if command == "start":
-            await utils.tracking_manage(True)
+            await tracking_manage(True)
             await start.edit_text("Трекинг включен для всех пользователей")
         elif command == "stop":
-            await utils.tracking_manage(False)
+            await tracking_manage(False)
             await start.edit_text("Трекинг выключен для всех пользователей")
         elif command == "status":
-            users = await utils.get_tracked_users()
+            users = await get_tracked_users()
             tracked = "\n".join([str(user) for user in users])
             await start.edit_text(
                 f"Трекаются: \n" + tracked if users else "Никто не трекается",
@@ -277,13 +262,13 @@ async def handle_topic_command_info(msg: Message, command: CommandObject = None)
     if command.args is None:
         if start.message_thread_id:
             await start.edit_text(
-                text=utils.user_info(UserDatabase(topic_id=msg.message_thread_id).tg_id()),
+                text=user_info(UserDatabase(topic_id=msg.message_thread_id).tg_id()),
                 parse_mode="HTML",
             )
         else:
-            await start.edit_text(text=utils.get_all_users_info())
+            await start.edit_text(text=get_all_users_info())
     else:
-        await start.edit_text(utils.user_info(int(command.args)), parse_mode="MarkdownV2")
+        await start.edit_text(user_info(int(command.args)), parse_mode="MarkdownV2")
 
 
 @router.message(
@@ -359,35 +344,30 @@ async def file_handler(msg: Message):
 
 
 @router.message(ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID))
-async def handle_topic_message(msg: Message) -> None:
+async def handle_topic_message(msg: Message, state: FSMContext) -> None:
     """Отправляет сообщение в личный топик пользователя"""
 
-    try:
-        if "/" in msg.text[0]:
-            await msg.answer("Нет такой команды, но я тебя спас, не бойся")
+    from app.misc.states import BroadcastStates
+
+    if msg.from_user.is_bot:
+        return
+
+    if msg.text and msg.text.startswith("/"):
+        await msg.answer("Нет такой команды, но я тебя спас, не бойся")
+        return
+
+    if msg.message_thread_id is not None:
+        await msg.bot.send_message(
+            UserDatabase(topic_id=msg.message_thread_id).tg_id(), text=msg.text
+        )
+    else:
+        if msg.is_from_offline:
+            from app.misc import send_broadcast_message
+
+            await send_broadcast_message(msg, state, msg.message_id)
         else:
-            from app.database.user import UserDatabase
-
-            if msg.message_thread_id is not None:
-                await msg.bot.send_message(
-                    UserDatabase(topic_id=msg.message_thread_id).tg_id(), text=msg.text
-                )
-            else:
-                from asyncio import sleep
-
-                from app.database.utils import all_user_ids
-
-                user_ids = all_user_ids()
-                for user_id in user_ids:
-                    if not UserDatabase(user_id).blocked:
-                        try:
-                            await msg.bot.send_message(user_id, msg.text)
-                        except Exception as e:
-                            logging.error(
-                                f"Не удалось отправить сообщение пользователю {user_id}: {e}"
-                            )
-                        finally:
-                            await sleep(0.5)
-                logging.info("Отправлено сообщение всем пользователям")
-    except TypeError:
-        pass
+            await msg.answer(
+                "Вы действительно хотите отправить это сообщение?",
+                reply_markup=kb.message_confirm(),
+            )
+            await state.set_state(BroadcastStates.waiting_for_confirmation)

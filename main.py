@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-
 import asyncio
 import logging
 from datetime import datetime
@@ -23,7 +22,6 @@ import pytz
 
 from app import bot
 from app.config import EVENT_LEVEL, LOG_FILE, LOG_LEVEL, TIMEZONE
-from app.database.db_init import db_init
 
 if __name__ == "__main__":
     logging.Formatter.converter = lambda *args: datetime.now(pytz.timezone(TIMEZONE)).timetuple()
@@ -46,5 +44,4 @@ if __name__ == "__main__":
     logging.getLogger("aiogram.event").setLevel(levels[EVENT_LEVEL])
     logging.getLogger("apscheduler.scheduler").setLevel(levels[EVENT_LEVEL])
 
-    db_init()
     asyncio.run(bot.main())
