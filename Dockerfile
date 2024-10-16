@@ -16,5 +16,7 @@ RUN poetry install --no-dev
 
 # Почему-то не устанавливается через poetry в докере
 RUN pip install toml
+RUN pip install openpyxl
+RUN pip install python-docx
 
 CMD ["python", "main.py"]
