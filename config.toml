@@ -7,7 +7,6 @@ admin_id = 000000
 [logging]
 level = "INFO"
 event_level = "WARNING"
-logfile = "logs/bot.log"
 
 [date]
 # Параметр для корректировки числителя и знаменателя:
