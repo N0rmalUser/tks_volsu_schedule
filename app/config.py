@@ -30,7 +30,6 @@ BOT_TOKEN: str = config["bot"]["token"]
 ADMIN_CHAT_ID: int = config["bot"]["admin_chat_id"]
 ADMIN_ID: int = config["bot"]["admin_id"]
 
-LOG_FILE: str = config["logging"]["logfile"]
 
 LOG_LEVEL = config["logging"]["level"]
 EVENT_LEVEL = config["logging"]["event_level"]
@@ -49,6 +48,7 @@ COLLEGE_TEACHERS_ID: list = list(config["college"]["teachers"].values())
 TIMEZONE: str = config["date"]["timezone"]
 
 DATA_PATH: Path = root_path / "data"
+LOG_FILE: Path = DATA_PATH / "bot.log"
 ACTIVITIES_DB: Path = DATA_PATH / "db" / "activities.db"
 SCHEDULE_DB: Path = DATA_PATH / "db" / "schedule.db"
 USERS_DB: Path = DATA_PATH / "db" / "users.db"
