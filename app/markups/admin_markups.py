@@ -33,11 +33,13 @@ def admin_menu():
             [
                 KeyboardButton(text="/college"),
                 KeyboardButton(text="/update"),
-                KeyboardButton(text="/dump")],
+                KeyboardButton(text="/dump"),
+            ],
             [
                 KeyboardButton(text="/month"),
                 KeyboardButton(text="/day"),
-                KeyboardButton(text="/info")],
+                KeyboardButton(text="/info"),
+            ],
         ],
         resize_keyboard=True,
     )
