@@ -9,14 +9,8 @@ RUN localedef -i ru_RU -f UTF-8 ru_RU.UTF-8 || true
 COPY app app
 COPY main.py main.py
 COPY config.toml config.toml
-COPY pyproject.toml pyproject.toml
+COPY requirements.txt requirements.txt
 
-RUN pip install --no-cache-dir poetry
-RUN poetry install --no-dev
-
-# Почему-то не устанавливается через poetry в докере
-RUN pip install toml
-RUN pip install openpyxl
-RUN pip install python-docx
+RUN pip install -r requirements.txt
 
 CMD ["python", "main.py"]
