@@ -31,7 +31,7 @@ from app.config import (
     LOG_FILE,
     PLOT_PATH,
     SCHEDULE_DB,
-    USERS_DB
+    USERS_DB,
 )
 from app.database import get_all_users_info, get_tracked_users, tracking_manage, user_info
 from app.database.user import UserDatabase
@@ -52,10 +52,11 @@ async def handle_send_daily_plot(msg: Message, command: CommandObject = None) ->
 
     from app.database import activity as db
     from app.misc import user_activity
+
     month = (
         datetime.strptime(command.args, "%d.%m.%Y") if command.args else datetime.now()
     ).strftime("%Y-%m-%d")
-    if msg.message_thread_id and msg.message_thread_id != 1: # TODO: Починить топики
+    if msg.message_thread_id and msg.message_thread_id != 1:  # TODO: Починить топики
         activity = db.get_user_activity_for_month(
             user_id=UserDatabase(topic_id=msg.message_thread_id).tg_id(),
             date_str=month,
@@ -181,6 +182,7 @@ async def dump_handler(msg: Message) -> None:
 )
 async def college_handler(msg: Message) -> None:
     import aiohttp
+
     try:
         async with aiohttp.ClientSession() as session:
             for teacher in COLLEGE_TEACHERS.values():

@@ -269,13 +269,21 @@ async def group_sheet_handler(
     callback: CallbackQuery, callback_data: ChangeCallbackFactory
 ) -> None:
     if not callback_data.value:
-        await callback.message.edit_text("Выберите группу", reply_markup=kb.get_sheet_groups(callback.from_user.id))
+        await callback.message.edit_text(
+            "Выберите группу", reply_markup=kb.get_sheet_groups(callback.from_user.id)
+        )
         return
     if callback_data.value == 9999:
         for group in GROUPS:
-            await callback.message.answer_document(FSInputFile(GROUPS_SCHEDULE_PATH / f"{group}.docx"))
+            await callback.message.answer_document(
+                FSInputFile(GROUPS_SCHEDULE_PATH / f"{group}.docx")
+            )
     else:
-        await callback.message.answer_document(FSInputFile(GROUPS_SCHEDULE_PATH / f"{Schedule().get_group_name(callback_data.value)}.docx"))
+        await callback.message.answer_document(
+            FSInputFile(
+                GROUPS_SCHEDULE_PATH / f"{Schedule().get_group_name(callback_data.value)}.docx"
+            )
+        )
     await callback.answer()
 
 

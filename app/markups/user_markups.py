@@ -235,7 +235,9 @@ def get_sheet_teachers(user_id: int):
         rows.append(1)
         builder.button(
             text="Всех и сразу",
-            callback_data=keyboard_factory.ChangeCallbackFactory(action="teacher_sheet", value=9999),
+            callback_data=keyboard_factory.ChangeCallbackFactory(
+                action="teacher_sheet", value=9999
+            ),
         )
         builder.adjust(*rows)
     return builder.as_markup()

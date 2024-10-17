@@ -21,7 +21,7 @@ from openpyxl import load_workbook
 from openpyxl.styles import Border, Side
 from pandas import concat, read_sql_query
 
-from app.config import SCHEDULE_DB, TEACHERS_SHEETS_PATH, ROOMS_SHEETS_PATH
+from app.config import ROOMS_SHEETS_PATH, SCHEDULE_DB, TEACHERS_SHEETS_PATH
 
 
 def teacher(teacher_name: str) -> str:
