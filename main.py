@@ -34,14 +34,20 @@ if __name__ == "__main__":
         "FATAL": logging.FATAL,
         "EXCEPTION": logging.ERROR,
     }
-    logging.basicConfig(
-        level=levels[LOG_LEVEL],
-        filename=LOG_FILE,
-        format="%(asctime)s %(levelname)s  %(message)s",
+
+    logger = logging.getLogger()
+    logger.setLevel(levels[LOG_LEVEL])
+
+    for handler in logger.handlers[:]:
+        logger.removeHandler(handler)
+
+    formatter = logging.Formatter(
+        fmt="%(asctime)s %(levelname)s  %(message)s",
         datefmt="%H:%M:%S %d-%m-%Y",
-        encoding="utf-8",
     )
+    file_handler = logging.FileHandler(LOG_FILE, encoding="utf-8")
+    file_handler.setFormatter(formatter)
+    logger.addHandler(file_handler)
     logging.getLogger("aiogram.event").setLevel(levels[EVENT_LEVEL])
-    logging.getLogger("apscheduler.scheduler").setLevel(levels[EVENT_LEVEL])
 
     asyncio.run(bot.main())
