@@ -275,6 +275,34 @@ async def get_tracked_users() -> list:
     return tracked_users
 
 
+@sql_kit(USERS_DB)
+def get_users_by_group_id(group_id: int, cursor: sqlite3.Cursor):
+    cursor.execute(
+        """
+        SELECT u.user_id
+        FROM User_Info u
+        JOIN Temp_Data t ON u.user_id = t.user_id
+        WHERE t.group_id = ?
+        """,
+        (group_id,),
+    )
+    return [row[0] for row in cursor.fetchall()]
+
+
+@sql_kit(USERS_DB)
+def get_users_by_teacher_id(group_id: int, cursor: sqlite3.Cursor):
+    cursor.execute(
+        """
+        SELECT u.user_id
+        FROM User_Info u
+        JOIN Temp_Data t ON u.user_id = t.user_id
+        WHERE t.teacher_id = ?
+        """,
+        (group_id,),
+    )
+    return [row[0] for row in cursor.fetchall()]
+
+
 try:
     user_db_init()
     schedule_db_init()
