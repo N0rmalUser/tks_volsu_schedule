@@ -439,35 +439,42 @@ class Schedule:
                 """,
                 (schedule_id,),
             )
-        return self.__cursor.fetchall()[0]
+        result = self.__cursor.fetchone()
+        return result[0] if result else None
 
     def get_group_name(self, group_id: int) -> str:
         self.__cursor.execute("SELECT GroupName FROM Groups WHERE GroupID = ?", (group_id,))
-        return self.__cursor.fetchone()[0]
+        result = self.__cursor.fetchone()
+        return result[0] if result else None
 
     def get_group_id(self, group_name: str) -> int:
         self.__cursor.execute("SELECT GroupID FROM Groups WHERE GroupName = ?", (group_name,))
-        return self.__cursor.fetchone()[0]
+        result = self.__cursor.fetchone()
+        return result[0] if result else None
 
     def get_teacher_name(self, teacher_id: int) -> str:
         self.__cursor.execute(
             "SELECT TeacherName FROM Teachers WHERE TeacherID = ?", (teacher_id,)
         )
-        return self.__cursor.fetchone()[0]
+        result = self.__cursor.fetchone()
+        return result[0] if result else None
 
     def get_teacher_id(self, teacher_name: str) -> int:
         self.__cursor.execute(
             "SELECT TeacherID FROM Teachers WHERE TeacherName = ?", (teacher_name,)
         )
-        return self.__cursor.fetchone()[0]
+        result = self.__cursor.fetchone()
+        return result[0] if result else None
 
     def get_room_name(self, room_id: int) -> str:
         self.__cursor.execute("SELECT RoomName FROM Rooms WHERE RoomID = ?", (room_id,))
-        return self.__cursor.fetchone()[0]
+        result = self.__cursor.fetchone()
+        return result[0] if result else None
 
     def get_room_id(self, room_name: str) -> int:
         self.__cursor.execute("SELECT RoomID FROM Rooms WHERE RoomName = ?", (room_name,))
-        return self.__cursor.fetchone()[0]
+        result = self.__cursor.fetchone()
+        return result[0] if result else None
 
     def clear_university(self) -> None:
         self.__cursor.execute(f"DELETE FROM Schedule")

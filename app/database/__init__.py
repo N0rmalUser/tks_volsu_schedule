@@ -193,7 +193,7 @@ def user_info(user_id: int):
 
 
 @sql_kit(USERS_DB)
-def all_user_ids(cursor: sqlite3.Cursor) -> list:
+def all_user_ids(cursor: sqlite3.Cursor) -> list[int] | None:
     """
     Возвращает список всех user_id
     :param cursor:  :class:`sqlite3.Cursor` Не нужно передавать
@@ -201,7 +201,8 @@ def all_user_ids(cursor: sqlite3.Cursor) -> list:
     """
 
     cursor.execute("SELECT user_id FROM User_Info")
-    return [row[0] for row in cursor.fetchall()]
+    result = cursor.fetchone()
+    return result[0] if result else None
 
 
 @sql_kit(USERS_DB)
@@ -286,7 +287,8 @@ def get_users_by_group_id(group_id: int, cursor: sqlite3.Cursor):
         """,
         (group_id,),
     )
-    return [row[0] for row in cursor.fetchall()]
+    result = cursor.fetchone()
+    return result[0] if result else None
 
 
 @sql_kit(USERS_DB)
@@ -300,7 +302,8 @@ def get_users_by_teacher_id(group_id: int, cursor: sqlite3.Cursor):
         """,
         (group_id,),
     )
-    return [row[0] for row in cursor.fetchall()]
+    result = cursor.fetchone()
+    return result[0] if result else None
 
 
 try:
