@@ -41,6 +41,7 @@ async def main() -> None:
         user.message.router,
         user.status.router,
         admin.message.router,
+        admin.callback.router,
     )
 
     dp.update.middleware(middlewares.BanUsersMiddleware())
