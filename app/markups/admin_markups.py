@@ -31,9 +31,9 @@ def admin_menu():
                 KeyboardButton(text="/track status"),
             ],
             [
+                KeyboardButton(text="/dump"),
                 KeyboardButton(text="/college"),
                 KeyboardButton(text="/update"),
-                KeyboardButton(text="/dump"),
             ],
             [
                 KeyboardButton(text="/month"),
@@ -60,5 +60,13 @@ def message_confirm():
                 InlineKeyboardButton(text="✅ Подтвердить", callback_data="confirm_send"),
             ],
             [InlineKeyboardButton(text="❌ Отменить", callback_data="cancel_send")],
+        ]
+    )
+
+
+def notify():
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text="Оповестить", callback_data="notify")],
         ]
     )
