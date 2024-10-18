@@ -13,7 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
-
+import asyncio
 import logging
 
 from aiogram import F, Router
@@ -206,12 +206,20 @@ async def update_handler(msg: Message) -> None:
     start = await msg.answer("Подождите...")
     try:
         schedule_parser.college_schedule_parser()
-        schedule_parser.university_schedule_parser()
-        await start.edit_text("База данных расписания обновлена")
-        logging.info("База данных расписания обновлена")
     except Exception as e:
-        await start.edit_text("Ошибка обновления базы данных расписания")
+        await start.edit_text("Ошибка обновления базы данных расписания колледжа")
         logging.error(e)
+        return
+
+    try:
+        schedule_parser.university_schedule_parser()
+    except Exception as e:
+        await start.edit_text("Ошибка обновления базы данных расписания университета")
+        logging.error(e)
+        return
+
+    await start.edit_text("База данных расписания обновлена")
+    logging.info("База данных расписания обновлена")
 
 
 @router.message(
@@ -299,7 +307,7 @@ async def handle_topic_command_student(msg: Message) -> None:
 
 @router.message(
     F.document,
-    ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID),
+    ChatTypeIdFilter(chat_type=["group", "supergroup"]),
 )
 async def file_handler(msg: Message):
     """Ловит документы и заменяет файл schedule.db, users.db, activities.db на полученные."""
@@ -320,11 +328,11 @@ async def file_handler(msg: Message):
         },
         ".xlsx": {
             "path": COLLEGE_SHEETS_PATH,
-            "message": f"Заменил файл {file_name}",
+            "message": file_name,
         },
         ".docx": {
             "path": GROUPS_SCHEDULE_PATH,
-            "message": f"Заменил файл {file_name}",
+            "message": file_name,
         },
     }
 
@@ -338,11 +346,32 @@ async def file_handler(msg: Message):
         with open(file_map[key]["path"] / file_name, "wb") as new_file:
             new_file.write(downloaded_file.read())
 
+        if not hasattr(msg.bot, "collected_messages"):
+            msg.bot.collected_messages = []
+
+        msg.bot.collected_messages.append(file_map[key]["message"])
         logging.info(file_map[key]["message"])
-        await msg.answer(file_map[key]["message"])
+
     else:
-        await msg.answer("Этот файл нельзя заменить")
+        if not hasattr(msg.bot, "collected_messages"):
+            msg.bot.collected_messages = []
+        msg.bot.collected_messages.append(f"Файл {file_name} нельзя заменить")
         logging.info(f"{msg.from_user.id} пытался заменить файл {file_name}")
+
+    if hasattr(msg.bot, "send_message_task"):
+        msg.bot.send_message_task.cancel()
+
+    msg.bot.send_message_task = asyncio.create_task(send_collected_messages(msg))
+
+
+async def send_collected_messages(msg: Message):
+    await asyncio.sleep(5)
+
+    if hasattr(msg.bot, "collected_messages") and msg.bot.collected_messages:
+        await msg.answer(
+            "Заменил файлы:\n" + "\n".join(msg.bot.collected_messages), reply_markup=kb.notify()
+        )
+        del msg.bot.collected_messages
 
 
 @router.message(ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID))
