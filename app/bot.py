@@ -66,7 +66,7 @@ async def start_message(msg: Message, menu, keyboard) -> None:
     )
     await msg.answer("Выбери себя в списке", reply_markup=keyboard)
 
-    if not msg.from_user.is_bot and not user.topic_id:
+    if not msg.from_user.is_bot and (not user.start_date or not user.topic_id):
         await topic_create(msg)
 
 
