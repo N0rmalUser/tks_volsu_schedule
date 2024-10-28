@@ -59,7 +59,7 @@ class TopicCreatorMiddleware(BaseMiddleware):
             if not user.topic_id:
                 from app.bot import topic_create
 
-                if msg := (event.message or event.callback_query):
+                if msg := event.message:
                     await topic_create(msg)
             return await handler(event, data)
         return

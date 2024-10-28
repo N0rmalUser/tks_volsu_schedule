@@ -26,7 +26,7 @@ from app import middlewares
 from app.config import ADMIN_CHAT_ID, BOT_TOKEN
 from app.database.user import UserDatabase
 from app.handlers import admin, user
-from app.markups import admin_markups as kb
+from app.markups import admin as kb
 
 
 async def main() -> None:
