@@ -21,7 +21,7 @@ from app.bot import process_track
 from app.config import GROUPS, GROUPS_SCHEDULE_PATH, ROOMS, TEACHERS
 from app.database.schedule import Schedule
 from app.database.user import UserDatabase
-from app.markups import user_markups as kb
+from app.markups import user as kb
 from app.markups.keyboard_factory import (
     ChangeCallbackFactory,
     DayCallbackFactory,

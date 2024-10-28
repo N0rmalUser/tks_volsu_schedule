@@ -19,7 +19,7 @@ import logging
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
-from app.markups import admin_markups
+from app.markups import admin
 from app.misc.states import BroadcastStates
 
 from . import schedule_parser, sheets_maker, states, text_maker, user_activity
@@ -109,7 +109,7 @@ async def send_broadcast_message(msg: Message, state: FSMContext, message_id: in
                 finally:
                     await msg.edit_text(
                         text=f"Отправлено {sent_count} из {total_users} сообщений\n{create_progress_bar(sent_count, total_users)}",
-                        reply_markup=admin_markups.cancel_sending(),
+                        reply_markup=admin.cancel_sending(),
                     )
                     await sleep(1)
         logging.info("Отправлено сообщение всем пользователям")

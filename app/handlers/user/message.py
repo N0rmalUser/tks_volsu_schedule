@@ -24,7 +24,7 @@ from pytz import timezone as tz
 from app.config import ADMIN_CHAT_ID, TIMEZONE
 from app.database.user import UserDatabase
 from app.filters import ChatTypeIdFilter
-from app.markups import user_markups as kb
+from app.markups import user as kb
 
 router = Router()
 

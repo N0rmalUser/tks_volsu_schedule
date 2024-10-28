@@ -13,6 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
+
 import asyncio
 import logging
 
@@ -36,7 +37,7 @@ from app.config import (
 from app.database import get_all_users_info, get_tracked_users, tracking_manage, user_info
 from app.database.user import UserDatabase
 from app.filters import ChatTypeIdFilter
-from app.markups import admin_markups as kb
+from app.markups import admin as kb
 
 router = Router()
 
