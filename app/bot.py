@@ -47,7 +47,7 @@ async def main() -> None:
     dp.update.middleware(middlewares.BanUsersMiddleware())
     dp.update.middleware(middlewares.TopicCreatorMiddleware())
     dp.update.middleware(middlewares.UserActivityMiddleware())
-    # dp.callback_query.middleware(middlewares.CallbackTelegramErrorsMiddleware())
+    dp.callback_query.middleware(middlewares.CallbackTelegramErrorsMiddleware())
 
     await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types(), polling_timeout=60)
