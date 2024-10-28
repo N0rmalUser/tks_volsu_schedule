@@ -207,16 +207,16 @@ async def update_handler(msg: Message) -> None:
 
     start = await msg.answer("Подождите...")
     try:
-        schedule_parser.college_schedule_parser()
+        schedule_parser.university_schedule_parser()
     except Exception as e:
-        await start.edit_text("Ошибка обновления базы данных расписания колледжа")
+        await start.edit_text("Ошибка обновления базы данных расписания университета")
         logging.error(e)
         return
 
     try:
-        schedule_parser.university_schedule_parser()
+        schedule_parser.college_schedule_parser()
     except Exception as e:
-        await start.edit_text("Ошибка обновления базы данных расписания университета")
+        await start.edit_text("Ошибка обновления базы данных расписания колледжа")
         logging.error(e)
         return
 
@@ -390,6 +390,11 @@ async def handle_topic_message(msg: Message, state: FSMContext) -> None:
         return
 
     if msg.message_thread_id is not None:
+        await msg.bot.copy_message(
+            chat_id=UserDatabase(topic_id=msg.message_thread_id).tg_id(),
+            from_chat_id=msg.chat.id,
+            message_id=msg.message_id,
+        )
         await msg.bot.send_message(
             UserDatabase(topic_id=msg.message_thread_id).tg_id(), text=msg.text
         )
