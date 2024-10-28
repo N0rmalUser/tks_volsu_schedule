@@ -33,6 +33,7 @@ from app.config import (
     PLOT_PATH,
     SCHEDULE_DB,
     USERS_DB,
+    DATA_PATH,
 )
 from app.database import get_all_users_info, get_tracked_users, tracking_manage, user_info
 from app.database.user import UserDatabase
@@ -316,15 +317,15 @@ async def file_handler(msg: Message):
     file_name = msg.document.file_name
     file_map = {
         "schedule.db": {
-            "path": SCHEDULE_DB,
+            "path": DATA_PATH / "db",
             "message": "Заменили расписание",
         },
         "users.db": {
-            "path": USERS_DB,
+            "path": DATA_PATH / "db",
             "message": "Заменили базу данных пользователей",
         },
         "activities.db": {
-            "path": ACTIVITIES_DB,
+            "path": DATA_PATH / "db",
             "message": "Заменили базу данных активности пользователей",
         },
         ".xlsx": {
