@@ -138,9 +138,9 @@ async def admin_handler(msg: Message) -> None:
     logging.info(f"{msg.from_user.id} написал админу")
 
 
-@router.message(Command("spreadsheet"), ChatTypeIdFilter(chat_type=["private"]))
+@router.message(Command("spreadsheets"), ChatTypeIdFilter(chat_type=["private"]))
 async def admin_handler(msg: Message) -> None:
-    """Обработчик команды /spreadsheet. Присылает пользователю файл с расписанием выбранной группы/преподавателя"""
+    """Обработчик команды /spreadsheets. Присылает пользователю файл с расписанием выбранной группы/преподавателя"""
 
     await msg.answer(
         "Выберите, какой тип расписания вы хотите скачать.",
