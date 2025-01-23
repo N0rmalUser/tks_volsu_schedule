@@ -170,30 +170,29 @@ def user_info(user_id: int):
 
     from app.config import GROUPS, TEACHERS
 
-    user = UserDatabase(user_id)
-    days_until = (
-        datetime.strptime(user.last_date, "%d-%m-%Y %H:%M:%S").date() - datetime.today().date()
-    ).days
+    user_obj = UserDatabase(user_id)
+    days_until = (datetime.fromisoformat(user_obj.last_date) - datetime.today().date()).days
     return f"""
 Информация о пользователе:
-<code>user type: </code> <code>{user.type}</code>
-<code>username:  </code> <code>{user.username}</code>
-<code>fullname:  </code> <code>{user.fullname}</code>
-<code>start date:</code> <code>{user.start_date}</code>
-<code>last_date: </code> <code>{user.last_date}</code>
+<code>user type: </code> <code>{user_obj.type}</code>
+<code>username:  </code> <code>{user_obj.username}</code>
+<code>fullname:  </code> <code>{user_obj.fullname}</code>
+<code>start date:</code> <code>{user_obj.start_date}</code>
+<code>last_date: </code> <code>{user_obj.last_date}</code>
 <code>           </code> <code>{days_until} дней назад</code>
 
-<code>inviter id:</code> <code>{user.inviter_id}</code>
-<code>blocked:   </code> <code>{user.blocked}</code>
-<code>banned:    </code> <code>{user.banned}</code>
-<code>tracking:  </code> <code>{user.tracking}</code>
-<code>teacher:   </code> <code>{TEACHERS[int(user.teacher) - 1] if user.teacher else "None"}</code>
-<code>group:     </code> <code>{GROUPS[int(user.group) - 1].replace("-", "") if user.group else "None"}</code>
+<code>inviter id:</code> <code>{user_obj.inviter_id}</code>
+<code>blocked:   </code> <code>{user_obj.blocked}</code>
+<code>banned:    </code> <code>{user_obj.banned}</code>
+<code>tracking:  </code> <code>{user_obj.tracking}</code>
+<code>teacher:   </code> <code>{TEACHERS[int(user_obj.teacher) - 1] if user_obj.teacher else "None"}</code>
+<code>group:     </code> <code>{GROUPS[int(user_obj.group) - 1].replace("-", "") if user_obj.group else "None"}</code>
     """
 
 
+# Не менять, должен обязательно список отправлять
 @sql_kit(USERS_DB)
-def all_user_ids(cursor: sqlite3.Cursor) -> list[int] | None:
+def all_user_ids(cursor: sqlite3.Cursor) -> list[int]:
     """
     Возвращает список всех user_id
     :param cursor:  :class:`sqlite3.Cursor` Не нужно передавать
@@ -201,8 +200,7 @@ def all_user_ids(cursor: sqlite3.Cursor) -> list[int] | None:
     """
 
     cursor.execute("SELECT user_id FROM User_Info")
-    result = cursor.fetchone()
-    return result[0] if result else None
+    return cursor.fetchone()
 
 
 @sql_kit(USERS_DB)
