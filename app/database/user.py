@@ -465,20 +465,6 @@ class UserDatabase:
         result = self.__cursor.fetchone()
         return result[0] if result else None
 
-    @start_date.setter
-    def start_date(self, date: str) -> None:
-        """Устанавливает дату регистрации пользователя"""
-
-        self.__cursor.execute(
-            """
-            INSERT INTO User_Info(user_id, start_date)
-            VALUES(?, ?) ON CONFLICT(user_id) DO UPDATE 
-            SET start_date=excluded.start_date;
-            """,
-            (self.__user_id, date),
-        )
-        self.__conn.commit()
-
     def tg_id(self) -> int:
         """Возвращает user_id пользователя"""
 
