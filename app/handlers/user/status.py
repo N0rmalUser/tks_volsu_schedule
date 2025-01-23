@@ -31,7 +31,7 @@ async def user_blocked_bot(event: ChatMemberUpdated):
     user = UserDatabase(event.from_user.id)
     user.blocked = True
     await process_track(
-        user=user,
+        user,
         text=f"Пользователь @{event.from_user.username} заблокировал бота",
         bot=event.bot,
     )
@@ -44,7 +44,7 @@ async def user_unblocked_bot(event: ChatMemberUpdated):
     user = UserDatabase(event.from_user.id)
     user.blocked = False
     await process_track(
-        user=user,
+        user,
         text=f"Пользователь @{event.from_user.username} разблокировал бота",
         bot=event.bot,
     )
