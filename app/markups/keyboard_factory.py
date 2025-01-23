@@ -41,25 +41,3 @@ class DefaultChangeCallbackFactory(CallbackData, prefix="default_change"):
 
     action: Optional[str] = None
     value: Optional[int] = None
-
-
-class ScheduleEditingCallbackFactory(CallbackData, prefix="edit"):
-    """Фабрика для создания CallbackData для клавиатур изменения расписания."""
-
-    action: Optional[str] = None
-    value: Optional[int] = None
-    day: Optional[int] = None
-    edit: Optional[str] = None
-    schedule_id: Optional[int] = None
-    keyboard_type: Optional[str] = None
-
-
-class ScheduleConstructorCallbackFactory(CallbackData, prefix="add"):
-    """Фабрика для создания CallbackData для клавиатур изменения расписания."""
-
-    action: Optional[str] = None
-    value: Optional[int] = None
-    add: Optional[str] = None
-    schedule_id: Optional[int] = None
-    keyboard_type: Optional[str] = None
-    previous: Optional[str] = None

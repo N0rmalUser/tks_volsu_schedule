@@ -125,7 +125,7 @@ async def week_handler(callback: CallbackQuery, callback_data: DayCallbackFactor
         ),
     )
     await callback.answer()
-    await process_track(user=user, text=callback.data, bot=callback.bot)
+    await process_track(user, text=callback.data, bot=callback.bot)
 
 
 @router.callback_query(ChangeCallbackFactory.filter(F.action == "room"))
@@ -149,7 +149,7 @@ async def room_handler(callback: CallbackQuery, callback_data: ChangeCallbackFac
         ),
     )
     await callback.answer()
-    await process_track(user=user, text=callback.data, bot=callback.bot)
+    await process_track(user, text=callback.data, bot=callback.bot)
 
 
 @router.callback_query(ChangeCallbackFactory.filter(F.action == "teacher"))
@@ -176,7 +176,7 @@ async def teacher_handler(callback: CallbackQuery, callback_data: ChangeCallback
         ),
     )
     await callback.answer()
-    await process_track(user=user, text=callback.data, bot=callback.bot)
+    await process_track(user, text=callback.data, bot=callback.bot)
 
 
 @router.callback_query(ChangeCallbackFactory.filter(F.action == "group"))
@@ -201,7 +201,7 @@ async def group_handler(callback: CallbackQuery, callback_data: ChangeCallbackFa
         ),
     )
     await callback.answer()
-    await process_track(user=user, text=callback.data, bot=callback.bot)
+    await process_track(user, text=callback.data, bot=callback.bot)
 
 
 @router.callback_query(ChangeCallbackFactory.filter(F.action == "spreadsheet"))
@@ -228,7 +228,7 @@ async def process_default_change(
 
     await callback.message.edit_text(f"Default изменён на {callback_data.value}")
     await callback.answer()
-    await process_track(user=user, text=callback.data, bot=callback.bot)
+    await process_track(user, text=callback.data, bot=callback.bot)
 
 
 @router.callback_query(DefaultChangeCallbackFactory.filter(F.action == "default_teacher"))
