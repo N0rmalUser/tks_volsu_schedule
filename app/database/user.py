@@ -401,7 +401,7 @@ class UserDatabase:
 
         self.__cursor.execute(
             """
-            SELECT defaulte FROM User_Info
+            SELECT default_choose FROM User_Info
             WHERE user_id = ?
             """,
             (self.__user_id,),
@@ -415,9 +415,9 @@ class UserDatabase:
 
         self.__cursor.execute(
             """
-            INSERT INTO User_Info(user_id, defaulte)
+            INSERT INTO User_Info(user_id, default_choose)
             VALUES(?, ?) ON CONFLICT(user_id) DO UPDATE
-            SET defaulte=excluded.defaulte;
+            SET default_choose=excluded.default_choose;
             """,
             (self.__user_id, default),
         )
@@ -438,19 +438,16 @@ class UserDatabase:
         return result[0] if result else None
 
     @last_date.setter
-    def last_date(self, msg: Message) -> None:
+    def last_date(self, date: str) -> None:
         """Устанавливает последнюю дату использования бота пользователем"""
 
-        formatted_last_date = msg.date.astimezone(pytz.timezone(TIMEZONE)).strftime(
-            "%d-%m-%Y %H:%M:%S"
-        )
         self.__cursor.execute(
             """
             INSERT INTO User_Info(user_id, last_date)
             VALUES(?, ?) ON CONFLICT(user_id) DO UPDATE
             SET last_date=excluded.last_date;
             """,
-            (msg.from_user.id, formatted_last_date),
+            (self.__user_id, date),
         )
         self.__conn.commit()
 

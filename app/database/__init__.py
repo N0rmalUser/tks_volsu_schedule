@@ -57,12 +57,12 @@ def user_db_init(cursor: sqlite3.Cursor):
             username TEXT,
             fullname TEXT,
             topic_id INTEGER,
-            start_date TEXT,
-            last_date TEXT,
+            start_date TIMESTAMP DEFAULT (datetime('now','localtime')),
+            last_date TIMESTAMP,
             inviter_id INTEGER,
             blocked BOOLEAN DEFAULT false,
             banned BOOLEAN DEFAULT false,
-            defaulte TEXT,
+            default_choose TEXT,
             FOREIGN KEY (inviter_id) REFERENCES User_Info(user_id)
         )
     """
@@ -75,8 +75,8 @@ def user_db_init(cursor: sqlite3.Cursor):
             tracking BOOLEAN DEFAULT false,
             week INTEGER,
             day INTEGER,
-            teacher_id INTEGER,
-            group_id INTEGER,
+            teacher_id INTEGER DEFAULT 0,
+            group_id INTEGER DEFAULT 0,
             FOREIGN KEY (user_id) REFERENCES User_Info(user_id)
         )
     """
