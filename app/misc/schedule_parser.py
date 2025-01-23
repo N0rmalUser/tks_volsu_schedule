@@ -23,7 +23,7 @@ import pandas as pd
 from docx import Document
 
 from app import config
-from app.config import COLLEGE_SHEETS_PATH, GROUPS_SCHEDULE_PATH
+from app.config import COLLEGE_SHEETS_PATH, GROUPS, GROUPS_SCHEDULE_PATH
 from app.database.schedule import Schedule
 
 
@@ -73,27 +73,27 @@ def college_schedule_parser():
             if pd.isna(row[teacher_name]):
                 continue
             substitution = re.split(r"\.", row[teacher_name])
-            groups = substitution[0]
-            subject_name = (
-                re.sub(r"\s*,*\s*преп.*$", "", re.sub(r"^\s*", "", substitution[1])) + ")"
-            )
-            room_name = (
-                re.sub(r"(\s*|,*|ауд)", "", substitution[-1])
-                if substitution[-1] != ""
-                else re.sub(r"(\s*|,*|ауд)", "", substitution[-2])
-            )
-            group_name = list(set([i.strip() for i in groups.split(",")]))
-            for i in range(len(group_name)):
-                schedule_db.add_schedule(
-                    college=True,
-                    time=re.sub(r"\b8:30\b", "08:30", re.sub(r"\s*", "", time)),
-                    day_name=day_name,
-                    week_type=week_name,
-                    group_id=schedule_db.add_group(group_name[i]),
-                    teacher_id=schedule_db.add_teacher(teacher_name),
-                    room_id=schedule_db.add_room(room_name),
-                    subject_id=schedule_db.add_subject(subject_name),
-                )
+
+            for group in [i.strip() for i in substitution[0].split(",")]:
+                if group not in GROUPS:
+                    subject_name = (
+                        re.sub(r"\s*,*\s*преп.*$", "", re.sub(r"^\s*", "", substitution[1])) + ")"
+                    )
+                    room_name = (
+                        re.sub(r"(\s*|,*|ауд)", "", substitution[-1])
+                        if substitution[-1] != ""
+                        else re.sub(r"(\s*|,*|ауд)", "", substitution[-2])
+                    )
+                    schedule_db.add_schedule(
+                        college=True,
+                        time=re.sub(r"\b8:30\b", "08:30", re.sub(r"\s*", "", time)),
+                        day_name=day_name,
+                        week_type=week_name,
+                        group_id=schedule_db.add_group(group),
+                        teacher_id=schedule_db.add_teacher(teacher_name),
+                        room_id=schedule_db.add_room(room_name),
+                        subject_id=schedule_db.add_subject(subject_name),
+                    )
     logging.info("Расписания колледжа успешно сохранены в базу данных.")
 
 
