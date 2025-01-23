@@ -17,6 +17,7 @@
 import time
 start_time = time.monotonic()
 
+import app
 import asyncio
 import logging
 
@@ -24,7 +25,6 @@ from datetime import datetime
 
 import pytz
 
-from app import bot
 from app.config import EVENT_LEVEL, LOG_FILE, LOG_LEVEL, TIMEZONE
 
 if __name__ == "__main__":
@@ -46,10 +46,10 @@ if __name__ == "__main__":
         datefmt="%H:%M:%S %d-%m-%Y",
         handlers=[
             logging.FileHandler(LOG_FILE, encoding="utf-8"),
-            # logging.StreamHandler()
+            logging.StreamHandler()
         ]
     )
     logging.getLogger("aiogram.event").setLevel(levels[EVENT_LEVEL])
     logging.debug(f"Starting at {start_time}")
     logging.critical(f"Bot started in {(time.monotonic() - start_time):.2f} seconds.")
-    asyncio.run(bot.main())
+    asyncio.run(app.main())

@@ -18,7 +18,7 @@ from aiogram import Router
 from aiogram.filters.chat_member_updated import KICKED, MEMBER, ChatMemberUpdatedFilter
 from aiogram.types import ChatMemberUpdated
 
-from app.bot import process_track
+from app import process_track
 from app.database.user import UserDatabase
 
 router = Router()

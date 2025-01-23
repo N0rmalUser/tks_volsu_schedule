@@ -17,7 +17,7 @@
 from aiogram import F, Router
 from aiogram.types import CallbackQuery, FSInputFile
 
-from app.bot import process_track
+from app import process_track
 from app.config import GROUPS, GROUPS_SCHEDULE_PATH, ROOMS, TEACHERS
 from app.database.schedule import Schedule
 from app.database.user import UserDatabase

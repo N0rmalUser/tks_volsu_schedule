@@ -52,7 +52,7 @@ async def start_deep_handler(msg: Message, command: CommandObject) -> None:
         user.week = 1
         user.tracking = False
 
-        from app.bot import start_message
+        from app import start_message
 
         await start_message(msg, menu, keyboard)
     except Exception:
@@ -77,7 +77,7 @@ async def start_handler(msg: Message) -> None:
         else (kb.student_menu(), kb.get_groups())
     )
 
-    from app.bot import start_message
+    from app import start_message
 
     await start_message(msg, menu, keyboard)
 
@@ -122,7 +122,7 @@ async def help_handler(msg: Message) -> None:
 async def admin_handler(msg: Message) -> None:
     """Обработчик команды /admin. Пересылает сообщение админу и включает слежку за действиями пользователя."""
 
-    from app.bot import process_track
+    from app import process_track
 
     user = UserDatabase(msg.from_user.id)
     user.tracking = True
