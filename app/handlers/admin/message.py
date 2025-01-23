@@ -397,9 +397,6 @@ async def handle_topic_message(msg: Message, state: FSMContext) -> None:
             from_chat_id=msg.chat.id,
             message_id=msg.message_id,
         )
-        await msg.bot.send_message(
-            UserDatabase(topic_id=msg.message_thread_id).tg_id(), text=msg.text
-        )
     else:
         if msg.is_from_offline:
             from app.misc import send_broadcast_message
