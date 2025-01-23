@@ -28,12 +28,12 @@ from app.config import (
     ADMIN_ID,
     COLLEGE_SHEETS_PATH,
     COLLEGE_TEACHERS,
+    DATA_PATH,
     GROUPS_SCHEDULE_PATH,
     LOG_FILE,
     PLOT_PATH,
     SCHEDULE_DB,
     USERS_DB,
-    DATA_PATH,
 )
 from app.database import get_all_users_info, get_tracked_users, tracking_manage, user_info
 from app.database.user import UserDatabase
@@ -339,31 +339,33 @@ async def file_handler(msg: Message):
     }
 
     key = next((key for key in file_map if key in file_name), None)
+    try:
+        if key:
+            file_id = msg.document.file_id
+            file_info = await msg.bot.get_file(file_id)
+            downloaded_file = await msg.bot.download_file(file_info.file_path)
 
-    if key:
-        file_id = msg.document.file_id
-        file_info = await msg.bot.get_file(file_id)
-        downloaded_file = await msg.bot.download_file(file_info.file_path)
+            with open(file_map[key]["path"] / file_name, "wb") as new_file:
+                new_file.write(downloaded_file.read())
 
-        with open(file_map[key]["path"] / file_name, "wb") as new_file:
-            new_file.write(downloaded_file.read())
+            if not hasattr(msg.bot, "collected_messages"):
+                msg.bot.collected_messages = []
 
-        if not hasattr(msg.bot, "collected_messages"):
-            msg.bot.collected_messages = []
+            msg.bot.collected_messages.append(file_map[key]["message"])
+            logging.info(file_map[key]["message"])
 
-        msg.bot.collected_messages.append(file_map[key]["message"])
-        logging.info(file_map[key]["message"])
+        else:
+            if not hasattr(msg.bot, "collected_messages"):
+                msg.bot.collected_messages = []
+            msg.bot.collected_messages.append(f"Файл {file_name} нельзя заменить")
+            logging.info(f"{msg.from_user.id} пытался заменить файл {file_name}")
 
-    else:
-        if not hasattr(msg.bot, "collected_messages"):
-            msg.bot.collected_messages = []
-        msg.bot.collected_messages.append(f"Файл {file_name} нельзя заменить")
-        logging.info(f"{msg.from_user.id} пытался заменить файл {file_name}")
+        if hasattr(msg.bot, "send_message_task"):
+            msg.bot.send_message_task.cancel()
 
-    if hasattr(msg.bot, "send_message_task"):
-        msg.bot.send_message_task.cancel()
-
-    msg.bot.send_message_task = asyncio.create_task(send_collected_messages(msg))
+        msg.bot.send_message_task = asyncio.create_task(send_collected_messages(msg))
+    except Exception:
+        pass
 
 
 async def send_collected_messages(msg: Message):
