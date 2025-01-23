@@ -16,12 +16,15 @@
 
 
 import logging
+from datetime import datetime
 from typing import Any, Awaitable, Callable, Dict
 
+import pytz
 from aiogram import BaseMiddleware
 from aiogram.exceptions import TelegramBadRequest, TelegramNetworkError, TelegramRetryAfter
 from aiogram.types import Message, Update
 
+from app.config import TIMEZONE
 from app.database.activity import log_user_activity
 from app.database.user import UserDatabase
 
@@ -95,5 +98,7 @@ class UserActivityMiddleware(BaseMiddleware):
         event: Update,
         data: Dict[str, Any],
     ) -> Any:
-        log_user_activity(user_id=data["event_from_user"].id)
+        user_id = data["event_from_user"].id
+        UserDatabase(user_id).last_date = datetime.now(pytz.timezone(TIMEZONE)).isoformat()
+        log_user_activity(user_id)
         return await handler(event, data)
