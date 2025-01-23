@@ -71,7 +71,7 @@ async def start_message(msg: Message, menu, keyboard) -> None:
 
 
 async def topic_create(msg: Message) -> None:
-    user = UserDatabase(msg.from_user.id)
+    user_db = UserDatabase(msg.from_user.id)
     if msg.from_user.username:
         topic_name = f"{msg.from_user.username} {msg.from_user.id}"
     else:
@@ -80,37 +80,37 @@ async def topic_create(msg: Message) -> None:
         await msg.bot.create_forum_topic(
             ADMIN_CHAT_ID, topic_name, icon_custom_emoji_id="5312016608254762256"
         )
-        if user.type == "teacher"
+        if user_db.type == "teacher"
         else await msg.bot.create_forum_topic(ADMIN_CHAT_ID, topic_name)
     )
     topic_id = result.message_thread_id
-    user.topic_id = topic_id
-    inviter = user.inviter_id
+    user_db.topic_id = topic_id
+    inviter = user_db.inviter_id
     user_info = (
         f"Пользователь: <code>{msg.from_user.full_name}</code>\n"
         f"ID: <code>{msg.from_user.id}</code>\n"
         f"Username: @{msg.from_user.username}\n"
         f"Пригласил: <code>{inviter if inviter else 'Никто'}</code>\n"
-        f"Тип пользователя: {user.type}"
+        f"Тип пользователя: {user_db.type}"
     )
-    user.tracking = True
-    await process_track(user=user, text=user_info, bot=msg.bot, keyboard=kb.admin_menu())
-    user.tracking = False
+    user_db.tracking = True
+    await process_track(user_db, text=user_info, bot=msg.bot, keyboard=kb.admin_menu())
+    user_db.tracking = False
     logging.info(f"Создан топик имени {msg.from_user.id} @{msg.from_user.username}")
 
 
 async def process_track(
-    user: UserDatabase,
+    user_db: UserDatabase,
     text: str,
     bot: Bot,
     keyboard: ReplyKeyboardMarkup | InlineKeyboardMarkup | None = None,
     parse_mode: str = "HTML",
 ) -> None:
     try:
-        if user.tracking:
+        if user_db.tracking:
             await bot.send_message(
                 ADMIN_CHAT_ID,
-                message_thread_id=user.topic_id,
+                message_thread_id=user_db.topic_id,
                 text=text,
                 reply_markup=keyboard,
                 parse_mode=parse_mode,
