@@ -18,7 +18,6 @@ import sqlite3
 from datetime import datetime
 
 import pytz
-from aiogram.types import Message
 
 from app.config import NUMERATOR, TIMEZONE, USERS_DB
 
