@@ -43,9 +43,8 @@ async def start_handler(msg: Message) -> None:
         else (kb.student_menu(), kb.get_groups())
     )
 
-    from app import start_message
-
-    await start_message(msg, menu, keyboard)
+    import app
+    await app.start_message(msg, menu, keyboard)
 
 
 @router.message(Command("help"), ChatTypeIdFilter(chat_type=["private"]))
