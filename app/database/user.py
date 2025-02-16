@@ -374,7 +374,7 @@ class User:
         result = self.__cursor.fetchone()
         return result[0] if result else None
 
-    def isExists(self) -> bool:
+    def is_exists(self) -> bool:
         """Проверяет, есть ли пользователь в базе данных"""
 
         self.__cursor.execute(

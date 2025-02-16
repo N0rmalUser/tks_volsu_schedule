@@ -39,7 +39,7 @@ class BanUsersMiddleware(BaseMiddleware):
         data: Dict[str, Any],
     ) -> Any:
         user = User(data["event_from_user"].id)
-        if user.isExists:
+        if user.is_exists:
             if not user.banned:
                 return await handler(event, data)
         else:
