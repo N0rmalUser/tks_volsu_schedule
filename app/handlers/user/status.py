@@ -27,7 +27,9 @@ router = Router()
 async def user_blocked_bot(event: ChatMemberUpdated):
     """Хендлер для считывания блокировки бота пользователем."""
 
-    user = UserDatabase(event.from_user.id)
+    from app import process_track
+
+    user = User(event.from_user.id)
     user.blocked = True
     await process_track(
         user,
@@ -40,7 +42,9 @@ async def user_blocked_bot(event: ChatMemberUpdated):
 async def user_unblocked_bot(event: ChatMemberUpdated):
     """Хендлер для считывания разблокировки бота пользователем."""
 
-    user = UserDatabase(event.from_user.id)
+    from app import process_track
+
+    user = User(event.from_user.id)
     user.blocked = False
     await process_track(
         user,

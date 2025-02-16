@@ -167,7 +167,7 @@ def get_days(user_id: int, keyboard_type: str, week: int, value: int) -> InlineK
                 action="week",
                 keyboard_type=keyboard_type,
                 week=2,
-                day=UserDatabase(user_id).day,
+                day=User(user_id).day,
                 value=value,
             ),
         )
@@ -182,7 +182,7 @@ def get_days(user_id: int, keyboard_type: str, week: int, value: int) -> InlineK
                 action="week",
                 keyboard_type=keyboard_type,
                 week=1,
-                day=UserDatabase(user_id).day,
+                day=User(user_id).day,
                 value=value,
             ),
         )
@@ -207,7 +207,7 @@ def get_sheets(user_id: int) -> InlineKeyboardMarkup:
         text="Группа",
         callback_data=keyboard_factory.ChangeCallbackFactory(action="group_sheet"),
     )
-    if UserDatabase(user_id).type == "teacher":
+    if User(user_id).type == "teacher":
         builder.button(
             text="Кабинет",
             callback_data=keyboard_factory.ChangeCallbackFactory(action="room_sheet"),
@@ -230,7 +230,7 @@ def get_sheet_teachers(user_id: int):
             ),
         )
     builder.adjust(2)
-    if UserDatabase(user_id).type == "teacher":
+    if User(user_id).type == "teacher":
         rows = [len(row) for row in builder.as_markup().inline_keyboard]
         rows.append(1)
         builder.button(
@@ -257,7 +257,7 @@ def get_sheet_groups(user_id: int):
             ),
         )
     builder.adjust(3)
-    if UserDatabase(user_id).type == "teacher":
+    if User(user_id).type == "teacher":
         rows = [len(row) for row in builder.as_markup().inline_keyboard]
         rows.append(1)
         builder.button(

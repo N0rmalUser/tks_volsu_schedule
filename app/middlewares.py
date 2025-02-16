@@ -38,8 +38,8 @@ class BanUsersMiddleware(BaseMiddleware):
         event: Update,
         data: Dict[str, Any],
     ) -> Any:
-        user = UserDatabase(data["event_from_user"].id)
-        if user.exists():
+        user = User(data["event_from_user"].id)
+        if user.isExists:
             if not user.banned:
                 return await handler(event, data)
         else:

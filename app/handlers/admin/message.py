@@ -116,8 +116,8 @@ async def ban_command_handler(msg: Message) -> None:
     user = User(topic_id=msg.message_thread_id)
     user.banned = True
     await msg.answer("Мы его забанили!!!")
-    await msg.bot.send_message(user.tg_id(), "За нарушение правил, тебя забанили")
-    logging.info(f"Забанен юзверь {user.tg_id()}")
+    await msg.bot.send_message(user.id, "За нарушение правил, тебя забанили")
+    logging.info(f"Забанен юзверь {user.id}")
 
 
 @router.message(
@@ -130,8 +130,28 @@ async def ban_command_handler(msg: Message) -> None:
     user = User(topic_id=msg.message_thread_id)
     user.banned = False
     await msg.answer("Мы его разбанили!!!")
-    await msg.bot.send_message(user.tg_id(), "Амнистия! Тебя разбанили")
-    logging.info(f"Разбанен юзверь {user.tg_id()}")
+    await msg.bot.send_message(user.id, "Амнистия! Тебя разбанили")
+    logging.info(f"Разбанен юзверь {user.id}")
+
+
+@router.message(
+    Command("clear"),
+    ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID),
+)
+async def dump_handler(msg: Message) -> None:
+    """Удаляет все файлы расписания."""
+
+    start = await msg.answer("Удаляю ненужные файлы")
+    for i in (GROUPS_SCHEDULE_PATH, COLLEGE_SHEETS_PATH):
+        for filename in os.listdir(i):
+            file_path = os.path.join(COLLEGE_SHEETS_PATH, filename)
+            if os.path.isfile(file_path):
+                try:
+                    os.remove(file_path)
+                except Exception as e:
+                    logging.error(e)
+    await start.edit_text("Ненужные файлы удалены")
+
 
 
 @router.message(

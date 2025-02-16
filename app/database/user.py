@@ -35,6 +35,12 @@ class User:
             self.__user_id = user_id
 
     @property
+    def id(self) -> int:
+        """Возвращает user_id пользователя"""
+
+        return self.__user_id
+
+    @property
     def username(self) -> bool:
         """Возвращает username пользователя из базы данных"""
 
