@@ -68,9 +68,7 @@ async def day_handler(callback: CallbackQuery, callback_data: DayCallbackFactory
 
     await callback.message.edit_text(
         text,
-        reply_markup=kb.get_days(
-            callback.from_user.id, keyboard_type=keyboard_type, week=week, value=value
-        ),
+        reply_markup=kb.get_days(keyboard_type=keyboard_type, week=week, day=day, value=value),
     )
     await callback.answer()
 
@@ -107,9 +105,7 @@ async def week_handler(callback: CallbackQuery, callback_data: DayCallbackFactor
 
     await callback.message.edit_text(
         text,
-        reply_markup=kb.get_days(
-            callback.from_user.id, keyboard_type=keyboard_type, week=week, value=value
-        ),
+        reply_markup=kb.get_days(keyboard_type=keyboard_type, week=week, day=day, value=value),
     )
     await callback.answer()
     import app
@@ -127,12 +123,7 @@ async def room_handler(callback: CallbackQuery, callback_data: ChangeCallbackFac
             week=week,
             room_name=Schedule().get_room_name(callback_data.value),
         ),
-        reply_markup=kb.get_days(
-            callback.from_user.id,
-            keyboard_type="room",
-            week=week,
-            value=callback_data.value,
-        ),
+        reply_markup=kb.get_days(keyboard_type="room", week=week, day=day, value=callback_data.value),
     )
     await callback.answer()
     import app
@@ -154,12 +145,7 @@ async def teacher_handler(callback: CallbackQuery, callback_data: ChangeCallback
             week=week,
             teacher_name=Schedule().get_teacher_name(callback_data.value),
         ),
-        reply_markup=kb.get_days(
-            callback.from_user.id,
-            keyboard_type="teacher",
-            week=week,
-            value=callback_data.value,
-        ),
+        reply_markup=kb.get_days(keyboard_type="teacher", week=week, day=day, value=callback_data.value,),
     )
     await callback.answer()
     import app
@@ -179,12 +165,7 @@ async def group_handler(callback: CallbackQuery, callback_data: ChangeCallbackFa
             week=week,
             group_name=Schedule().get_group_name(callback_data.value),
         ),
-        reply_markup=kb.get_days(
-            callback.from_user.id,
-            keyboard_type="group",
-            week=week,
-            value=callback_data.value,
-        ),
+        reply_markup=kb.get_days(keyboard_type="group", week=week, day=day, value=callback_data.value,),
     )
     await callback.answer()
     import app

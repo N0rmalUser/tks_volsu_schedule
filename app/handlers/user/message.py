@@ -17,7 +17,7 @@
 import logging
 
 from aiogram import F, Router
-from aiogram.filters import Command, CommandObject, CommandStart
+from aiogram.filters import Command, CommandStart
 from aiogram.types import Message
 
 from app.config import ADMIN_CHAT_ID
@@ -139,7 +139,7 @@ async def handler(msg: Message) -> None:
         )
         return
     if user.type == "teacher":
-        week_kb = kb.get_days(user_id, "teacher", week, value=entity_id)
+        week_kb = kb.get_days(keyboard_type="teacher", week=week, day=day, value=entity_id)
         await msg.answer(
             text_maker.get_teacher_schedule(
                 day=day,
@@ -149,7 +149,7 @@ async def handler(msg: Message) -> None:
             reply_markup=week_kb,
         )
     elif user.type == "student":
-        week_kb = kb.get_days(user_id, "group", week, value=entity_id)
+        week_kb = kb.get_days(keyboard_type="group", week=week, day=day, value=entity_id)
         await msg.answer(
             text_maker.get_group_schedule(
                 day=day,

@@ -140,14 +140,14 @@ def get_default_groups():
     return builder.as_markup()
 
 
-def get_days(user_id: int, keyboard_type: str, week: int, value: int) -> InlineKeyboardMarkup:
+def get_days(keyboard_type: str, week: int, day: int, value: int) -> InlineKeyboardMarkup:
     """Возвращает клавиатуру с днями недели и кнопкой смены недели."""
 
     builder = InlineKeyboardBuilder()
-    for day in ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб"]:
+    for i in ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб"]:
         int_day = {"Пн": 1, "Вт": 2, "Ср": 3, "Чт": 4, "Пт": 5, "Сб": 6}[day]
         builder.button(
-            text=day,
+            text=i,
             callback_data=keyboard_factory.DayCallbackFactory(
                 action="day",
                 keyboard_type=keyboard_type,
@@ -167,7 +167,7 @@ def get_days(user_id: int, keyboard_type: str, week: int, value: int) -> InlineK
                 action="week",
                 keyboard_type=keyboard_type,
                 week=2,
-                day=User(user_id).day,
+                day=day,
                 value=value,
             ),
         )
@@ -182,7 +182,7 @@ def get_days(user_id: int, keyboard_type: str, week: int, value: int) -> InlineK
                 action="week",
                 keyboard_type=keyboard_type,
                 week=1,
-                day=User(user_id).day,
+                day=day,
                 value=value,
             ),
         )
