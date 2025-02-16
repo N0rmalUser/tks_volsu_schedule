@@ -21,8 +21,7 @@ import pytz
 
 from app.config import NUMERATOR, TIMEZONE, USERS_DB
 
-
-class UserDatabase:
+class User:
     def __init__(self, user_id: int = None, topic_id: int = None):
         """Класс для работы с базой данных пользователей. Позволяет получать и устанавливать данные пользователя в базе данных."""
 

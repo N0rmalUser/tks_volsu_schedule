@@ -42,7 +42,7 @@ from aiogram.utils.deep_linking import create_start_link
 
 from app import middlewares
 from app.config import ADMIN_CHAT_ID, BOT_TOKEN
-from app.database.user import UserDatabase
+from app.database.user import User
 from app.handlers import admin, user
 from app.markups import admin as kb
 
@@ -84,12 +84,12 @@ async def start_message(msg: Message, menu, keyboard) -> None:
     )
     await msg.answer("Выбери себя в списке", reply_markup=keyboard)
 
-    if not msg.from_user.is_bot and (not user.start_date or not user.topic_id):
+    if not msg.from_user.is_bot and not User(msg.from_user.id).topic_id:
         await topic_create(msg)
 
 
 async def topic_create(msg: Message) -> None:
-    user_db = UserDatabase(msg.from_user.id)
+    user_db = User(msg.from_user.id)
     if msg.from_user.username:
         topic_name = f"{msg.from_user.username} {msg.from_user.id}"
     else:
@@ -118,7 +118,7 @@ async def topic_create(msg: Message) -> None:
 
 
 async def process_track(
-    user_db: UserDatabase,
+    user_db: User,
     text: str,
     bot: Bot,
     keyboard: ReplyKeyboardMarkup | InlineKeyboardMarkup | None = None,

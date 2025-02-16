@@ -20,7 +20,7 @@ from aiogram.types import CallbackQuery, FSInputFile
 from app import process_track
 from app.config import GROUPS, GROUPS_SCHEDULE_PATH, ROOMS, TEACHERS
 from app.database.schedule import Schedule
-from app.database.user import UserDatabase
+from app.database.user import User
 from app.markups import user as kb
 from app.markups.keyboard_factory import (
     ChangeCallbackFactory,
@@ -158,8 +158,7 @@ async def teacher_handler(callback: CallbackQuery, callback_data: ChangeCallback
     Если преподаватель является учеником (указывается в config.toml), отправляет расписание его групп, смешанное с занятиями, которые он сам проводит
     """
 
-    user = UserDatabase(callback.from_user.id)
-    user.set_today_date()
+    user = User(callback.from_user.id)
     user.teacher = callback_data.value
 
     await callback.message.edit_text(
@@ -183,8 +182,7 @@ async def teacher_handler(callback: CallbackQuery, callback_data: ChangeCallback
 async def group_handler(callback: CallbackQuery, callback_data: ChangeCallbackFactory) -> None:
     """Функция, обрабатывающая нажатие кнопки группы. Отправляет расписание на этот день для группы."""
 
-    user = UserDatabase(callback.from_user.id)
-    user.set_today_date()
+    user = User(callback.from_user.id)
     user.group = callback_data.value
 
     await callback.message.edit_text(
@@ -223,7 +221,7 @@ async def process_default_change(
 ) -> None:
     """Обработчик изменения значения по умолчанию (teacher/group)."""
 
-    user = UserDatabase(callback.from_user.id)
+    user = User(callback.from_user.id)
     user.default = callback_data.value
 
     await callback.message.edit_text(f"Default изменён на {callback_data.value}")

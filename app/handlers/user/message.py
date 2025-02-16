@@ -21,7 +21,7 @@ from aiogram.filters import Command, CommandObject, CommandStart
 from aiogram.types import Message
 
 from app.config import ADMIN_CHAT_ID
-from app.database.user import UserDatabase
+from app.database.user import User
 from app.filters import ChatTypeIdFilter
 from app.markups import user as kb
 
@@ -64,7 +64,7 @@ async def start_deep_handler(msg: Message, command: CommandObject) -> None:
 async def start_handler(msg: Message) -> None:
     """Обработчик команды /start без deep_link'а."""
 
-    user = UserDatabase(msg.from_user.id)
+    user = User(msg.from_user.id)
     if user.start_date is None:
         user.username = f"@{msg.from_user.username}"
         user.fullname = msg.from_user.full_name
@@ -85,7 +85,7 @@ async def start_handler(msg: Message) -> None:
 @router.message(Command("help"), ChatTypeIdFilter(chat_type=["private"]))
 async def help_handler(msg: Message) -> None:
     """Обработчик команды /help. Отправляет сообщение с описанием бота."""
-    if UserDatabase(msg.from_user.id).type == "teacher":
+    if User(msg.from_user.id).type == "teacher":
         await msg.answer(
             """
 Привет, это бот расписания кафедры ТКС!
@@ -124,7 +124,7 @@ async def admin_handler(msg: Message) -> None:
 
     from app import process_track
 
-    user = UserDatabase(msg.from_user.id)
+    user = User(msg.from_user.id)
     user.tracking = True
     logging.warning(f"Юзверь {msg.from_user.id} @{msg.from_user.username} просит помощи админа")
     await process_track(user, text="Юзверь просит помощи админа!", bot=msg.bot)
@@ -147,7 +147,7 @@ async def admin_handler(msg: Message) -> None:
 async def default_handler(msg: Message) -> None:
     """Устанавливает пользователю преподавателя или группу по-умолчанию"""
 
-    if UserDatabase(msg.from_user.id).type == "teacher":
+    if User(msg.from_user.id).type == "teacher":
         await msg.answer("Выберите себя из списка", reply_markup=kb.get_default_teachers())
     else:
         await msg.answer("Выберите себя из списка", reply_markup=kb.get_default_groups())
@@ -159,9 +159,7 @@ async def handler(msg: Message) -> None:
     from app.misc import text_maker
 
     user_id = msg.from_user.id
-    user = UserDatabase(user_id)
-
-    user.set_today_date()
+    user = User(user_id)
     default = user.default
 
     if default is None:

@@ -26,7 +26,7 @@ from aiogram.types import Message, Update
 
 from app.config import TIMEZONE
 from app.database.activity import log_user_activity
-from app.database.user import UserDatabase
+from app.database.user import User
 
 
 class BanUsersMiddleware(BaseMiddleware):
@@ -55,7 +55,7 @@ class TopicCreatorMiddleware(BaseMiddleware):
         event: Update,
         data: Dict[str, Any],
     ) -> Any:
-        user = UserDatabase(data["event_from_user"].id)
+        user = User(data["event_from_user"].id)
         if (event.message and not event.message.from_user.is_bot) or (
             event.callback_query and not event.callback_query.from_user.is_bot
         ):
@@ -99,6 +99,6 @@ class UserActivityMiddleware(BaseMiddleware):
         data: Dict[str, Any],
     ) -> Any:
         user_id = data["event_from_user"].id
-        UserDatabase(user_id).last_date = datetime.now(pytz.timezone(TIMEZONE)).isoformat()
+        User(user_id).last_date = datetime.now(pytz.timezone(TIMEZONE)).isoformat()
         log_user_activity(user_id)
         return await handler(event, data)

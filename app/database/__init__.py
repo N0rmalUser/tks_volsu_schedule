@@ -13,6 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
+
 import logging
 import sqlite3
 from datetime import datetime
@@ -21,7 +22,7 @@ from pathlib import Path
 
 from app.config import ACTIVITIES_DB, SCHEDULE_DB, USERS_DB
 
-from .user import UserDatabase
+from .user import User
 
 
 def sql_kit(db: Path = ":memory:"):

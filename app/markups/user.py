@@ -19,7 +19,7 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from app import config
 from app.database.schedule import Schedule
-from app.database.user import UserDatabase
+from app.database.user import User
 from app.markups import keyboard_factory
 
 

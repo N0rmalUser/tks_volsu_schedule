@@ -36,7 +36,8 @@ from app.config import (
     USERS_DB,
 )
 from app.database import get_all_users_info, get_tracked_users, tracking_manage, user_info
-from app.database.user import UserDatabase
+from app.database.schedule import Schedule
+from app.database.user import User
 from app.filters import ChatTypeIdFilter
 from app.markups import admin as kb
 
@@ -60,7 +61,7 @@ async def handle_send_daily_plot(msg: Message, command: CommandObject = None) ->
     ).strftime("%Y-%m-%d")
     if msg.message_thread_id and msg.message_thread_id != 1:  # TODO: Починить топики
         activity = db.get_user_activity_for_month(
-            user_id=UserDatabase(topic_id=msg.message_thread_id).tg_id(),
+            user_id=User(topic_id=msg.message_thread_id).id,
             date_str=month,
         )
     else:
@@ -88,7 +89,7 @@ async def handle_send_hourly_plot(msg: Message, command: CommandObject = None) -
     ).strftime("%Y-%m-%d")
     if msg.message_thread_id:
         activity = db.get_user_activity_for_day(
-            user_id=UserDatabase(topic_id=msg.message_thread_id).tg_id(), date_str=date
+            user_id=User(topic_id=msg.message_thread_id).id, date_str=date
         )
     else:
         activity = db.get_activity_for_day(date_str=date)
@@ -112,7 +113,7 @@ async def handle_topic_command_track(msg: Message) -> None:
 )
 async def ban_command_handler(msg: Message) -> None:
     """Банит пользователя. Изменяет значение столбца banned в базе данных."""
-    user = UserDatabase(topic_id=msg.message_thread_id)
+    user = User(topic_id=msg.message_thread_id)
     user.banned = True
     await msg.answer("Мы его забанили!!!")
     await msg.bot.send_message(user.tg_id(), "За нарушение правил, тебя забанили")
@@ -126,7 +127,7 @@ async def ban_command_handler(msg: Message) -> None:
 async def ban_command_handler(msg: Message) -> None:
     """Разбанивает пользователя. Изменяет значение столбца banned в базе данных."""
 
-    user = UserDatabase(topic_id=msg.message_thread_id)
+    user = User(topic_id=msg.message_thread_id)
     user.banned = False
     await msg.answer("Мы его разбанили!!!")
     await msg.bot.send_message(user.tg_id(), "Амнистия! Тебя разбанили")
@@ -239,7 +240,7 @@ async def handle_topic_command_track(msg: Message, command: CommandObject) -> No
     start = await msg.answer("Подождите...")
 
     if start.message_thread_id:
-        user = UserDatabase(topic_id=msg.message_thread_id)
+        user = User(topic_id=msg.message_thread_id)
         if command == "start":
             user.tracking = True
         elif command == "stop":
@@ -274,7 +275,7 @@ async def handle_topic_command_info(msg: Message, command: CommandObject = None)
     if command.args is None:
         if start.message_thread_id:
             await start.edit_text(
-                text=user_info(UserDatabase(topic_id=msg.message_thread_id).tg_id()),
+                text=user_info(User(topic_id=msg.message_thread_id).id),
                 parse_mode="HTML",
             )
         else:
@@ -290,7 +291,7 @@ async def handle_topic_command_info(msg: Message, command: CommandObject = None)
 async def handle_topic_command_teacher(msg: Message) -> None:
     start = await msg.answer("Изменяю тип пользователя...")
     if start.message_thread_id:
-        user = UserDatabase(topic_id=msg.message_thread_id)
+        user = User(topic_id=msg.message_thread_id)
         user.type = "teacher"
         await start.edit_text("Тип пользователя изменён на `teacher`")
 
@@ -302,7 +303,7 @@ async def handle_topic_command_teacher(msg: Message) -> None:
 async def handle_topic_command_student(msg: Message) -> None:
     start = await msg.answer("Изменяю тип пользователя...")
     if start.message_thread_id:
-        user = UserDatabase(topic_id=msg.message_thread_id)
+        user = User(topic_id=msg.message_thread_id)
         user.type = "student"
         await start.edit_text("Тип пользователя изменён на `student`")
 
@@ -393,7 +394,7 @@ async def handle_topic_message(msg: Message, state: FSMContext) -> None:
 
     if msg.message_thread_id is not None:
         await msg.bot.copy_message(
-            chat_id=UserDatabase(topic_id=msg.message_thread_id).tg_id(),
+            chat_id=User(topic_id=msg.message_thread_id).id,
             from_chat_id=msg.chat.id,
             message_id=msg.message_id,
         )

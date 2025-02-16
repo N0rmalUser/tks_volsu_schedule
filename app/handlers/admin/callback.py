@@ -20,7 +20,7 @@ from aiogram import F, Router
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery
 
-from app.database import UserDatabase, get_users_by_teacher_id
+from app.database import User, get_users_by_teacher_id
 from app.database.schedule import Schedule
 from app.misc import send_broadcast_message
 from app.misc.states import BroadcastStates
@@ -61,7 +61,7 @@ async def find_groups_handler(callback: CallbackQuery):
         for group in found_groups:
             group_id: int = Schedule().get_group_id(group[0])
             for user_id in get_users_by_group_id(group_id):
-                user = UserDatabase(user_id)
+                user = User(user_id)
                 if not user.blocked and not user.banned:
                     await callback.bot.send_message(
                         user_id, f"Обновлено расписание для {group[0]}"
