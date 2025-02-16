@@ -72,18 +72,22 @@ def college_schedule_parser():
             last_time = row["время"]
             if pd.isna(row[teacher_name]):
                 continue
-            substitution = re.split(r"\.", row[teacher_name])
 
-            for group in [i.strip() for i in substitution[0].split(",")]:
+            split_result = re.split(r"\.\s*", row[teacher_name], maxsplit=1)
+            if len(split_result) != 2:
+                logging.error(f"Неверный формат группы и предмета: {row[teacher_name]}")
+                continue
+            parts = re.split(r'\s*преп\.\s*|\s*ауд\.\s*', split_result[1].strip())
+            if len(parts) != 3:
+                logging.error(f"Неверный формат данных: {split_result[1]}")
+                continue
+            subject = parts[0].strip().rstrip(',. ')
+            room_str = parts[2].strip()
+            room_name = re.sub(r'\s*ауд\.?\s*', '', room_str, flags=re.IGNORECASE).strip()
+            groups = [g.strip() for g in split_result[0].split(',')]
+
+            for group in groups:
                 if group not in GROUPS:
-                    subject_name = (
-                        re.sub(r"\s*,*\s*преп.*$", "", re.sub(r"^\s*", "", substitution[1])) + ")"
-                    )
-                    room_name = (
-                        re.sub(r"(\s*|,*|ауд)", "", substitution[-1])
-                        if substitution[-1] != ""
-                        else re.sub(r"(\s*|,*|ауд)", "", substitution[-2])
-                    )
                     schedule_db.add_schedule(
                         college=True,
                         time=re.sub(r"\b8:30\b", "08:30", re.sub(r"\s*", "", time)),
@@ -92,7 +96,7 @@ def college_schedule_parser():
                         group_id=schedule_db.add_group(group),
                         teacher_id=schedule_db.add_teacher(teacher_name),
                         room_id=schedule_db.add_room(room_name),
-                        subject_id=schedule_db.add_subject(subject_name),
+                        subject_id=schedule_db.add_subject(subject),
                     )
     logging.info("Расписания колледжа успешно сохранены в базу данных.")
 
