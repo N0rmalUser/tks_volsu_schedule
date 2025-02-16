@@ -27,42 +27,9 @@ from app.markups import user as kb
 
 router = Router()
 
-
-@router.message(CommandStart(deep_link=True), ChatTypeIdFilter(chat_type=["private"]))
-async def start_deep_handler(msg: Message, command: CommandObject) -> None:
-    """Обработчик команды /start с deep_link'ом. Назначает тип пользователя в зависимости от ссылки, а также добавляет id пригласившего пользователя в базу данных."""
-
-    from aiogram.utils.deep_linking import decode_payload
-
-    try:
-        payload = decode_payload(command.args)
-        args = payload.split("=")
-        user = UserDatabase(msg.from_user.id)
-        user.inviter = int(args[0])
-        if args[1] == "teacher":
-            user.user_type = "teacher"
-            menu, keyboard = kb.teacher_menu(), kb.get_teachers()
-        else:
-            user.user_type = "student"
-            menu, keyboard = kb.student_menu(), kb.get_groups()
-        if user.start_date is None:
-            user.username = f"@{msg.from_user.username}"
-            user.fullname = msg.from_user.full_name
-        user.set_today_date()
-        user.week = 1
-        user.tracking = False
-
-        from app import start_message
-
-        await start_message(msg, menu, keyboard)
-    except Exception:
-        logging.warning(f"{msg.from_user.id} перешёл по неверной ссылке")
-        await msg.answer("Неверная ссылка")
-
-
 @router.message(CommandStart(), ChatTypeIdFilter(chat_type=["private"]))
 async def start_handler(msg: Message) -> None:
-    """Обработчик команды /start без deep_link'а."""
+    """Обработчик команды /start"""
 
     user = User(msg.from_user.id)
     if user.start_date is None:

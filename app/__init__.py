@@ -38,7 +38,6 @@ from aiogram import Bot, Dispatcher
 from aiogram.client.session.aiohttp import AiohttpSession
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.types import InlineKeyboardMarkup, Message, ReplyKeyboardMarkup
-from aiogram.utils.deep_linking import create_start_link
 
 from app import middlewares
 from app.config import ADMIN_CHAT_ID, BOT_TOKEN
@@ -74,12 +73,8 @@ async def main() -> None:
 async def start_message(msg: Message, menu, keyboard) -> None:
     """Отправляет сообщение при старте бота. Создаёт топик пользователя. Отправляет ссылку для приглашения и меню."""
 
-    user = UserDatabase(msg.from_user.id)
-    link = await create_start_link(
-        msg.bot, f"{msg.from_user.id}={UserDatabase(msg.from_user.id).type}", encode=True
-    )
     await msg.answer(
-        f"Привет, {msg.from_user.full_name}\n" f"Вот ссылка для приглашения: {link}",
+        f"Привет, {msg.from_user.full_name}\n",
         reply_markup=menu,
     )
     await msg.answer("Выбери себя в списке", reply_markup=keyboard)
@@ -94,13 +89,7 @@ async def topic_create(msg: Message) -> None:
         topic_name = f"{msg.from_user.username} {msg.from_user.id}"
     else:
         topic_name = f"{msg.from_user.full_name} {msg.from_user.id}"
-    result = (
-        await msg.bot.create_forum_topic(
-            ADMIN_CHAT_ID, topic_name, icon_custom_emoji_id="5312016608254762256"
-        )
-        if user_db.type == "teacher"
-        else await msg.bot.create_forum_topic(ADMIN_CHAT_ID, topic_name)
-    )
+    result = await msg.bot.create_forum_topic(ADMIN_CHAT_ID, topic_name)
     topic_id = result.message_thread_id
     user_db.topic_id = topic_id
     inviter = user_db.inviter_id

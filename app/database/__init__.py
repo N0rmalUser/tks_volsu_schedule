@@ -60,7 +60,6 @@ def user_db_init(cursor: sqlite3.Cursor):
             topic_id INTEGER,
             start_date TIMESTAMP DEFAULT (datetime('now','localtime')),
             last_date TIMESTAMP,
-            inviter_id INTEGER,
             blocked BOOLEAN DEFAULT false,
             banned BOOLEAN DEFAULT false,
             default_choose TEXT,
