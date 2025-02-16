@@ -35,7 +35,7 @@ LOG_LEVEL = config["logging"]["level"]
 EVENT_LEVEL = config["logging"]["event_level"]
 
 GROUPS: list[str] = config["university"]["groups"]
-TEACHERS: list[str] = config["university"]["teachers"]
+TEACHERS: list[str] = sorted(config["university"]["teachers"])
 ROOMS: list = config["university"]["rooms"]
 
 STUDENTS = config["university"]["students"]
