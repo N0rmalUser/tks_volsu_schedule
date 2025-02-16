@@ -408,7 +408,7 @@ async def handle_topic_message(msg: Message, state: FSMContext) -> None:
     if msg.from_user.is_bot:
         return
 
-    if msg.text and msg.text.startswith("/"):
+    if msg.text and (msg.text.startswith("/") or msg.text.startswith(".")):
         await msg.answer("Нет такой команды, но я тебя спас, не бойся")
         return
 
