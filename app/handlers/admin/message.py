@@ -16,6 +16,7 @@
 
 import asyncio
 import logging
+import os
 
 from aiogram import F, Router
 from aiogram.filters import Command, CommandObject
@@ -33,7 +34,7 @@ from app.config import (
     LOG_FILE,
     PLOT_PATH,
     SCHEDULE_DB,
-    USERS_DB,
+    USERS_DB
 )
 from app.database import get_all_users_info, get_tracked_users, tracking_manage, user_info
 from app.database.schedule import Schedule
