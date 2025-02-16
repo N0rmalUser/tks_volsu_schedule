@@ -15,7 +15,9 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import logging
+from datetime import datetime
 
+import pytz
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
@@ -23,6 +25,24 @@ from app.markups import admin
 from app.misc.states import BroadcastStates
 
 from . import schedule_parser, sheets_maker, states, text_maker, user_activity
+from ..config import TIMEZONE, NUMERATOR
+
+
+def get_today() -> tuple[int, int]:
+    """Метод для получения сегодняшнего дня и недели"""
+
+    day = int(f"{datetime.now(pytz.timezone(TIMEZONE)).weekday() + 1}")
+    week_int = 2 if NUMERATOR == 0 else 1
+    week = (
+        week_int
+        if datetime.now(pytz.timezone(TIMEZONE)).isocalendar()[1] % 2 == 0
+        else 3 - week_int
+    )
+    if day == 7:
+        return 1, week + 1 if week == 1 else week - 1
+
+    else:
+        return day, week
 
 
 def time_to_minutes(time_str: str) -> int:
@@ -86,7 +106,7 @@ async def send_broadcast_message(msg: Message, state: FSMContext, message_id: in
     from asyncio import sleep
 
     from app.database import all_user_ids
-    from app.database.user import UserDatabase
+    from app.database.user import User
 
     user_ids = all_user_ids()
     sent_count = 0
@@ -96,7 +116,7 @@ async def send_broadcast_message(msg: Message, state: FSMContext, message_id: in
             if await state.get_state() == BroadcastStates.cancel_sending.state:
                 await msg.edit_text(text="Отправка отменена")
                 break
-            if not UserDatabase(user_id).blocked:
+            if not User(user_id).blocked:
                 try:
                     await msg.bot.copy_message(
                         chat_id=user_id,

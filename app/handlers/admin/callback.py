@@ -73,7 +73,7 @@ async def find_groups_handler(callback: CallbackQuery):
             teacher = re.sub(r"_", r".", re.sub(r"([А-ЯЁа-яё]{2,})_", r"\1 ", teacher))
             teacher_id: int = Schedule().get_teacher_id(teacher)
             for user_id in get_users_by_teacher_id(teacher_id):
-                user = UserDatabase(user_id)
+                user = User(user_id)
                 if not user.blocked and not user.banned:
                     await callback.bot.send_message(user_id, f"Обновлено расписание для {teacher}")
                     users += 1

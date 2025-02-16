@@ -73,8 +73,6 @@ def user_db_init(cursor: sqlite3.Cursor):
         CREATE TABLE IF NOT EXISTS Temp_Data (
             user_id INTEGER PRIMARY KEY,
             tracking BOOLEAN DEFAULT false,
-            week INTEGER,
-            day INTEGER,
             teacher_id INTEGER DEFAULT 0,
             group_id INTEGER DEFAULT 0,
             FOREIGN KEY (user_id) REFERENCES User_Info(user_id)
@@ -170,7 +168,7 @@ def user_info(user_id: int):
 
     from app.config import GROUPS, TEACHERS
 
-    user_obj = UserDatabase(user_id)
+    user_obj = User(user_id)
     days_until = (datetime.fromisoformat(user_obj.last_date) - datetime.today().date()).days
     return f"""
 Информация о пользователе:
@@ -181,7 +179,6 @@ def user_info(user_id: int):
 <code>last_date: </code> <code>{user_obj.last_date}</code>
 <code>           </code> <code>{days_until} дней назад</code>
 
-<code>inviter id:</code> <code>{user_obj.inviter_id}</code>
 <code>blocked:   </code> <code>{user_obj.blocked}</code>
 <code>banned:    </code> <code>{user_obj.banned}</code>
 <code>tracking:  </code> <code>{user_obj.tracking}</code>
@@ -217,7 +214,9 @@ def get_all_users_info(cursor: sqlite3.Cursor) -> str:
     month_users_count, week_users_count, today_users_count = 0, 0, 0
     today = datetime.today().date()
     for (last_date_str,) in users:
-        last_date = datetime.strptime(last_date_str, "%d-%m-%Y %H:%M:%S").date()
+        date_object = datetime.fromisoformat(last_date_str)
+        formatted_date = date_object.strftime("%d-%m-%Y %H:%M:%S")
+        last_date = datetime.strptime(formatted_date, "%d-%m-%Y %H:%M:%S").date()
         days_until = (last_date - today).days
         if days_until >= -30:
             month_users_count += 1
@@ -257,7 +256,7 @@ async def tracking_manage(tracking: bool) -> None:
     """
 
     for user_id in all_user_ids():
-        UserDatabase(user_id).tracking = tracking
+        User(user_id).tracking = tracking
 
 
 async def get_tracked_users() -> list:
@@ -269,7 +268,7 @@ async def get_tracked_users() -> list:
     user_ids = all_user_ids()
     tracked_users = []
     for user_id in user_ids:
-        if UserDatabase(user_id).tracking:
+        if User(user_id).tracking:
             tracked_users.append(f"`{user_id}`")
     return tracked_users
 

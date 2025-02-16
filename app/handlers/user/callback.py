@@ -27,7 +27,7 @@ from app.markups.keyboard_factory import (
     DayCallbackFactory,
     DefaultChangeCallbackFactory,
 )
-from app.misc import text_maker
+from app.misc import text_maker, get_today
 from app.misc.sheets_maker import room, teacher
 
 router = Router()

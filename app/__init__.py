@@ -92,12 +92,10 @@ async def topic_create(msg: Message) -> None:
     result = await msg.bot.create_forum_topic(ADMIN_CHAT_ID, topic_name)
     topic_id = result.message_thread_id
     user_db.topic_id = topic_id
-    inviter = user_db.inviter_id
     user_info = (
         f"Пользователь: <code>{msg.from_user.full_name}</code>\n"
         f"ID: <code>{msg.from_user.id}</code>\n"
         f"Username: @{msg.from_user.username}\n"
-        f"Пригласил: <code>{inviter if inviter else 'Никто'}</code>\n"
         f"Тип пользователя: {user_db.type}"
     )
     user_db.tracking = True

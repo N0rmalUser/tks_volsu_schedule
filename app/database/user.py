@@ -15,11 +15,9 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import sqlite3
-from datetime import datetime
 
-import pytz
+from app.config import USERS_DB
 
-from app.config import NUMERATOR, TIMEZONE, USERS_DB
 
 class User:
     def __init__(self, user_id: int = None, topic_id: int = None):
@@ -469,29 +467,7 @@ class User:
         result = self.__cursor.fetchone()
         return result[0] if result else None
 
-    def tg_id(self) -> int:
-        """Возвращает user_id пользователя"""
-
-        return self.__user_id
-
-    def set_today_date(self) -> None:
-        """Устанавливает день и неделю в зависимости от текущей даты"""
-
-        day = int(f"{datetime.now(pytz.timezone(TIMEZONE)).weekday() + 1}")
-        week_int = 2 if NUMERATOR == 0 else 1
-        week = (
-            week_int
-            if datetime.now(pytz.timezone(TIMEZONE)).isocalendar()[1] % 2 == 0
-            else 3 - week_int
-        )
-        if day == 7:
-            self.day = 1
-            self.week = week + 1 if week == 1 else week - 1
-        else:
-            self.day = day
-            self.week = week
-
-    def exists(self) -> bool:
+    def isExists(self) -> bool:
         """Проверяет, есть ли пользователь в базе данных"""
 
         self.__cursor.execute(
