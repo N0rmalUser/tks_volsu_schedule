@@ -207,43 +207,6 @@ class User:
         self.__conn.commit()
 
     @property
-    def inviter_id(self) -> int:
-        """Возвращает id пригласившего пользователя из базы данных"""
-
-        self.__cursor.execute(
-            """
-            SELECT inviter_id FROM User_Info
-            WHERE user_id = ?
-            """,
-            (self.__user_id,),
-        )
-        result = self.__cursor.fetchone()
-        return result[0] if result else None
-
-    @inviter_id.setter
-    def inviter_id(self, inviter_id: int):
-        """Устанавливает id пригласившего пользователя в базе данных"""
-
-        self.__cursor.execute(
-            """
-            SELECT inviter_id FROM User_Info
-            WHERE user_id = ?
-            """,
-            (self.__user_id,),
-        )
-        result = self.__cursor.fetchone()
-        if result is None:
-            self.__cursor.execute(
-                """
-                INSERT INTO User_Info(user_id, inviter_id) 
-                VALUES(?, ?) ON CONFLICT(user_id) DO UPDATE 
-                SET inviter_id=excluded.inviter_id;
-                """,
-                (self.__user_id, inviter_id),
-            )
-        self.__conn.commit()
-
-    @property
     def teacher(self) -> int:
         """Возвращает преподавателя пользователя из базы данных"""
 
@@ -338,62 +301,6 @@ class User:
             WHERE user_id = ?;
             """,
             (self.__user_id,),
-        )
-        self.__conn.commit()
-
-    @property
-    def week(self) -> int:
-        """Возвращает неделю, выбранную пользователем"""
-
-        self.__cursor.execute(
-            """
-            SELECT week FROM Temp_Data
-            WHERE user_id = ?
-            """,
-            (self.__user_id,),
-        )
-        result = self.__cursor.fetchone()
-        return int(result[0]) if result else None
-
-    @week.setter
-    def week(self, week: int) -> None:
-        """Устанавливает неделю, выбранную пользователем"""
-
-        self.__cursor.execute(
-            """
-            INSERT INTO Temp_Data(user_id, week)
-            VALUES(?, ?) ON CONFLICT(user_id) DO UPDATE
-            SET week=excluded.week;
-            """,
-            (self.__user_id, week),
-        )
-        self.__conn.commit()
-
-    @property
-    def day(self) -> int:
-        """Возвращает день недели, выбранный пользователь"""
-
-        self.__cursor.execute(
-            """
-            SELECT day FROM Temp_Data
-            WHERE user_id = ?
-            """,
-            (self.__user_id,),
-        )
-        result = self.__cursor.fetchone()
-        return result[0] if result else None
-
-    @day.setter
-    def day(self, day: int) -> None:
-        """Устанавливает день недели, выбранный пользователь"""
-
-        self.__cursor.execute(
-            """
-            INSERT INTO Temp_Data(user_id, day)
-            VALUES(?, ?) ON CONFLICT(user_id) DO UPDATE
-            SET day=excluded.day;
-            """,
-            (self.__user_id, day),
         )
         self.__conn.commit()
 

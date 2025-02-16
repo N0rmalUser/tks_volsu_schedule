@@ -24,6 +24,7 @@ from app.config import ADMIN_CHAT_ID
 from app.database.user import User
 from app.filters import ChatTypeIdFilter
 from app.markups import user as kb
+from app.misc import get_today
 
 router = Router()
 
@@ -35,8 +36,6 @@ async def start_handler(msg: Message) -> None:
     if user.start_date is None:
         user.username = f"@{msg.from_user.username}"
         user.fullname = msg.from_user.full_name
-    user.set_today_date()
-    user.week = 1
     user.tracking = False
     menu, keyboard = (
         (kb.teacher_menu(), kb.get_teachers())
@@ -128,6 +127,7 @@ async def handler(msg: Message) -> None:
     user_id = msg.from_user.id
     user = User(user_id)
     default = user.default
+    day, week = get_today()
 
     if default is None:
         entity_id = user.teacher if user.type == "teacher" else user.group
@@ -140,21 +140,21 @@ async def handler(msg: Message) -> None:
         )
         return
     if user.type == "teacher":
-        week_kb = kb.get_days(user_id, "teacher", user.week, value=entity_id)
+        week_kb = kb.get_days(user_id, "teacher", week, value=entity_id)
         await msg.answer(
             text_maker.get_teacher_schedule(
-                day=user.day,
-                week=user.week,
+                day=day,
+                week=week,
                 teacher_name=Schedule().get_teacher_name(entity_id),
             ),
             reply_markup=week_kb,
         )
     elif user.type == "student":
-        week_kb = kb.get_days(user_id, "group", user.week, value=entity_id)
+        week_kb = kb.get_days(user_id, "group", week, value=entity_id)
         await msg.answer(
             text_maker.get_group_schedule(
-                day=user.day,
-                week=user.week,
+                day=day,
+                week=week,
                 group_name=Schedule().get_group_name(entity_id),
             ),
             reply_markup=week_kb,
