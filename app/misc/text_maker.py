@@ -35,7 +35,7 @@ def get_group_schedule(day: int, week: int, group_name: str, cursor: sqlite3.Cur
         FROM (
             SELECT ScheduleID, Time, SubjectID, GroupID, RoomID, TeacherID, DayOfWeek, WeekType, Subgroup FROM Schedule
             UNION ALL
-            SELECT ScheduleID, Time, SubjectID, GroupID, RoomID, TeacherID, DayOfWeek, WeekType, NULL AS Subgroup FROM CollegeSchedule
+            SELECT ScheduleID, Time, SubjectID, GroupID, RoomID, TeacherID, DayOfWeek, WeekType, 0 AS Subgroup FROM CollegeSchedule
         ) s        
         JOIN Subjects sub ON s.SubjectID = sub.SubjectID
         JOIN Groups g ON s.GroupID = g.GroupID
@@ -58,7 +58,7 @@ def get_group_schedule(day: int, week: int, group_name: str, cursor: sqlite3.Cur
     if schedule:
         # sorted_lessons = sorted(schedule, key=lambda x: time_to_minutes(x["time"]))
         sorted_lessons = sorted(schedule, key=lambda x: (time_to_minutes(x["time"]),
-                                                         0 if x["subgroup"] == 0 else x["subgroup"]))
+                                                         0 if x.get("subgroup", 0) == 0 else x["subgroup"]))
         for lesson in sorted_lessons:
             subject = re.sub(r"\([^)]*\)", "", lesson["subject"])
 
@@ -112,7 +112,7 @@ def get_teacher_schedule(day: int, week: int, teacher_name: str, cursor: sqlite3
             FROM (
                 SELECT ScheduleID, Time, DayOfWeek, WeekType, SubjectID, GroupID, RoomID, TeacherID, Subgroup  FROM Schedule
                 UNION ALL
-                SELECT ScheduleID, Time, DayOfWeek, WeekType, SubjectID, GroupID, RoomID, TeacherID, NULL AS Subgroup FROM CollegeSchedule
+                SELECT ScheduleID, Time, DayOfWeek, WeekType, SubjectID, GroupID, RoomID, TeacherID, 0 AS Subgroup FROM CollegeSchedule
             ) s
             JOIN Subjects sub ON s.SubjectID = sub.SubjectID
             JOIN Groups g ON s.GroupID = g.GroupID
@@ -171,7 +171,7 @@ def get_room_schedule(day, week, room_name, cursor: sqlite3.Cursor = None):
         FROM (
             SELECT ScheduleID, Time, SubjectID, GroupID, RoomID, TeacherID, DayOfWeek, WeekType, Subgroup FROM Schedule
             UNION ALL
-            SELECT ScheduleID, Time, SubjectID, GroupID, RoomID, TeacherID, DayOfWeek, WeekType, NULL AS Subgroup FROM CollegeSchedule
+            SELECT ScheduleID, Time, SubjectID, GroupID, RoomID, TeacherID, DayOfWeek, WeekType, 0 AS Subgroup FROM CollegeSchedule
         ) s            
         JOIN Subjects sub ON s.SubjectID = sub.SubjectID
         JOIN Groups g ON s.GroupID = g.GroupID
@@ -194,8 +194,9 @@ def get_room_schedule(day, week, room_name, cursor: sqlite3.Cursor = None):
                     "room": room, "subgroup": subgroup})
     text = header = f"{days_of_week[day - 1]}       {week_type}\n{room_name}\n\n"
     if schedule:
+        print(schedule)
         sorted_lessons = sorted(schedule, key=lambda x: (time_to_minutes(x["time"]),
-                                                         0 if x["subgroup"] == 0 else x["subgroup"]))
+                                                         0 if x.get("subgroup", 0) == 0 else x["subgroup"]))
         for lesson in sorted_lessons:
             subject = re.sub(r"\([^)]*\)", "", lesson["subject"])
             label = get_lesson_label(str(re.search(r"\(([^)]*)\)", lesson["subject"])))
