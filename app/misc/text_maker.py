@@ -133,7 +133,8 @@ def get_teacher_schedule(day: int, week: int, teacher_name: str, cursor: sqlite3
     text = header = f"{days_of_week[day - 1]}       {week_type}\n{teacher_name}\n\n"
     if schedule:
         sorted_lessons = sorted(schedule, key=lambda x: (time_to_minutes(x["time"]),
-                                                         0 if x["subgroup"] == 0 else x["subgroup"]))
+                                                         0 if x.get("subgroup", 0) == 0 else x["subgroup"]))
+
         for lesson in sorted_lessons:
             subject = re.sub(r"\([^)]*\)", "", lesson["subject"])
             label = get_lesson_label(str(re.search(r"\(([^)]*)\)", lesson["subject"])))
