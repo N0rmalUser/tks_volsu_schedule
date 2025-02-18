@@ -47,7 +47,8 @@ if __name__ == "__main__":
         handlers=[
             logging.FileHandler(LOG_FILE, encoding="utf-8"),
             logging.StreamHandler()
-        ]
+        ],
+        force=True
     )
     logging.getLogger("aiogram.event").setLevel(levels[EVENT_LEVEL])
     logging.debug(f"Starting at {start_time}")
