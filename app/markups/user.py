@@ -70,13 +70,23 @@ def get_groups() -> InlineKeyboardMarkup:
     from app.database.schedule import Schedule
 
     builder = InlineKeyboardBuilder()
+    counter=0
     for group in config.GROUPS:
-        builder.button(
-            text=group,
-            callback_data=keyboard_factory.ChangeCallbackFactory(
-                action="group", value=Schedule().get_group_id(group)
-            ),
-        )
+        if group == "-":
+            counter+=1
+            builder.button(
+                text=group,
+                callback_data=keyboard_factory.ChangeCallbackFactory(
+                    action=f"ignore{counter}"
+                ),
+            )
+        else:
+            builder.button(
+                text=group,
+                callback_data=keyboard_factory.ChangeCallbackFactory(
+                    action="group", value=Schedule().get_group_id(group)
+                ),
+            )
     builder.adjust(3)
     return builder.as_markup()
 
