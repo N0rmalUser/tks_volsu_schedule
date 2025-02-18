@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-from aiogram import types
+from aiogram import types, MagicFilter
 from aiogram.filters import BaseFilter
 
 from app.config import ADMIN_CHAT_ID
@@ -32,3 +32,8 @@ class ChatTypeIdFilter(BaseFilter):
             if message.chat.type in self.chat_type and self.chat_id is not None:
                 return str(message.chat.id) == str(ADMIN_CHAT_ID)
             return message.chat.type in self.chat_type
+
+
+class IgnoreFilter(MagicFilter):
+    def resolve(self, factory):
+        return "ignore" in factory.action

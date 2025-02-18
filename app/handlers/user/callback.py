@@ -20,6 +20,7 @@ from aiogram.types import CallbackQuery, FSInputFile
 from app.config import GROUPS, GROUPS_SCHEDULE_PATH, ROOMS, TEACHERS
 from app.database.schedule import Schedule
 from app.database.user import User
+from app.filters import IgnoreFilter
 from app.markups import user as kb
 from app.markups.keyboard_factory import (
     ChangeCallbackFactory,
@@ -32,12 +33,17 @@ from app.misc.sheets_maker import room, teacher
 router = Router()
 
 
-@router.callback_query(DayCallbackFactory.filter(F.action == "ignore"))
+@router.callback_query(DayCallbackFactory.filter(IgnoreFilter()))
 async def ignore_handler(callback: CallbackQuery) -> None:
     """Функция, сбрасывающая нажатия кнопки без функционала."""
 
     await callback.answer("Сейчас эта неделя")
 
+@router.callback_query(ChangeCallbackFactory.filter(IgnoreFilter()))
+async def ignore_handler(callback: CallbackQuery) -> None:
+    """Функция, сбрасывающая нажатия кнопки без функционала."""
+
+    await callback.answer()
 
 @router.callback_query(DayCallbackFactory.filter(F.action == "day"))
 async def day_handler(callback: CallbackQuery, callback_data: DayCallbackFactory) -> None:
