@@ -426,7 +426,7 @@ async def handle_topic_message(msg: Message, state: FSMContext) -> None:
             await send_broadcast_message(msg, state, msg.message_id)
         else:
             await msg.answer(
-                "Вы действительно хотите отправить это сообщение?",
+                "Кому отправить это сообщений?",
                 reply_markup=kb.message_confirm(),
             )
             await state.set_state(BroadcastStates.waiting_for_confirmation)

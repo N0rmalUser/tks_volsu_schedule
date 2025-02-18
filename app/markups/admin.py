@@ -57,9 +57,13 @@ def message_confirm():
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
-                InlineKeyboardButton(text="✅ Подтвердить", callback_data="confirm_send"),
+                InlineKeyboardButton(text="✅ Подтвердить", callback_data="confirm_all"),
             ],
-            [InlineKeyboardButton(text="❌ Отменить", callback_data="cancel_send")],
+            [
+                InlineKeyboardButton(text="👫 Студентам", callback_data="confirm_students"),
+                InlineKeyboardButton(text="👨‍🏫 Преподавателям", callback_data="confirm_teachers"),
+            ],
+            [InlineKeyboardButton(text="❌ Никому", callback_data="cancel_send")],
         ]
     )
 

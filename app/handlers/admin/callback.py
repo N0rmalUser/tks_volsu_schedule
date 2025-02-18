@@ -20,7 +20,7 @@ from aiogram import F, Router
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery
 
-from app.database import User, get_users_by_teacher_id
+from app.database import User, get_users_by_teacher_id, all_user_ids, student_ids, teachers_ids
 from app.database.schedule import Schedule
 from app.misc import send_broadcast_message
 from app.misc.states import BroadcastStates
@@ -41,12 +41,24 @@ async def cancel_sending(callback: CallbackQuery, state: FSMContext):
     await callback.message.delete_reply_markup()
 
 
-@router.callback_query(F.data == "confirm_send")
+@router.callback_query(F.data == "confirm_all")
 async def confirm_send_handler(callback: CallbackQuery, state: FSMContext):
-    await callback.answer("Начинаем отправку сообщений!")
+    await callback.answer("Начинаем отправку сообщений всем!")
     await state.set_state(BroadcastStates.sending_messages)
-    await send_broadcast_message(callback.message, state, callback.message.message_id - 1)
+    await send_broadcast_message(callback.message, state, callback.message.message_id - 1, all_user_ids())
 
+
+@router.callback_query(F.data == "confirm_students")
+async def confirm_send_handler(callback: CallbackQuery, state: FSMContext):
+    await callback.answer("Начинаем отправку сообщений студентам!")
+    await state.set_state(BroadcastStates.sending_messages)
+    await send_broadcast_message(callback.message, state, callback.message.message_id - 1, student_ids())
+
+@router.callback_query(F.data == "confirm_teachers")
+async def confirm_send_handler(callback: CallbackQuery, state: FSMContext):
+    await callback.answer("Начинаем отправку сообщений преподавателям!")
+    await state.set_state(BroadcastStates.sending_messages)
+    await send_broadcast_message(callback.message, state, callback.message.message_id - 1, teachers_ids())
 
 @router.callback_query(F.data == "notify")
 async def find_groups_handler(callback: CallbackQuery):
