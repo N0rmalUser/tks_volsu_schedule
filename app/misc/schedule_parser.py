@@ -121,106 +121,79 @@ def university_schedule_parser():
         doc = Document(file_path)
         table = doc.tables[0]
         temp_schedule = {}
-        # group = file.replace(".docx", "")
-        # subgroup = False
-        for row in table.rows[1:]:
-            day, time, info = row.cells[:3]
-            # if len(row.cells) == 3:
-            #     day, time, info = row.cells[:3]
-            # else:
-            #     subgroup = True
-            #     day, time, info, subinfo = row.cells[:4]
-            #     print(subinfo.text)
-            # TODO: Разделение по подгруппам
 
-            parts = re.split(r"(?<=\))\s*,", re.sub(r"\s*-*\s*поток\s\d+\s*", "", info.text))
-            subject = parts[0].strip()
-            if subject != "":
-                if len(parts) > 1 and parts[1].strip():
-                    auditorium_match = re.search(r"Ауд\.*.*", parts[1])
+        for row in table.rows[1:]:
+            cells = [cell.text.strip() for cell in row.cells]
+            if len(cells) < 3:
+                continue
+
+            day = re.sub(r"\s+", "", cells[0])
+            time = re.sub(r"\b8:30\b", "08:30", re.sub(r"\s*", "", cells[1].split("-")[0]))
+
+            subgroups = []
+            if len(cells) > 3 and cells[2] != cells[3]:
+                subgroups.append((cells[2], 1))
+                subgroups.append((cells[3], 2))
+            else:
+                subgroups.append((cells[2], 0))
+            for info, subgroup in subgroups:
+                parts = re.split(r"(?<=\))\s*,", re.sub(r"\s*-*\s*поток\s\d+\s*", "", info.replace("\n", "")))
+                subject = parts[0]
+                teachers = []
+                classroom = ""
+                if len(parts) > 1:
+                    auditorium_match = re.search(r"Ауд\.?([^,;]*)", parts[1])
+                    other = re.sub(r"Ауд\.?([^,;]*)", "", parts[1])
                     if auditorium_match:
                         classroom = re.sub(
                             r"Спортивныйзал",
-                            "Спортзал ",
-                            re.sub(r"\s*", "", re.sub(r"Ауд\.*", "", auditorium_match.group())),
-                        )
-                        if classroom[-1] in ",;:":
-                            classroom = classroom[:-1]
-                        teachers_text = re.sub(
-                            r"(\s*доцент\s*|\s*преподаватель\s*|\s*старший преподаватель\s*|\s*ассистент|\s*профессор\s*)",
+                            "Спортзал",
+                            re.sub(r"\s*", "", auditorium_match.group(1)))
+                        teachers_list = re.sub(
+                            r"\s*(?:доцент|преподаватель|старший преподаватель|ассистент|профессор)\s*",
                             "",
-                            parts[1].replace(classroom, ""),
+                            other
                         )
-                    else:
-                        classroom = ""
-                        teachers_text = ""
+                        teachers = re.split(r"\s*,\s*", teachers_list)
 
-                    teachers = [
-                        teacher.strip() for teacher in teachers_text.split(",") if teacher.strip()
-                    ]
-                    teacher = ", ".join(teachers)
-                else:
-                    teacher = ""
-                    classroom = ""
-            else:
-                teacher = "None"
-                subject = "None"
-                classroom = "None"
-            formatted_time = time.text.split("-")[0]
-            time = re.sub(r"\b8:30\b", "08:30", re.sub(r"\s*", "", formatted_time))
-            day = re.sub(r"\s+", "", day.text)
-            key = (str(day), str(time))
-            if subject.strip() and teacher.strip() and classroom.strip():
-                schedule_entry = {
-                    "Предмет": subject,
-                    "Преподаватель": teacher,
-                    "Аудитория": classroom,
-                }
+                key = (day, time, subgroup)
                 if key not in temp_schedule:
                     temp_schedule[key] = {
-                        "Числитель": schedule_entry,
-                        "Знаменатель": schedule_entry,
+                        "Числитель": {
+                            "subject": subject,
+                            "teacher": teachers,
+                            "classroom": classroom
+                        },
+                        "Знаменатель": {
+                            "subject": subject,
+                            "teacher": teachers,
+                            "classroom": classroom
+                        }
                     }
                 else:
-                    temp_schedule[key]["Знаменатель"] = schedule_entry
-        full_schedule = {"Числитель": {}, "Знаменатель": {}}
-        for (day, time), parts in temp_schedule.items():
-            for part in ["Числитель", "Знаменатель"]:
-                if part in parts:
-                    if day not in full_schedule[part]:
-                        full_schedule[part][day] = {}
-                    full_schedule[part][day][time] = parts[part]
+                    temp_schedule[key]["Знаменатель"] = {
+                        "subject": subject,
+                        "teacher": teachers,
+                        "classroom": classroom
+                    }
+
         group_name = os.path.splitext(file)[0]
-
-        times = ["08:30", "10:10", "12:00", "13:40", "15:20", "17:00", "18:40"]
-        days = ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота"]
-
-        for week_name, week_schedule in full_schedule.items():
-            for day_name, day_schedule in week_schedule.items():
-                for subject_time in times:
-                    if subject_time in day_schedule:
-                        if day_schedule[subject_time]["Предмет"] == "None":
-                            del full_schedule[week_name][day_name][subject_time]
-            for DAY in days:
-                if DAY in week_schedule:
-                    if full_schedule[week_name][DAY] == {}:
-                        del full_schedule[week_name][DAY]
-
-        for week_type, week_schedule in full_schedule.items():
-            for day_name, day_schedule in week_schedule.items():
-                for time, details in day_schedule.items():
-                    teacher_name = (
-                        details["Преподаватель"].split(",")[0].strip()
-                        if "," in details["Преподаватель"]
-                        else details["Преподаватель"]
-                    )
+        for (day, time, subgroup), data in temp_schedule.items():
+            for week_type in ["Числитель", "Знаменатель"]:
+                details = data[week_type]
+                if not details["subject"] or details["subject"] == "None":
+                    continue
+                for teacher in details["teacher"]:
+                    if len(teacher) < 1:
+                        continue
                     schedule_db.add_schedule(
                         time=time,
-                        day_name=day_name,
+                        day_name=day,
                         week_type=week_type,
                         group_id=schedule_db.add_group(group_name),
-                        teacher_id=schedule_db.add_teacher(teacher_name),
-                        room_id=schedule_db.add_room(details["Аудитория"]),
-                        subject_id=schedule_db.add_subject(details["Предмет"]),
+                        teacher_id=schedule_db.add_teacher(teacher),
+                        room_id=schedule_db.add_room(details["classroom"]),
+                        subject_id=schedule_db.add_subject(details["subject"]),
+                        subgroup=subgroup
                     )
     logging.info("Расписания университета успешно сохранены в базу данных.")

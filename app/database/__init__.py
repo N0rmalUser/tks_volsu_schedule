@@ -83,58 +83,59 @@ def user_db_init(cursor: sqlite3.Cursor):
 def schedule_db_init(cursor: sqlite3.Cursor):
     cursor.execute(
         """CREATE TABLE IF NOT EXISTS Rooms (
-                        RoomID INTEGER PRIMARY KEY AUTOINCREMENT,
-                        RoomName TEXT UNIQUE NOT NULL)"""
+            RoomID INTEGER PRIMARY KEY AUTOINCREMENT,
+            RoomName TEXT UNIQUE NOT NULL)"""
     )
 
     cursor.execute(
         """CREATE TABLE IF NOT EXISTS Groups (
-                        GroupID INTEGER PRIMARY KEY AUTOINCREMENT,
-                        GroupName TEXT UNIQUE NOT NULL)"""
+            GroupID INTEGER PRIMARY KEY AUTOINCREMENT,
+            GroupName TEXT UNIQUE NOT NULL)"""
     )
 
     cursor.execute(
         """CREATE TABLE IF NOT EXISTS Teachers (
-                        TeacherID INTEGER PRIMARY KEY AUTOINCREMENT,
-                        TeacherName TEXT UNIQUE NOT NULL)"""
+            TeacherID INTEGER PRIMARY KEY AUTOINCREMENT,
+            TeacherName TEXT UNIQUE NOT NULL)"""
     )
 
     cursor.execute(
         """CREATE TABLE IF NOT EXISTS Subjects (
-                        SubjectID INTEGER PRIMARY KEY AUTOINCREMENT,
-                        SubjectName TEXT UNIQUE NOT NULL)"""
+            SubjectID INTEGER PRIMARY KEY AUTOINCREMENT,
+            SubjectName TEXT UNIQUE NOT NULL)"""
     )
 
     cursor.execute(
         """CREATE TABLE IF NOT EXISTS Schedule (
-                        ScheduleID INTEGER PRIMARY KEY AUTOINCREMENT,
-                        Time TEXT NOT NULL,
-                        DayOfWeek TEXT NOT NULL,
-                        WeekType TEXT NOT NULL,
-                        GroupID INTEGER,
-                        TeacherID INTEGER,
-                        RoomID INTEGER,
-                        SubjectID INTEGER,
-                        FOREIGN KEY (GroupID) REFERENCES Groups(GroupID),
-                        FOREIGN KEY (TeacherID) REFERENCES Teachers(TeacherID),
-                        FOREIGN KEY (RoomID) REFERENCES Rooms(RoomID),
-                        FOREIGN KEY (SubjectID) REFERENCES Subjects(SubjectID))"""
+            ScheduleID INTEGER PRIMARY KEY AUTOINCREMENT,
+            Time TEXT NOT NULL,
+            DayOfWeek TEXT NOT NULL,
+            WeekType TEXT NOT NULL,
+            GroupID INTEGER,
+            Subgroup INTEGER,                        
+            TeacherID INTEGER,
+            RoomID INTEGER,
+            SubjectID INTEGER,
+            FOREIGN KEY (GroupID) REFERENCES Groups(GroupID),
+            FOREIGN KEY (TeacherID) REFERENCES Teachers(TeacherID),
+            FOREIGN KEY (RoomID) REFERENCES Rooms(RoomID),
+            FOREIGN KEY (SubjectID) REFERENCES Subjects(SubjectID))"""
     )
 
     cursor.execute(
         """CREATE TABLE IF NOT EXISTS CollegeSchedule (
-                            ScheduleID INTEGER PRIMARY KEY AUTOINCREMENT,
-                            Time TEXT NOT NULL,
-                            DayOfWeek TEXT NOT NULL,
-                            WeekType TEXT NOT NULL,
-                            GroupID INTEGER,
-                            TeacherID INTEGER,
-                            RoomID INTEGER,
-                            SubjectID INTEGER,
-                            FOREIGN KEY (GroupID) REFERENCES Groups(GroupID),
-                            FOREIGN KEY (TeacherID) REFERENCES Teachers(TeacherID),
-                            FOREIGN KEY (RoomID) REFERENCES Rooms(RoomID),
-                            FOREIGN KEY (SubjectID) REFERENCES Subjects(SubjectID))"""
+            ScheduleID INTEGER PRIMARY KEY AUTOINCREMENT,
+            Time TEXT NOT NULL,
+            DayOfWeek TEXT NOT NULL,
+            WeekType TEXT NOT NULL,
+            GroupID INTEGER,
+            TeacherID INTEGER,
+            RoomID INTEGER,
+            SubjectID INTEGER,
+            FOREIGN KEY (GroupID) REFERENCES Groups(GroupID),
+            FOREIGN KEY (TeacherID) REFERENCES Teachers(TeacherID),
+            FOREIGN KEY (RoomID) REFERENCES Rooms(RoomID),
+            FOREIGN KEY (SubjectID) REFERENCES Subjects(SubjectID))"""
     )
 
 

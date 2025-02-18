@@ -40,10 +40,11 @@ def teacher(teacher_name: str) -> str:
             GROUP_CONCAT(g.GroupName, ', ') AS GroupNames,
             r.RoomName,
             sub.SubjectName
+            Subgroup
         FROM (
-            SELECT Time, DayOfWeek, WeekType, SubjectID, GroupID, RoomID, TeacherID FROM Schedule
+            SELECT Time, DayOfWeek, WeekType, SubjectID, GroupID, RoomID, TeacherID, Subgroup FROM Schedule
             UNION ALL
-            SELECT Time, DayOfWeek, WeekType, SubjectID, GroupID, RoomID, TeacherID FROM CollegeSchedule
+            SELECT Time, DayOfWeek, WeekType, SubjectID, GroupID, RoomID, TeacherID, NULL AS Subgroup FROM CollegeSchedule
         ) s
         JOIN Subjects sub ON s.SubjectID = sub.SubjectID
         JOIN Groups g ON s.GroupID = g.GroupID
