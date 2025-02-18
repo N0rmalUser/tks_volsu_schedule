@@ -145,7 +145,7 @@ def get_days(keyboard_type: str, week: int, day: int, value: int) -> InlineKeybo
 
     builder = InlineKeyboardBuilder()
     for i in ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб"]:
-        int_day = {"Пн": 1, "Вт": 2, "Ср": 3, "Чт": 4, "Пт": 5, "Сб": 6}[day]
+        int_day = {"Пн": 1, "Вт": 2, "Ср": 3, "Чт": 4, "Пт": 5, "Сб": 6}[i]
         builder.button(
             text=i,
             callback_data=keyboard_factory.DayCallbackFactory(
