@@ -17,11 +17,11 @@
 import re
 import sqlite3
 
-from app import config
+from app.config import STUDENTS, SCHEDULE_DB
 from app.database import sql_kit
 
 
-@sql_kit(config.SCHEDULE_DB)
+@sql_kit(SCHEDULE_DB)
 def get_group_schedule(day: int, week: int, group_name: str, cursor: sqlite3.Cursor = None, ):
     """Возвращает отформатированное расписание для указанной группы на указанный день и неделю"""
 
@@ -73,7 +73,7 @@ def get_group_schedule(day: int, week: int, group_name: str, cursor: sqlite3.Cur
         return f"{header}Сегодня пар нет!"
 
 
-@sql_kit(config.SCHEDULE_DB)
+@sql_kit(SCHEDULE_DB)
 def get_teacher_schedule(day: int, week: int, teacher_name: str, cursor: sqlite3.Cursor = None, ):
     """Возвращает отформатированное расписание для указанного преподавателя на указанный день и неделю. Если преподаватель обучается в какой-либо группе (указывается в config.py), то возвращает расписание для этой группы, смешанное с расписанием преподавателя."""
 
@@ -83,8 +83,7 @@ def get_teacher_schedule(day: int, week: int, teacher_name: str, cursor: sqlite3
     days_of_week = ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота"]
 
     schedule = []
-    if teacher_name in config.STUDENTS.keys():
-
+    if teacher_name in STUDENTS.keys():
         query = """
                 SELECT s.ScheduleID, s.Time, sub.SubjectName, r.RoomName, t.TeacherName
                 FROM (
@@ -150,7 +149,7 @@ def get_teacher_schedule(day: int, week: int, teacher_name: str, cursor: sqlite3
         return f"{header}Сегодня пар нет!"
 
 
-@sql_kit(config.SCHEDULE_DB)
+@sql_kit(SCHEDULE_DB)
 def get_room_schedule(day, week, room_name, cursor: sqlite3.Cursor = None):
     """Возвращает отформатированное расписание для указанной аудитории на указанный день и неделю. Если аудитория имеет несколько вариантов (например, 2-13М и 2-13аМ), то возвращает расписание для всех вариантов."""
 
