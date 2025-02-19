@@ -56,9 +56,8 @@ def get_group_schedule(day: int, week: int, group_name: str, cursor: sqlite3.Cur
                 "subgroup": subgroup})
     text = header = f"{days_of_week[day - 1]}       {week_type}\n{group_name}\n\n"
     if schedule:
-        # sorted_lessons = sorted(schedule, key=lambda x: time_to_minutes(x["time"]))
-        sorted_lessons = sorted(schedule, key=lambda x: (time_to_minutes(x["time"]),
-                                                         0 if x.get("subgroup", 0) == 0 else x["subgroup"]))
+        sorted_lessons = sorted(schedule, key=lambda x: (
+        time_to_minutes(x["time"]), 0 if x.get("subgroup", 0) == 0 else x["subgroup"]))
         for lesson in sorted_lessons:
             subject = re.sub(r"\([^)]*\)", "", lesson["subject"])
 
