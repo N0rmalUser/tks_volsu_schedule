@@ -193,7 +193,7 @@ def room(room_name: str):
         room_variants = [room_name]
 
     for variant in room_variants:
-        df = read_sql_query(sql=query, con=conn, params=(variant,))
+        df = read_sql_query(sql=query, con=conn, params=[variant])
         schedule_dfs.append(df)
 
     df = concat(schedule_dfs, ignore_index=True)
