@@ -17,11 +17,12 @@
 import logging
 import sqlite3
 
+import pandas as pd
 from openpyxl import load_workbook
 from openpyxl.styles import Border, Side
 from pandas import concat, read_sql_query
 
-from app.config import ROOMS_SHEETS_PATH, SCHEDULE_DB, TEACHERS_SHEETS_PATH
+from app.config import ROOMS_SHEETS_PATH, SCHEDULE_DB, TEACHERS_SHEETS_PATH, STUDENTS
 
 
 def teacher(teacher_name: str) -> str:
@@ -39,12 +40,12 @@ def teacher(teacher_name: str) -> str:
             s.WeekType,
             GROUP_CONCAT(g.GroupName, ', ') AS GroupNames,
             r.RoomName,
-            sub.SubjectName
+            sub.SubjectName,
             Subgroup
         FROM (
             SELECT Time, DayOfWeek, WeekType, SubjectID, GroupID, RoomID, TeacherID, Subgroup FROM Schedule
             UNION ALL
-            SELECT Time, DayOfWeek, WeekType, SubjectID, GroupID, RoomID, TeacherID, NULL AS Subgroup FROM CollegeSchedule
+            SELECT Time, DayOfWeek, WeekType, SubjectID, GroupID, RoomID, TeacherID, 0 AS Subgroup FROM CollegeSchedule
         ) s
         JOIN Subjects sub ON s.SubjectID = sub.SubjectID
         JOIN Groups g ON s.GroupID = g.GroupID
@@ -54,9 +55,34 @@ def teacher(teacher_name: str) -> str:
         GROUP BY s.Time, s.DayOfWeek, s.WeekType, r.RoomName, sub.SubjectName;
         """
 
-    df = read_sql_query(sql=query, con=conn, params=(teacher_name,))
-    conn.close()
+    teacher_df = read_sql_query(sql=query, con=conn, params=[teacher_name])
+    student_df = pd.DataFrame()
+    if teacher_name in STUDENTS.keys():
+        query = """
+                SELECT
+                    s.Time,
+                    s.DayOfWeek,
+                    s.WeekType,
+                    t.TeacherName AS GroupNames,
+                    r.RoomName,
+                    sub.SubjectName,
+                    0 AS Subgroup
+                FROM (
+                    SELECT Time, DayOfWeek, WeekType, SubjectID, GroupID, RoomID, TeacherID FROM Schedule
+                    UNION ALL
+                    SELECT Time, DayOfWeek, WeekType, SubjectID, GroupID, RoomID, TeacherID FROM CollegeSchedule
+                ) s
+                JOIN Subjects sub ON s.SubjectID = sub.SubjectID
+                JOIN Groups g ON s.GroupID = g.GroupID
+                JOIN Rooms r ON s.RoomID = r.RoomID
+                JOIN Teachers t ON s.TeacherID = t.TeacherID
+                WHERE g.GroupName = ?
+                ORDER BY s.Time, s.DayOfWeek, s.WeekType, r.RoomName, sub.SubjectName;
+                """
+        student_df = read_sql_query(sql=query, con=conn, params=[STUDENTS[teacher_name]])
 
+    conn.close()
+    df = pd.concat([teacher_df, student_df], axis=0)
     wb = load_workbook(TEACHERS_SHEETS_PATH / "template.xlsx")
     ws = wb.active
     not_empty_rows = []
@@ -74,7 +100,7 @@ def teacher(teacher_name: str) -> str:
         else:
             not_empty_rows.append(row - 1)
 
-        ws.cell(row=row, column=start_col).value = data["GroupNames"]
+        ws.cell(row=row, column=start_col).value = f'{data["GroupNames"]}{f".{data["Subgroup"]}" if data["Subgroup"] else ""}'
         ws.cell(row=row, column=start_col + 1).value = data["RoomName"]
         ws.cell(row=row, column=start_col + 2).value = data["SubjectName"]
 
