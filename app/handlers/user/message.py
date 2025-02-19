@@ -112,13 +112,11 @@ async def handler(msg: Message) -> None:
 
     user_id = msg.from_user.id
     user = User(user_id)
-    default = user.default
+    entity_id = user.default
     day, week = get_today()
 
-    if default is None:
+    if entity_id is None:
         entity_id = user.teacher if user.type == "teacher" else user.group
-    else:
-        entity_id = Schedule().get_teacher_id(default)
 
     if not entity_id:
         await msg.answer(

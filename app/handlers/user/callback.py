@@ -145,8 +145,17 @@ async def process_default_change(callback: CallbackQuery, callback_data: ChangeC
 
     user = User(callback.from_user.id)
     user.default = callback_data.value
+    if callback_data.value is None:
+        await callback.message.edit_text("Выбор по умолчанию удалён")
+        await callback.answer()
+        return
 
-    await callback.message.edit_text(f"Default изменён на {callback_data.value}")
+    if user.type == "teacher":
+        await callback.message.edit_text(
+            f"Преподаватель по умолчанию изменён на {Schedule().get_teacher_name(callback_data.value)}")
+    else:
+        await callback.message.edit_text(
+            f"Группа по умолчанию изменена на {Schedule().get_group_name(callback_data.value)}")
     await callback.answer()
 
 
