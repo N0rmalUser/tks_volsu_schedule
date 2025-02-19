@@ -86,19 +86,29 @@ def get_teacher_schedule(day: int, week: int, teacher_name: str, cursor: sqlite3
         query = """
                 SELECT s.ScheduleID, s.Time, sub.SubjectName, r.RoomName, t.TeacherName
                 FROM (
-                    SELECT ScheduleID, Time, SubjectID, GroupID, RoomID, TeacherID, DayOfWeek, WeekType FROM Schedule
+                    SELECT ScheduleID, Time, SubjectID, GroupID, RoomID, TeacherID, DayOfWeek, WeekType, Subgroup FROM Schedule
                     UNION ALL
-                    SELECT ScheduleID, Time, SubjectID, GroupID, RoomID, TeacherID, DayOfWeek, WeekType FROM CollegeSchedule
+                    SELECT ScheduleID, Time, SubjectID, GroupID, RoomID, TeacherID, DayOfWeek, WeekType, 0 AS Subgroup FROM CollegeSchedule
                 ) s
                 JOIN Subjects sub ON s.SubjectID = sub.SubjectID
                 JOIN Groups g ON s.GroupID = g.GroupID
                 JOIN Rooms r ON s.RoomID = r.RoomID
                 JOIN Teachers t ON s.TeacherID = t.TeacherID
-                WHERE g.GroupName = ? AND s.DayOfWeek = ? AND s.WeekType = ?
+                WHERE g.GroupName = ? AND Subgroup IN ({}) AND s.DayOfWeek = ? AND s.WeekType = ?
                 ORDER BY s.Time;
                 """
 
-        cursor.execute(query, (config.STUDENTS[teacher_name], days_of_week[day - 1], week_type), )
+        if "." in STUDENTS[teacher_name]:
+            group, subgroup = STUDENTS[teacher_name].split(".")
+            subgroup_list = [0] + [int(s) for s in subgroup.split(",") if s.isdigit()]
+
+        else:
+            group = STUDENTS[teacher_name]
+            subgroup_list = [0]
+        placeholders = ", ".join("?" for _ in subgroup_list)
+        query = query.format(placeholders)
+        params = [group] + subgroup_list + [days_of_week[day - 1], week_type]
+        cursor.execute(query, params)
         rows = cursor.fetchall()
         for row in rows:
             schedule_id, time, subject, room_name, teacher = row
