@@ -217,9 +217,11 @@ def get_all_users_info(cursor: sqlite3.Cursor) -> str:
     month_users_count, week_users_count, today_users_count = 0, 0, 0
     today = datetime.today().date()
     for (last_date_str,) in users:
-        date_object = datetime.fromisoformat(last_date_str)
-        formatted_date = date_object.strftime("%d-%m-%Y %H:%M:%S")
-        last_date = datetime.strptime(formatted_date, "%d-%m-%Y %H:%M:%S").date()
+        # TODO: Убрать этот костыль. В бд привести в формат iso
+        try:
+            last_date = datetime.fromisoformat(last_date_str).date()
+        except Exception:
+            last_date = datetime.strptime(last_date_str, "%d-%m-%Y %H:%M:%S").date()
         days_until = (last_date - today).days
         if days_until >= -30:
             month_users_count += 1
