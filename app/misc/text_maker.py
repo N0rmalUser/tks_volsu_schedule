@@ -202,7 +202,6 @@ def get_room_schedule(day, week, room_name, cursor: sqlite3.Cursor = None):
                     "room": room, "subgroup": subgroup})
     text = header = f"{days_of_week[day - 1]}       {week_type}\n{room_name}\n\n"
     if schedule:
-        print(schedule)
         sorted_lessons = sorted(schedule, key=lambda x: (time_to_minutes(x["time"]),
                                                          0 if x.get("subgroup", 0) == 0 else x["subgroup"]))
         for lesson in sorted_lessons:
