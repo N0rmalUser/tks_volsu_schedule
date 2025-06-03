@@ -3,6 +3,8 @@ LABEL authors="N0rmalUser"
 
 WORKDIR /schedule
 
+ENV PYTHONUNBUFFERED=1
+
 RUN apt-get update
 RUN apt-get install -y ca-certificates iputils-ping
 RUN update-ca-certificates
@@ -12,9 +14,8 @@ RUN localedef -i ru_RU -f UTF-8 ru_RU.UTF-8 || true
 
 COPY app app
 COPY main.py main.py
-COPY config.toml config.toml
 COPY requirements.txt requirements.txt
 
-RUN pip install -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 CMD ["python", "main.py"]
