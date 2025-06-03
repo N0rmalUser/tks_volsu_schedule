@@ -44,5 +44,5 @@ jobs:
               --restart=always \
               -v /root/schedule/config.toml:/schedule/config.toml \
               -v /root/schedule/data:/schedule/data \
-              ${{ secrets.DOCKER_USERNAME }}/patasu:latest
+              ${{ secrets.DOCKER_USERNAME }}/schedule:latest
           EOF
