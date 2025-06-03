@@ -37,7 +37,6 @@ from app.config import (
     USERS_DB
 )
 from app.database import get_all_users_info, get_tracked_users, tracking_manage, user_info
-from app.database.schedule import Schedule
 from app.database.user import User
 from app.filters import ChatTypeIdFilter
 from app.markups import admin as kb
@@ -207,17 +206,38 @@ async def dump_handler(msg: Message) -> None:
 async def college_handler(msg: Message) -> None:
     import aiohttp
 
-    try:
-        async with aiohttp.ClientSession() as session:
-            for teacher in COLLEGE_TEACHERS.values():
-                await session.post(
-                    url="https://app.volsu.ru/api/bot/select-teacher",
-                    json={"teacherId": teacher, "telegramId": ADMIN_ID, "start": "download"},
-                )
-        logging.info("Расписание преподавателей колледжа успешно скачано")
-    except Exception as e:
-        await msg.answer("Ошибка вытаскивания расписания из колледжского бота")
-        logging.error(e)
+    data = {
+        "hash": "query_id=AAHkr7QcAAAAAOSvtBw41eSu&user=%7B%22id%22%3A481603556%2C%22first_name%22%3A%22%D0%92%D0%BE%D0%B2%D0%B0%22%2C%22last_name%22%3A%22%22%2C%22username%22%3A%22n0rmal_user%22%2C%22language_code%22%3A%22ru%22%2C%22allows_write_to_pm%22%3Atrue%2C%22photo_url%22%3A%22https%3A%5C%2F%5C%2Ft.me%5C%2Fi%5C%2Fuserpic%5C%2F320%5C%2FMwzX7xhSh8lSg8JRGT7onqJJW5SbzCNkVvjAJeudEpE.svg%22%7D&auth_date=1748944069&signature=oo8rRuRrNBDO02--MQR7gxWDrm5IOy-RsdTwFxD9Lmw6_3pKEuL5yTxRtYVXP1FUHhQMv0oPl1_Ok1VJ13PzBg&hash=d6d69c82f0b8bae1f3b1941536e88f13c6b255eeb0ec53d5daa3f34d3f57f3bf",
+        "start": "download"
+    }
+
+    total = len(COLLEGE_TEACHERS)
+    async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(limit=20, ssl=False)) as session:
+        try:
+            for index, (teacher_name, teacher_id) in enumerate(COLLEGE_TEACHERS.items()):
+                max_retries = 5
+                for attempt in range(max_retries):
+                    try:
+                        request_data = {**data, "teacherId": teacher_id}
+                        async with session.post(
+                                url="https://app.volsu.ru/api/bot/select-teacher",
+                                json=request_data
+                        ) as response:
+                            print(f"{response.ok} {index + 1} из {total} (Попытка {attempt + 1}/{max_retries})")
+                            if response.ok:
+                                break
+                            await asyncio.sleep(5)
+                    except Exception as e:
+                        print(
+                            f"Ошибка при отправке запроса для {teacher_name} ({teacher_id}): {e} (Попытка {attempt + 1}/{max_retries})")
+                        await asyncio.sleep(1)
+                else:
+                    print(f"Не удалось выполнить запрос для {teacher_name} ({teacher_id}) после {max_retries} попыток")
+                await asyncio.sleep(1)
+            logging.info("Расписание преподавателей колледжа успешно скачано")
+        except Exception as e:
+            await msg.answer("Ошибка вытаскивания расписания из колледжского бота")
+            logging.error(e)
 
 
 @router.message(

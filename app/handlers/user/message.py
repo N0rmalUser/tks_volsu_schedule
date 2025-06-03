@@ -34,9 +34,6 @@ async def start_handler(msg: Message) -> None:
     """Обработчик команды /start"""
 
     user = User(msg.from_user.id)
-    if user.start_date is None:
-        user.username = f"@{msg.from_user.username}"
-        user.fullname = msg.from_user.full_name
     user.tracking = False
     menu, keyboard = (
         (kb.teacher_menu(), kb.get_teachers()) if user.type == "teacher" else (kb.student_menu(), kb.get_groups()))

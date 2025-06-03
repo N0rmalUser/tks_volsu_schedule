@@ -39,50 +39,6 @@ class User:
         return self.__user_id
 
     @property
-    def username(self) -> bool:
-        """Возвращает username пользователя из базы данных"""
-
-        self.__cursor.execute("""
-            SELECT username FROM User_Info
-            WHERE user_id = ?
-            """, (self.__user_id,), )
-        result = self.__cursor.fetchone()
-        return result[0] if result is not None else False
-
-    @username.setter
-    def username(self, username: str) -> None:
-        """Устанавливает username телеграмма (@кто-то) пользователя в базе данных"""
-
-        self.__cursor.execute("""
-            INSERT INTO User_Info(user_id, username)
-            VALUES(?, ?) ON CONFLICT(user_id) DO UPDATE 
-            SET username=excluded.username;
-            """, (self.__user_id, username), )
-        self.__conn.commit()
-
-    @property
-    def fullname(self) -> bool:
-        """Возвращает полное имя пользователя из базы данных."""
-
-        self.__cursor.execute("""
-            SELECT fullname FROM User_Info
-            WHERE user_id = ?
-            """, (self.__user_id,), )
-        result = self.__cursor.fetchone()
-        return result[0] if result is not None else False
-
-    @fullname.setter
-    def fullname(self, fullname: str) -> None:
-        """Устанавливает полное имя пользователя в базе данных"""
-
-        self.__cursor.execute("""
-            INSERT INTO User_Info(user_id, fullname)
-            VALUES(?, ?) ON CONFLICT(user_id) DO UPDATE 
-            SET fullname=excluded.fullname;
-            """, (self.__user_id, fullname), )
-        self.__conn.commit()
-
-    @property
     def blocked(self) -> bool:
         """Возвращает значение blocked из базы данных. Если blocked = True, то пользователь заблокировал бота."""
 
