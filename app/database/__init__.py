@@ -152,8 +152,6 @@ def user_info(user_id: int):
     return f"""
 Информация о пользователе:
 <code>user type: </code> <code>{user_obj.type}</code>
-<code>username:  </code> <code>{user_obj.username}</code>
-<code>fullname:  </code> <code>{user_obj.fullname}</code>
 <code>start date:</code> <code>{user_obj.start_date}</code>
 <code>last_date: </code> <code>{user_obj.last_date}</code>
 <code>           </code> <code>{days_until} дней назад</code>
