@@ -148,7 +148,11 @@ def user_info(user_id: int):
     from app.config import GROUPS, TEACHERS
 
     user_obj = User(user_id)
-    days_until = (datetime.fromisoformat(user_obj.last_date) - datetime.today().date()).days
+    # TODO: Убрать этот костыль. В бд привести в формат iso
+    try:
+        days_until = (datetime.fromisoformat(user_obj.last_date).date() - datetime.today().date()).days
+    except Exception:
+        days_until = (datetime.fromisoformat(user_obj.last_date) - datetime.today().date()).days
     return f"""
 Информация о пользователе:
 <code>user type: </code> <code>{user_obj.type}</code>
