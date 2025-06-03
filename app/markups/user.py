@@ -259,13 +259,23 @@ def get_sheet_groups(user_id: int):
     from app.database.schedule import Schedule
 
     builder = InlineKeyboardBuilder()
+    counter = 0
     for group in config.GROUPS:
-        builder.button(
-            text=group,
-            callback_data=keyboard_factory.ChangeCallbackFactory(
-                action="group_sheet", value=Schedule().get_group_id(group)
-            ),
-        )
+        if group == "-":
+            counter+=1
+            builder.button(
+                text=group,
+                callback_data=keyboard_factory.ChangeCallbackFactory(
+                    action=f"ignore{counter}"
+                ),
+            )
+        else:
+            builder.button(
+                text=group,
+                callback_data=keyboard_factory.ChangeCallbackFactory(
+                    action="group_sheet", value=Schedule().get_group_id(group)
+                ),
+            )
     builder.adjust(3)
     if User(user_id).type == "teacher":
         rows = [len(row) for row in builder.as_markup().inline_keyboard]
