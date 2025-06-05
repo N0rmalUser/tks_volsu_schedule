@@ -59,8 +59,7 @@ def user_db_init(cursor: sqlite3.Cursor):
             last_date TIMESTAMP,
             blocked BOOLEAN DEFAULT false,
             banned BOOLEAN DEFAULT false,
-            default_choose TEXT,
-            FOREIGN KEY (inviter_id) REFERENCES User_Info(user_id)
+            default_choose TEXT
         )
     """)
 
