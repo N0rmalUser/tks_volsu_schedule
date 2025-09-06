@@ -53,7 +53,7 @@ def user_db_init(cursor: sqlite3.Cursor):
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS User_Info (
             user_id INTEGER PRIMARY KEY,
-            user_type TEXT DEFAULT student,
+            user_type TEXT DEFAULT 'student',
             topic_id INTEGER,
             start_date TIMESTAMP DEFAULT (datetime('now','localtime')),
             last_date TIMESTAMP,
