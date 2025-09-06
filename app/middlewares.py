@@ -97,13 +97,10 @@ class TrackingMiddleware(BaseMiddleware):
             return await handler(event, data)
 
         if user.tracking:
-            if event.message and not event.message.from_user.is_bot:
-                await event.bot.forward_message(ADMIN_CHAT_ID, message_thread_id=user.topic_id, from_chat_id=user.id,
-                                                message_id=event.message.message_id)
-            elif event.callback_query and not event.callback_query.from_user.is_bot:
+            if event.callback_query and not event.callback_query.from_user.is_bot:
                 await event.bot.send_message(ADMIN_CHAT_ID, message_thread_id=user.topic_id,
                                              text=event.callback_query.data, parse_mode="HTML")
             else:
-                await event.bot.send_message(ADMIN_CHAT_ID, message_thread_id=user.topic_id,
-                                             text=f"Какое-то неизвестное событие {event.event}", parse_mode="HTML")
+                await event.bot.forward_message(ADMIN_CHAT_ID, message_thread_id=user.topic_id, from_chat_id=user.id,
+                                                message_id=event.message.message_id)
         return await handler(event, data)
