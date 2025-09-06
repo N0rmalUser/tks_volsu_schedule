@@ -19,7 +19,7 @@ import logging
 import os
 
 from aiogram import F, Router
-from aiogram.filters import Command, CommandObject
+from aiogram.filters import Command, CommandObject, StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.types import FSInputFile, Message
 
@@ -40,6 +40,7 @@ from app.database import get_all_users_info, get_tracked_users, tracking_manage,
 from app.database.user import User
 from app.filters import ChatTypeIdFilter
 from app.markups import admin as kb
+from app.misc.states import BotHashStates
 
 router = Router()
 
@@ -203,15 +204,22 @@ async def dump_handler(msg: Message) -> None:
     Command("college"),
     ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID),
 )
-async def college_handler(msg: Message) -> None:
+async def dump_handler(msg: Message, state: FSMContext) -> None:
+    await msg.answer("Введите хэш запроса:")
+    await state.set_state(BotHashStates.sending_hash)
+
+@router.message(
+    StateFilter(BotHashStates.sending_hash),
+    ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID),
+)
+async def college_handler(msg: Message, state: FSMContext) -> None:
     import aiohttp
 
     data = {
-        "hash": "query_id=AAHkr7QcAAAAAOSvtBw41eSu&user=%7B%22id%22%3A481603556%2C%22first_name%22%3A%22%D0%92%D0%BE%D0%B2%D0%B0%22%2C%22last_name%22%3A%22%22%2C%22username%22%3A%22n0rmal_user%22%2C%22language_code%22%3A%22ru%22%2C%22allows_write_to_pm%22%3Atrue%2C%22photo_url%22%3A%22https%3A%5C%2F%5C%2Ft.me%5C%2Fi%5C%2Fuserpic%5C%2F320%5C%2FMwzX7xhSh8lSg8JRGT7onqJJW5SbzCNkVvjAJeudEpE.svg%22%7D&auth_date=1748944069&signature=oo8rRuRrNBDO02--MQR7gxWDrm5IOy-RsdTwFxD9Lmw6_3pKEuL5yTxRtYVXP1FUHhQMv0oPl1_Ok1VJ13PzBg&hash=d6d69c82f0b8bae1f3b1941536e88f13c6b255eeb0ec53d5daa3f34d3f57f3bf",
+        "hash": msg.text,
         "start": "download"
     }
 
-    total = len(COLLEGE_TEACHERS)
     async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(limit=20, ssl=False)) as session:
         try:
             for index, (teacher_name, teacher_id) in enumerate(COLLEGE_TEACHERS.items()):
@@ -223,7 +231,7 @@ async def college_handler(msg: Message) -> None:
                                 url=VOLSU_BOT_URL,
                                 json=request_data
                         ) as response:
-                            print(f"{response.ok} {index + 1} из {total} (Попытка {attempt + 1}/{max_retries})")
+                            print(f"{response.ok} {index + 1} из {len(COLLEGE_TEACHERS)} (Попытка {attempt + 1}/{max_retries})")
                             if response.ok:
                                 break
                             await asyncio.sleep(5)
@@ -238,6 +246,7 @@ async def college_handler(msg: Message) -> None:
         except Exception as e:
             await msg.answer("Ошибка вытаскивания расписания из колледжского бота")
             logging.error(e)
+    await state.set_state(BotHashStates.waiting)
 
 
 @router.message(
