@@ -43,6 +43,6 @@ jobs:
             docker run -d --name schedule \
               --restart=always \
               -v /root/schedule/config.toml:/schedule/config.toml \
-              -v /root/schedule/data:/schedule/data \
+              -v /root/schedule:/schedule/data \
               ${{ secrets.DOCKER_USERNAME }}/schedule:latest
           EOF
