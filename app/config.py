@@ -44,6 +44,7 @@ ALL_PERSONAL = sorted(set(TEACHERS) | set(STUDENTS.keys()))
 COLLEGE_CONST: int = config["college"]["id_const"]
 COLLEGE_TEACHERS: dict[str, str] = config["college"]["teachers"]
 COLLEGE_TEACHERS_ID: list = list(config["college"]["teachers"].values())
+VOLSU_BOT_URL: str = config["college"]["bot_url"]
 
 TIMEZONE: str = config["date"]["timezone"]
 

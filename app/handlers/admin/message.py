@@ -34,7 +34,7 @@ from app.config import (
     LOG_FILE,
     PLOT_PATH,
     SCHEDULE_DB,
-    USERS_DB
+    USERS_DB, VOLSU_BOT_URL
 )
 from app.database import get_all_users_info, get_tracked_users, tracking_manage, user_info
 from app.database.user import User
@@ -220,7 +220,7 @@ async def college_handler(msg: Message) -> None:
                     try:
                         request_data = {**data, "teacherId": teacher_id}
                         async with session.post(
-                                url="https://app.volsu.ru/api/bot/select-teacher",
+                                url=VOLSU_BOT_URL,
                                 json=request_data
                         ) as response:
                             print(f"{response.ok} {index + 1} из {total} (Попытка {attempt + 1}/{max_retries})")
