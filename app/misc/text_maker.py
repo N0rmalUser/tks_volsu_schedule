@@ -17,7 +17,7 @@
 import re
 import sqlite3
 
-from app.config import STUDENTS, SCHEDULE_DB
+from app.config import STUDENTS, SCHEDULE_DB, ALIASES
 from app.database import sql_kit
 
 
@@ -115,7 +115,12 @@ def get_teacher_schedule(day: int, week: int, teacher_name: str, cursor: sqlite3
             schedule.append(
                 {"schedule_id": schedule_id, "time": time, "subject": subject, "room": room_name, "teacher": teacher, })
 
-    query = """
+    teacher_variants = [teacher_name]
+    if teacher_name in ALIASES:
+        teacher_variants.extend(ALIASES[teacher_name])
+
+    teacher_names = ", ".join(i for i in teacher_variants)
+    query = f"""
             SELECT GROUP_CONCAT(s.ScheduleID, ', '), s.Time, sub.SubjectName, GROUP_CONCAT(g.GroupName, ', ') AS GroupNames, r.RoomName, Subgroup
             FROM (
                 SELECT ScheduleID, Time, DayOfWeek, WeekType, SubjectID, GroupID, RoomID, TeacherID, Subgroup  FROM Schedule
@@ -126,12 +131,11 @@ def get_teacher_schedule(day: int, week: int, teacher_name: str, cursor: sqlite3
             JOIN Groups g ON s.GroupID = g.GroupID
             JOIN Rooms r ON s.RoomID = r.RoomID
             JOIN Teachers t ON s.TeacherID = t.TeacherID
-            WHERE t.TeacherName = ? AND s.DayOfWeek = ? AND s.WeekType = ?
+            WHERE t.TeacherName IN ({", ".join("?" for _ in teacher_variants)}) AND s.DayOfWeek = ? AND s.WeekType = ?
             GROUP BY s.Time, sub.SubjectName, r.RoomName
             ORDER BY s.Time
             """
-
-    cursor.execute(query, (teacher_name, days_of_week[day - 1], week_type))
+    cursor.execute(query, teacher_variants + [days_of_week[day - 1], week_type])
     rows = cursor.fetchall()
     for row in rows:
         schedule_id, time, subject, group, room_name, subgroup = row

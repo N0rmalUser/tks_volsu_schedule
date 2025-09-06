@@ -46,6 +46,8 @@ COLLEGE_TEACHERS: dict[str, str] = config["college"]["teachers"]
 COLLEGE_TEACHERS_ID: list = list(config["college"]["teachers"].values())
 VOLSU_BOT_URL: str = config["college"]["bot_url"]
 
+ALIASES = config["aliases"]
+
 TIMEZONE: str = config["date"]["timezone"]
 
 DATA_PATH: Path = root_path / "data"

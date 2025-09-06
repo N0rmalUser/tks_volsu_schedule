@@ -38,3 +38,7 @@ bot_url = "https://volsu.1450983-cl92470.tw1.ru/api/bot/select-teacher"
 [college.teachers]
 "teacher" = "fffffffffffff"
 
+
+# Преподаватели с ошибкой в фамилии в расписаниях
+[aliases]
+"Иванов И.И" = ["Иваннов И.И.", "Иванов Т.И."]
