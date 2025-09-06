@@ -34,6 +34,7 @@ import logging
 
 from aiogram import Bot, Dispatcher
 from aiogram.client.session.aiohttp import AiohttpSession
+from aiogram.enums import ParseMode
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.types import Message
 
@@ -90,6 +91,6 @@ async def topic_create(msg: Message) -> None:
                  f"Тип пользователя: {user_db.type}")
     user_db.tracking = True
     await msg.bot.send_message(ADMIN_CHAT_ID, message_thread_id=topic_id, text=user_info,
-                               reply_markup=kb.admin_menu(), )
+                               reply_markup=kb.admin_menu(), parse_mode=ParseMode.HTML)
     user_db.tracking = False
     logging.info(f"Создан топик имени {msg.from_user.id} @{msg.from_user.username}")
