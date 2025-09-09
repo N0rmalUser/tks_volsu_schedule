@@ -18,16 +18,15 @@ import logging
 import os
 import re
 
-import openpyxl
-import pandas as pd
-from docx import Document
-
 from app import config
 from app.config import COLLEGE_SHEETS_PATH, GROUPS, GROUPS_SCHEDULE_PATH
 from app.database.schedule import Schedule
 
 
 def college_schedule_parser():
+    import openpyxl
+    import pandas as pd
+
     days = {
         "ПН": "Понедельник",
         "ВТ": "Вторник",
@@ -112,6 +111,8 @@ def set_default(schedule_db: Schedule):
 
 
 def university_schedule_parser():
+    from docx import Document
+
     def _parse_info(text: str):
         """Парсит строку вида 'Предмет (Лаб), [должность] Фамилия И.О., Ауд. 1-23 К'
         -> dict(subject, teachers[list], classroom[str])"""
