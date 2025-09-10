@@ -16,3 +16,21 @@ dependencies = [
     "pytz>=2024.1",
     "toml>=0.10.2",
 ]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.13.0",
+]
+
+[tool.ruff]
+line-length = 120
+exclude = ["__pycache__", "venv", "uv.lock"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W"]
+extend-select = ["E501"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
