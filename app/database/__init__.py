@@ -20,7 +20,7 @@ from datetime import datetime
 from functools import wraps
 from pathlib import Path
 
-from app.config import ACTIVITIES_DB, SCHEDULE_DB, USERS_DB
+from ..config import ACTIVITIES_DB, SCHEDULE_DB, USERS_DB
 
 from .user import User
 

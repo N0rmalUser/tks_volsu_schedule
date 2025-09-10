@@ -41,9 +41,12 @@ from aiogram.types import Message
 from app import middlewares
 from app.config import ADMIN_CHAT_ID, BOT_TOKEN
 from app.database.user import User
-from app.handlers import admin, user
+from .handlers.user import callback as user_callback
+from .handlers.user import message as user_message
+from .handlers.user import status as user_status
+from .handlers.admin import message as admin_message
+from .handlers.admin import callback as admin_callback
 from app.markups import admin as kb
-from . import database, filters, handlers, markups, middlewares, misc
 
 
 async def main() -> None:
@@ -53,8 +56,13 @@ async def main() -> None:
     bot = Bot(token=BOT_TOKEN, session=session)
     dp = Dispatcher(storage=MemoryStorage())
 
-    dp.include_routers(user.callback.router, user.message.router, user.status.router, admin.message.router,
-                       admin.callback.router, )
+    dp.include_routers(
+        user_callback.router,
+        user_message.router,
+        user_status.router,
+        admin_message.router,
+        admin_callback.router,
+    )
 
     dp.update.middleware(middlewares.BanUsersMiddleware())
     dp.update.middleware(middlewares.TopicCreatorMiddleware())
@@ -69,7 +77,10 @@ async def main() -> None:
 async def start_message(msg: Message, menu, keyboard) -> None:
     """Отправляет сообщение при старте бота. Создаёт топик пользователя. Отправляет ссылку для приглашения и меню."""
 
-    await msg.answer(f"Привет, {msg.from_user.full_name}\n", reply_markup=menu, )
+    await msg.answer(
+        f"Привет, {msg.from_user.full_name}\n",
+        reply_markup=menu,
+    )
     await msg.answer("Выбери себя в списке", reply_markup=keyboard)
 
     if not msg.from_user.is_bot and not User(msg.from_user.id).topic_id:
@@ -85,12 +96,48 @@ async def topic_create(msg: Message) -> None:
     result = await msg.bot.create_forum_topic(ADMIN_CHAT_ID, topic_name)
     topic_id = result.message_thread_id
     user_db.topic_id = topic_id
-    user_info = (f"Пользователь: <code>{msg.from_user.full_name}</code>\n"
-                 f"ID: <code>{msg.from_user.id}</code>\n"
-                 f"Username: @{msg.from_user.username}\n"
-                 f"Тип пользователя: {user_db.type}")
+    user_info = (
+        f"Пользователь: <code>{msg.from_user.full_name}</code>\n"
+        f"ID: <code>{msg.from_user.id}</code>\n"
+        f"Username: @{msg.from_user.username}\n"
+        f"Тип пользователя: {user_db.type}"
+    )
     user_db.tracking = True
-    await msg.bot.send_message(ADMIN_CHAT_ID, message_thread_id=topic_id, text=user_info,
-                               reply_markup=kb.admin_menu(), parse_mode=ParseMode.HTML)
+    await msg.bot.send_message(
+        ADMIN_CHAT_ID,
+        message_thread_id=topic_id,
+        text=user_info,
+        reply_markup=kb.admin_menu(),
+        parse_mode=ParseMode.HTML,
+    )
     user_db.tracking = False
     logging.info(f"Создан топик имени {msg.from_user.id} @{msg.from_user.username}")
+
+
+try:
+    from .config import (
+        DATA_PATH,
+        DB_PATH,
+        SCHEDULE_PATH,
+        GROUPS_SCHEDULE_PATH,
+        TEACHERS_SHEETS_PATH,
+        ROOMS_SHEETS_PATH,
+        COLLEGE_SHEETS_PATH,
+        PLOT_PATH,
+    )
+
+    for path in [
+        DATA_PATH,
+        DB_PATH,
+        SCHEDULE_PATH,
+        GROUPS_SCHEDULE_PATH,
+        TEACHERS_SHEETS_PATH,
+        ROOMS_SHEETS_PATH,
+        COLLEGE_SHEETS_PATH,
+        PLOT_PATH,
+    ]:
+        path.mkdir(parents=True, exist_ok=True)
+except ImportError as e:
+    logging.error(e)
+except Exception as e:
+    logging.error(e)
