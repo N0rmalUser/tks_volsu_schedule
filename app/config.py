@@ -51,10 +51,11 @@ ALIASES = config["aliases"]
 TIMEZONE: str = config["date"]["timezone"]
 
 DATA_PATH: Path = root_path / "data"
+DB_PATH: Path = DATA_PATH / "db"
 LOG_FILE: Path = DATA_PATH / "bot.log"
-ACTIVITIES_DB: Path = DATA_PATH / "db" / "activities.db"
-SCHEDULE_DB: Path = DATA_PATH / "db" / "schedule.db"
-USERS_DB: Path = DATA_PATH / "db" / "users.db"
+ACTIVITIES_DB: Path = DB_PATH / "activities.db"
+SCHEDULE_DB: Path = DB_PATH / "schedule.db"
+USERS_DB: Path = DB_PATH / "users.db"
 
 SCHEDULE_PATH: Path = DATA_PATH / "schedule"
 GROUPS_SCHEDULE_PATH: Path = SCHEDULE_PATH / "groups"

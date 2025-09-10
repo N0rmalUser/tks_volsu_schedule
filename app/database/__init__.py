@@ -27,7 +27,8 @@ from .user import User
 
 def sql_kit(db: Path = ":memory:"):
     """
-    Декоратор для работы с базой данных. Он открывает соединение с базой данных, выполняет функцию и закрывает соединение.
+    Декоратор для работы с базой данных. Он открывает соединение с базой данных, выполняет функцию и закрывает
+    соединение.
     :param db:  Путь к базе данных
     :return:  Результат выполнения функции
     """
@@ -50,7 +51,8 @@ def sql_kit(db: Path = ":memory:"):
 
 @sql_kit(USERS_DB)
 def user_db_init(cursor: sqlite3.Cursor):
-    cursor.execute("""
+    cursor.execute(
+        """
         CREATE TABLE IF NOT EXISTS User_Info (
             user_id INTEGER PRIMARY KEY,
             user_type TEXT DEFAULT 'student',
@@ -61,9 +63,11 @@ def user_db_init(cursor: sqlite3.Cursor):
             banned BOOLEAN DEFAULT false,
             default_choose TEXT
         )
-    """)
+    """
+    )
 
-    cursor.execute("""
+    cursor.execute(
+        """
         CREATE TABLE IF NOT EXISTS Temp_Data (
             user_id INTEGER PRIMARY KEY,
             tracking BOOLEAN DEFAULT false,
@@ -71,43 +75,55 @@ def user_db_init(cursor: sqlite3.Cursor):
             group_id INTEGER DEFAULT 0,
             FOREIGN KEY (user_id) REFERENCES User_Info(user_id)
         )
-    """)
+    """
+    )
 
 
 @sql_kit(SCHEDULE_DB)
 def schedule_db_init(cursor: sqlite3.Cursor):
-    cursor.execute("""CREATE TABLE IF NOT EXISTS Rooms (
+    cursor.execute(
+        """CREATE TABLE IF NOT EXISTS Rooms (
             RoomID INTEGER PRIMARY KEY AUTOINCREMENT,
-            RoomName TEXT UNIQUE NOT NULL)""")
+            RoomName TEXT UNIQUE NOT NULL)"""
+    )
 
-    cursor.execute("""CREATE TABLE IF NOT EXISTS Groups (
+    cursor.execute(
+        """CREATE TABLE IF NOT EXISTS Groups (
             GroupID INTEGER PRIMARY KEY AUTOINCREMENT,
-            GroupName TEXT UNIQUE NOT NULL)""")
+            GroupName TEXT UNIQUE NOT NULL)"""
+    )
 
-    cursor.execute("""CREATE TABLE IF NOT EXISTS Teachers (
+    cursor.execute(
+        """CREATE TABLE IF NOT EXISTS Teachers (
             TeacherID INTEGER PRIMARY KEY AUTOINCREMENT,
-            TeacherName TEXT UNIQUE NOT NULL)""")
+            TeacherName TEXT UNIQUE NOT NULL)"""
+    )
 
-    cursor.execute("""CREATE TABLE IF NOT EXISTS Subjects (
+    cursor.execute(
+        """CREATE TABLE IF NOT EXISTS Subjects (
             SubjectID INTEGER PRIMARY KEY AUTOINCREMENT,
-            SubjectName TEXT UNIQUE NOT NULL)""")
+            SubjectName TEXT UNIQUE NOT NULL)"""
+    )
 
-    cursor.execute("""CREATE TABLE IF NOT EXISTS Schedule (
+    cursor.execute(
+        """CREATE TABLE IF NOT EXISTS Schedule (
             ScheduleID INTEGER PRIMARY KEY AUTOINCREMENT,
             Time TEXT NOT NULL,
             DayOfWeek TEXT NOT NULL,
             WeekType TEXT NOT NULL,
             GroupID INTEGER,
-            Subgroup INTEGER,                        
+            Subgroup INTEGER,
             TeacherID INTEGER,
             RoomID INTEGER,
             SubjectID INTEGER,
             FOREIGN KEY (GroupID) REFERENCES Groups(GroupID),
             FOREIGN KEY (TeacherID) REFERENCES Teachers(TeacherID),
             FOREIGN KEY (RoomID) REFERENCES Rooms(RoomID),
-            FOREIGN KEY (SubjectID) REFERENCES Subjects(SubjectID))""")
+            FOREIGN KEY (SubjectID) REFERENCES Subjects(SubjectID))"""
+    )
 
-    cursor.execute("""CREATE TABLE IF NOT EXISTS CollegeSchedule (
+    cursor.execute(
+        """CREATE TABLE IF NOT EXISTS CollegeSchedule (
             ScheduleID INTEGER PRIMARY KEY AUTOINCREMENT,
             Time TEXT NOT NULL,
             DayOfWeek TEXT NOT NULL,
@@ -119,26 +135,31 @@ def schedule_db_init(cursor: sqlite3.Cursor):
             FOREIGN KEY (GroupID) REFERENCES Groups(GroupID),
             FOREIGN KEY (TeacherID) REFERENCES Teachers(TeacherID),
             FOREIGN KEY (RoomID) REFERENCES Rooms(RoomID),
-            FOREIGN KEY (SubjectID) REFERENCES Subjects(SubjectID))""")
+            FOREIGN KEY (SubjectID) REFERENCES Subjects(SubjectID))"""
+    )
 
 
 @sql_kit(ACTIVITIES_DB)
 def activity_db_init(cursor: sqlite3.Cursor):
-    cursor.execute("""
+    cursor.execute(
+        """
         CREATE TABLE IF NOT EXISTS daily_activity (
             user_ids TEXT,
             date TEXT,
             PRIMARY KEY (user_ids, date)
         );
-    """)
+    """
+    )
 
-    cursor.execute("""
+    cursor.execute(
+        """
         CREATE TABLE IF NOT EXISTS hourly_activity (
             user_ids TEXT,
             datetime TEXT,
             PRIMARY KEY (user_ids, datetime)
         );
-    """)
+    """
+    )
 
 
 def user_info(user_id: int):
@@ -240,16 +261,18 @@ def get_all_users_info(cursor: sqlite3.Cursor) -> str:
     cursor.execute("SELECT COUNT(*) FROM User_Info WHERE user_type = 'teacher'")
     teachers = cursor.fetchone()[0]
 
-    result = (f"Пользователей: {users_count}\n\n"
-              f"Из них:\n"
-              f"Преподавателей {teachers}\n"
-              f"Студентов {int(users_count) - int(teachers)}\n\n"
-              f"Активных:\n"
-              f"За месяц - {month_users_count}\n"
-              f"За неделю - {week_users_count}\n"
-              f"За день - {today_users_count}\n"
-              f"Заблокировали бота: {blocked_count}\n"
-              f"Забанено: {banned_count}")
+    result = (
+        f"Пользователей: {users_count}\n\n"
+        f"Из них:\n"
+        f"Преподавателей {teachers}\n"
+        f"Студентов {int(users_count) - int(teachers)}\n\n"
+        f"Активных:\n"
+        f"За месяц - {month_users_count}\n"
+        f"За неделю - {week_users_count}\n"
+        f"За день - {today_users_count}\n"
+        f"Заблокировали бота: {blocked_count}\n"
+        f"Забанено: {banned_count}"
+    )
     return result
 
 
@@ -279,24 +302,30 @@ async def get_tracked_users() -> list:
 
 @sql_kit(USERS_DB)
 def get_users_by_group_id(group_id: int, cursor: sqlite3.Cursor):
-    cursor.execute("""
+    cursor.execute(
+        """
         SELECT u.user_id
         FROM User_Info u
         JOIN Temp_Data t ON u.user_id = t.user_id
         WHERE t.group_id = ?
-        """, (group_id,), )
+        """,
+        (group_id,),
+    )
     result = cursor.fetchone()
     return result[0] if result else None
 
 
 @sql_kit(USERS_DB)
 def get_users_by_teacher_id(group_id: int, cursor: sqlite3.Cursor):
-    cursor.execute("""
+    cursor.execute(
+        """
         SELECT u.user_id
         FROM User_Info u
         JOIN Temp_Data t ON u.user_id = t.user_id
         WHERE t.teacher_id = ?
-        """, (group_id,), )
+        """,
+        (group_id,),
+    )
     result = cursor.fetchone()
     return result[0] if result else None
 
