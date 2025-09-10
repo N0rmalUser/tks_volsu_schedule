@@ -65,5 +65,6 @@ COLLEGE_SHEETS_PATH: Path = SCHEDULE_PATH / "college"
 PLOT_PATH: Path = DATA_PATH / "plot"
 
 locale.setlocale(
-    locale.LC_TIME, "Russian_Russia.1251" if platform.system() == "Windows" else "ru_RU.UTF-8"
+    locale.LC_TIME,
+    "Russian_Russia.1251" if platform.system() == "Windows" else "ru_RU.UTF-8",
 )

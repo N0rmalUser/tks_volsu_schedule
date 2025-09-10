@@ -17,7 +17,21 @@
 from math import ceil
 
 import pandas as pd
-from lets_plot import *
+from lets_plot import (
+    LetsPlot,
+    ggplot,
+    ggsize,
+    aes,
+    geom_bar,
+    ggtitle,
+    element_text,
+    xlab,
+    ylab,
+    scale_y_continuous,
+    flavor_high_contrast_dark,
+    theme,
+    element_rect,
+)
 
 from app.config import PLOT_PATH
 
@@ -34,9 +48,7 @@ def plot_activity_for_day(df: pd.DataFrame, date: str):
         + ggtitle(f"Активность пользователей по часам на {date}")
         + xlab("Время")
         + ylab("Количество пользователей")
-        + scale_y_continuous(
-            limits=[0, y_max], breaks=list(range(0, y_max + 1, 1 if y_max == 10 else 5))
-        )
+        + scale_y_continuous(limits=[0, y_max], breaks=list(range(0, y_max + 1, 1 if y_max == 10 else 5)))
         + flavor_high_contrast_dark()
         + theme(
             axis_text_x=element_text(angle=0, hjust=0.5),
@@ -60,9 +72,7 @@ def plot_activity_for_month(df: pd.DataFrame, month: str):
         + ggtitle(f"Активность пользователей по дням с {month}")
         + xlab("Дата")
         + ylab("Количество пользователей")
-        + scale_y_continuous(
-            limits=[0, y_max], breaks=list(range(0, y_max + 1, 1 if y_max == 10 else 5))
-        )
+        + scale_y_continuous(limits=[0, y_max], breaks=list(range(0, y_max + 1, 1 if y_max == 10 else 5)))
         + flavor_high_contrast_dark()
         + theme(
             axis_text_x=element_text(angle=0, hjust=0.5),

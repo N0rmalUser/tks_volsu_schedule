@@ -47,9 +47,7 @@ def admin_menu():
 
 def cancel_sending():
     return InlineKeyboardMarkup(
-        inline_keyboard=[
-            [InlineKeyboardButton(text="❌ Отменить отправку", callback_data="cancel_sending")]
-        ]
+        inline_keyboard=[[InlineKeyboardButton(text="❌ Отменить отправку", callback_data="cancel_sending")]]
     )
 
 

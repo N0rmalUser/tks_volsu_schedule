@@ -36,9 +36,11 @@ async def start_handler(msg: Message) -> None:
     user = User(msg.from_user.id)
     user.tracking = False
     menu, keyboard = (
-        (kb.teacher_menu(), kb.get_teachers()) if user.type == "teacher" else (kb.student_menu(), kb.get_groups()))
+        (kb.teacher_menu(), kb.get_teachers()) if user.type == "teacher" else (kb.student_menu(), kb.get_groups())
+    )
 
     import app
+
     await app.start_message(msg, menu, keyboard)
 
 
@@ -46,7 +48,8 @@ async def start_handler(msg: Message) -> None:
 async def help_handler(msg: Message) -> None:
     """Обработчик команды /help. Отправляет сообщение с описанием бота."""
     if User(msg.from_user.id).type == "teacher":
-        await msg.answer("""
+        await msg.answer(
+            """
 Привет, это бот расписания кафедры ТКС!
 
 Кнопка `Расписание на сегодня` показывает расписание на сегодняшний день для выбранного преподавателя.
@@ -57,9 +60,11 @@ async def help_handler(msg: Message) -> None:
 ✅ показывает, что выбрана эта неделя, для изменения недели нужно нажать кнопку с ➡️
 
 Для связи с администратором при возникших ошибках/изменениях в расписании используйте команду /admin и опишите проблему.
-""")
+"""
+        )
     else:
-        await msg.answer("""
+        await msg.answer(
+            """
 Привет, это бот расписания кафедры ТКС!
 
 Кнопка `Расписание на сегодня` показывает расписание на сегодняшний день для выбранной группы.
@@ -69,7 +74,8 @@ async def help_handler(msg: Message) -> None:
 
 Для связи с администратором при возникших ошибках/изменениях в расписании используйте команду /admin и опишите проблему.
 Донаты принимаются вкусняшками в 1-19М
-""")
+"""
+        )
 
 
 @router.message(Command("admin"), ChatTypeIdFilter(chat_type=["private"]))
@@ -85,11 +91,13 @@ async def admin_handler(msg: Message) -> None:
 
 
 @router.message(Command("spreadsheets"), ChatTypeIdFilter(chat_type=["private"]))
-async def admin_handler(msg: Message) -> None:
+async def spreadsheets_handler(msg: Message) -> None:
     """Обработчик команды /spreadsheets. Присылает пользователю файл с расписанием выбранной группы/преподавателя"""
 
-    await msg.answer("Выберите, какой тип расписания вы хотите скачать.",
-        reply_markup=kb.get_sheets(msg.from_user.id), )
+    await msg.answer(
+        "Выберите, какой тип расписания вы хотите скачать.",
+        reply_markup=kb.get_sheets(msg.from_user.id),
+    )
 
 
 @router.message(Command("default"), ChatTypeIdFilter(chat_type=["private"]))
@@ -103,7 +111,7 @@ async def default_handler(msg: Message) -> None:
 
 
 @router.message(F.text == "Расписание на сегодня", ChatTypeIdFilter(chat_type=["private"]))
-async def handler(msg: Message) -> None:
+async def schedule_handler(msg: Message) -> None:
     from app.database.schedule import Schedule
     from app.misc import text_maker
 
@@ -117,46 +125,58 @@ async def handler(msg: Message) -> None:
 
     if not entity_id:
         await msg.answer(
-            f"Сначала выберите {'ФИО преподавателя' if user.type == 'teacher' else 'группу'}, нажав на соответствующую кнопку.")
+            f"Сначала выберите {'ФИО преподавателя' if user.type == 'teacher' else 'группу'}, "
+            f"нажав на соответствующую кнопку."
+        )
         return
     if user.type == "teacher":
         week_kb = kb.get_days(keyboard_type="teacher", week=week, day=day, value=entity_id)
         await msg.answer(
-            text_maker.get_teacher_schedule(day=day, week=week, teacher_name=Schedule().get_teacher_name(entity_id), ),
-            reply_markup=week_kb, )
+            text_maker.get_teacher_schedule(
+                day=day,
+                week=week,
+                teacher_name=Schedule().get_teacher_name(entity_id),
+            ),
+            reply_markup=week_kb,
+        )
     elif user.type == "student":
         week_kb = kb.get_days(keyboard_type="group", week=week, day=day, value=entity_id)
         await msg.answer(
-            text_maker.get_group_schedule(day=day, week=week, group_name=Schedule().get_group_name(entity_id), ),
-            reply_markup=week_kb, )
+            text_maker.get_group_schedule(
+                day=day,
+                week=week,
+                group_name=Schedule().get_group_name(entity_id),
+            ),
+            reply_markup=week_kb,
+        )
     else:
         logging.info(f"{msg.from_user.id} неправильный тип пользователя")
         await msg.answer("Ошибка! Напишите админу /admin")
 
 
 @router.message(F.text == "Кабинеты", ChatTypeIdFilter(chat_type=["private"]))
-async def handler(msg: Message) -> None:
-    await msg.answer(f"Выберите кабинет", reply_markup=kb.get_rooms())
+async def rooms_handler(msg: Message) -> None:
+    await msg.answer("Выберите кабинет", reply_markup=kb.get_rooms())
 
 
 @router.message(F.text == "Группы", ChatTypeIdFilter(chat_type=["private"]))
-async def handler(msg: Message) -> None:
-    await msg.answer(f"Выберите группу", reply_markup=kb.get_groups())
+async def groups_handler(msg: Message) -> None:
+    await msg.answer("Выберите группу", reply_markup=kb.get_groups())
 
 
 @router.message(F.text == "Преподаватели", ChatTypeIdFilter(chat_type=["private"]))
-async def handler(msg: Message) -> None:
-    await msg.answer(f"Выберите преподавателя", reply_markup=kb.get_teachers())
+async def teachers_handler(msg: Message) -> None:
+    await msg.answer("Выберите преподавателя", reply_markup=kb.get_teachers())
 
 
 @router.message(F.text, ChatTypeIdFilter(chat_type=["private"]))
-async def handler(msg: Message) -> None:
+async def text_handler(msg: Message) -> None:
     if not User(msg.from_user.id).tracking:
         logging.info(f"{msg.from_user.id} написал неправильную команду")
         await msg.answer("Я не знаю такой команды")
 
 
 @router.message(ChatTypeIdFilter(chat_type=["private"]))
-async def handler(msg: Message) -> None:
+async def other_handler(msg: Message) -> None:
     if not User(msg.from_user.id).tracking:
         await msg.answer("Я тебя не понимаю, буковы пиши!")

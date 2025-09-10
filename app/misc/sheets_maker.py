@@ -100,7 +100,9 @@ def teacher(teacher_name: str) -> str:
         else:
             not_empty_rows.append(row - 1)
 
-        ws.cell(row=row, column=start_col).value = f'{data["GroupNames"]}{f".{data["Subgroup"]}" if data["Subgroup"] else ""}'
+        ws.cell(
+            row=row, column=start_col
+        ).value = f"{data['GroupNames']}{f'.{data["Subgroup"]}' if data['Subgroup'] else ''}"
         ws.cell(row=row, column=start_col + 1).value = data["RoomName"]
         ws.cell(row=row, column=start_col + 2).value = data["SubjectName"]
 
@@ -119,9 +121,7 @@ def teacher(teacher_name: str) -> str:
     for row in range(start_row, ws.max_row + 2):
         cell = ws.cell(row=row, column=1)
         if cell.value != prev_value and prev_value is not None:
-            ws.merge_cells(
-                start_row=start_merge_row, start_column=1, end_row=row - 1, end_column=1
-            )
+            ws.merge_cells(start_row=start_merge_row, start_column=1, end_row=row - 1, end_column=1)
             start_merge_row = row
         prev_value = cell.value
 
@@ -252,9 +252,7 @@ def room(room_name: str):
     for row in range(start_row, ws.max_row + 2):
         cell = ws.cell(row=row, column=1)
         if cell.value != prev_value and prev_value is not None:
-            ws.merge_cells(
-                start_row=start_merge_row, start_column=1, end_row=row - 1, end_column=1
-            )
+            ws.merge_cells(start_row=start_merge_row, start_column=1, end_row=row - 1, end_column=1)
             start_merge_row = row
         prev_value = cell.value
 

@@ -29,6 +29,7 @@ class BroadcastStates(StatesGroup):
     sending_messages = State()
     cancel_sending = State()
 
+
 class BotHashStates(StatesGroup):
     waiting = State()
     sending_hash = State()

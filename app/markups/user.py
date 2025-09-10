@@ -70,15 +70,13 @@ def get_groups() -> InlineKeyboardMarkup:
     from app.database.schedule import Schedule
 
     builder = InlineKeyboardBuilder()
-    counter=0
+    counter = 0
     for group in config.GROUPS:
         if group == "-":
-            counter+=1
+            counter += 1
             builder.button(
                 text=group,
-                callback_data=keyboard_factory.ChangeCallbackFactory(
-                    action=f"ignore{counter}"
-                ),
+                callback_data=keyboard_factory.ChangeCallbackFactory(action=f"ignore{counter}"),
             )
         else:
             builder.button(
@@ -100,9 +98,7 @@ def get_rooms() -> InlineKeyboardMarkup:
     for room in config.ROOMS:
         builder.button(
             text=str(room),
-            callback_data=keyboard_factory.ChangeCallbackFactory(
-                action="room", value=Schedule().get_room_id(room)
-            ),
+            callback_data=keyboard_factory.ChangeCallbackFactory(action="room", value=Schedule().get_room_id(room)),
         )
     builder.adjust(3)
     return builder.as_markup()
@@ -121,9 +117,7 @@ def get_default_teachers() -> InlineKeyboardMarkup:
         )
     builder.button(
         text="Очистить",
-        callback_data=keyboard_factory.DefaultChangeCallbackFactory(
-            action="default_teacher", value=None
-        ),
+        callback_data=keyboard_factory.DefaultChangeCallbackFactory(action="default_teacher", value=None),
     )
     builder.adjust(2)
     return builder.as_markup()
@@ -142,9 +136,7 @@ def get_default_groups():
         )
     builder.button(
         text="Очистить",
-        callback_data=keyboard_factory.DefaultChangeCallbackFactory(
-            action="default_group", value=None
-        ),
+        callback_data=keyboard_factory.DefaultChangeCallbackFactory(action="default_group", value=None),
     )
     builder.adjust(3)
     return builder.as_markup()
@@ -245,9 +237,7 @@ def get_sheet_teachers(user_id: int):
         rows.append(1)
         builder.button(
             text="Всех и сразу",
-            callback_data=keyboard_factory.ChangeCallbackFactory(
-                action="teacher_sheet", value=9999
-            ),
+            callback_data=keyboard_factory.ChangeCallbackFactory(action="teacher_sheet", value=9999),
         )
         builder.adjust(*rows)
     return builder.as_markup()
@@ -262,12 +252,10 @@ def get_sheet_groups(user_id: int):
     counter = 0
     for group in config.GROUPS:
         if group == "-":
-            counter+=1
+            counter += 1
             builder.button(
                 text=group,
-                callback_data=keyboard_factory.ChangeCallbackFactory(
-                    action=f"ignore{counter}"
-                ),
+                callback_data=keyboard_factory.ChangeCallbackFactory(action=f"ignore{counter}"),
             )
         else:
             builder.button(

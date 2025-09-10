@@ -15,7 +15,6 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import time
-start_time = time.monotonic()
 
 import app
 import asyncio
@@ -27,10 +26,10 @@ import pytz
 
 from app.config import EVENT_LEVEL, LOG_FILE, LOG_LEVEL, TIMEZONE
 
+start_time = time.monotonic()
+
 if __name__ == "__main__":
-    logging.Formatter.converter = lambda *args: datetime.now(
-        pytz.timezone(TIMEZONE)
-    ).timetuple()
+    logging.Formatter.converter = lambda *args: datetime.now(pytz.timezone(TIMEZONE)).timetuple()
     levels = {
         "DEBUG": logging.DEBUG,
         "INFO": logging.INFO,
@@ -46,9 +45,9 @@ if __name__ == "__main__":
         datefmt="%H:%M:%S %d-%m-%Y",
         handlers=[
             logging.FileHandler(LOG_FILE, encoding="utf-8"),
-            logging.StreamHandler()
+            logging.StreamHandler(),
         ],
-        force=True
+        force=True,
     )
     logging.getLogger("aiogram.event").setLevel(levels[EVENT_LEVEL])
     logging.debug(f"Starting at {start_time}")

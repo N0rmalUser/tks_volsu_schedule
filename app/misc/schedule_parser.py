@@ -77,14 +77,14 @@ def college_schedule_parser():
             if len(split_result) != 2:
                 logging.error(f"Неверный формат группы и предмета: {row[teacher_name]}")
                 continue
-            parts = re.split(r'\s*преп\.\s*|\s*ауд\.\s*', split_result[1].strip())
+            parts = re.split(r"\s*преп\.\s*|\s*ауд\.\s*", split_result[1].strip())
             if len(parts) != 3:
                 logging.error(f"Неверный формат данных: {split_result[1]}")
                 continue
-            subject = parts[0].strip().rstrip(',. ')
+            subject = parts[0].strip().rstrip(",. ")
             room_str = parts[2].strip()
-            room_name = re.sub(r'\s*ауд\.?\s*', '', room_str, flags=re.IGNORECASE).strip()
-            groups = [g.strip() for g in split_result[0].split(',')]
+            room_name = re.sub(r"\s*ауд\.?\s*", "", room_str, flags=re.IGNORECASE).strip()
+            groups = [g.strip() for g in split_result[0].split(",")]
 
             for group in groups:
                 if group not in GROUPS:
@@ -108,7 +108,6 @@ def set_default(schedule_db: Schedule):
         schedule_db.add_teacher(i)
     for i in sorted(config.ROOMS):
         schedule_db.add_room(i)
-
 
 
 def university_schedule_parser():
@@ -153,7 +152,6 @@ def university_schedule_parser():
         start = row.cells[1].text.strip().strip().split("-")[0]
         time = re.sub(r"\b8:30\b", "08:30", re.sub(r"\s*", "", start))
         return day, time
-
 
     def _process_row(row):
         """Возвращает список [(subgroup, info_dict)] для строки."""

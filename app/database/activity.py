@@ -65,9 +65,7 @@ def get_activity_for_day(date_str: str, cursor: sqlite3.Cursor):
 
 
 @sql_kit(ACTIVITIES_DB)
-def get_user_activity_for_month(
-    user_id: str, date_str: str, cursor: sqlite3.Cursor
-) -> pd.DataFrame:
+def get_user_activity_for_month(user_id: str, date_str: str, cursor: sqlite3.Cursor) -> pd.DataFrame:
     """Возвращает статистику активности пользователя за день по часам."""
 
     date = datetime.strptime(date_str, "%Y-%m-%d")
@@ -173,7 +171,8 @@ def log_user_activity(user_id: int, cursor: sqlite3.Cursor):
 
     if not result:
         cursor.execute(
-            "INSERT INTO daily_activity (date, user_ids) VALUES (?, ?)", (date, str(user_id))
+            "INSERT INTO daily_activity (date, user_ids) VALUES (?, ?)",
+            (date, str(user_id)),
         )
     else:
         user_ids = result[0].split(",")
@@ -181,7 +180,8 @@ def log_user_activity(user_id: int, cursor: sqlite3.Cursor):
             user_ids.append(str(user_id))
             updated_user_ids = ",".join(user_ids)
             cursor.execute(
-                "UPDATE daily_activity SET user_ids = ? WHERE date = ?", (updated_user_ids, date)
+                "UPDATE daily_activity SET user_ids = ? WHERE date = ?",
+                (updated_user_ids, date),
             )
 
     cursor.execute("SELECT user_ids FROM hourly_activity WHERE datetime = ?", (hour,))
@@ -189,7 +189,8 @@ def log_user_activity(user_id: int, cursor: sqlite3.Cursor):
 
     if not result:
         cursor.execute(
-            "INSERT INTO hourly_activity (datetime, user_ids) VALUES (?, ?)", (hour, str(user_id))
+            "INSERT INTO hourly_activity (datetime, user_ids) VALUES (?, ?)",
+            (hour, str(user_id)),
         )
     else:
         user_ids = result[0].split(",")

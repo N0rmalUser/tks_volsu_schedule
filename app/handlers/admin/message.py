@@ -26,7 +26,6 @@ from aiogram.types import FSInputFile, Message
 from app.config import (
     ACTIVITIES_DB,
     ADMIN_CHAT_ID,
-    ADMIN_ID,
     COLLEGE_SHEETS_PATH,
     COLLEGE_TEACHERS,
     DATA_PATH,
@@ -34,9 +33,15 @@ from app.config import (
     LOG_FILE,
     PLOT_PATH,
     SCHEDULE_DB,
-    USERS_DB, VOLSU_BOT_URL
+    USERS_DB,
+    VOLSU_BOT_URL,
 )
-from app.database import get_all_users_info, get_tracked_users, tracking_manage, user_info
+from app.database import (
+    get_all_users_info,
+    get_tracked_users,
+    tracking_manage,
+    user_info,
+)
 from app.database.user import User
 from app.filters import ChatTypeIdFilter
 from app.markups import admin as kb
@@ -57,9 +62,7 @@ async def handle_send_daily_plot(msg: Message, command: CommandObject = None) ->
     from app.database import activity as db
     from app.misc import user_activity
 
-    month = (
-        datetime.strptime(command.args, "%d.%m.%Y") if command.args else datetime.now()
-    ).strftime("%Y-%m-%d")
+    month = (datetime.strptime(command.args, "%d.%m.%Y") if command.args else datetime.now()).strftime("%Y-%m-%d")
     if msg.message_thread_id and msg.message_thread_id != 1:  # TODO: Починить топики
         activity = db.get_user_activity_for_month(
             user_id=User(topic_id=msg.message_thread_id).id,
@@ -67,9 +70,7 @@ async def handle_send_daily_plot(msg: Message, command: CommandObject = None) ->
         )
     else:
         activity = db.get_activity_for_month(date_str=month)
-    user_activity.plot_activity_for_month(
-        activity, datetime.strptime(month, "%Y-%m-%d").strftime("%d %B %Y")
-    )
+    user_activity.plot_activity_for_month(activity, datetime.strptime(month, "%Y-%m-%d").strftime("%d %B %Y"))
     await msg.answer_document(FSInputFile(PLOT_PATH / "activity_for_month.html"))
 
 
@@ -85,18 +86,12 @@ async def handle_send_hourly_plot(msg: Message, command: CommandObject = None) -
     from app.database import activity as db
     from app.misc import user_activity
 
-    date = (
-        datetime.strptime(command.args, "%d.%m.%Y") if command.args else datetime.now()
-    ).strftime("%Y-%m-%d")
+    date = (datetime.strptime(command.args, "%d.%m.%Y") if command.args else datetime.now()).strftime("%Y-%m-%d")
     if msg.message_thread_id:
-        activity = db.get_user_activity_for_day(
-            user_id=User(topic_id=msg.message_thread_id).id, date_str=date
-        )
+        activity = db.get_user_activity_for_day(user_id=User(topic_id=msg.message_thread_id).id, date_str=date)
     else:
         activity = db.get_activity_for_day(date_str=date)
-    user_activity.plot_activity_for_day(
-        activity, datetime.strptime(date, "%Y-%m-%d").strftime("%d %B %Y")
-    )
+    user_activity.plot_activity_for_day(activity, datetime.strptime(date, "%Y-%m-%d").strftime("%d %B %Y"))
     await msg.answer_document(FSInputFile(PLOT_PATH / "activity_for_day.html"))
 
 
@@ -104,7 +99,7 @@ async def handle_send_hourly_plot(msg: Message, command: CommandObject = None) -
     Command("menu"),
     ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID),
 )
-async def handle_topic_command_track(msg: Message) -> None:
+async def menu_command_track(msg: Message) -> None:
     await msg.answer("Меню админа", reply_markup=kb.admin_menu())
 
 
@@ -125,7 +120,7 @@ async def ban_command_handler(msg: Message) -> None:
     Command("unban"),
     ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID),
 )
-async def ban_command_handler(msg: Message) -> None:
+async def unban_command_handler(msg: Message) -> None:
     """Разбанивает пользователя. Изменяет значение столбца banned в базе данных."""
 
     user = User(topic_id=msg.message_thread_id)
@@ -139,7 +134,7 @@ async def ban_command_handler(msg: Message) -> None:
     Command("clear"),
     ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID),
 )
-async def dump_handler(msg: Message) -> None:
+async def clear_handler(msg: Message) -> None:
     """Удаляет все файлы расписания."""
 
     start = await msg.answer("Удаляю ненужные файлы")
@@ -152,7 +147,6 @@ async def dump_handler(msg: Message) -> None:
                 except Exception as e:
                     logging.error(e)
     await start.edit_text("Ненужные файлы удалены")
-
 
 
 @router.message(
@@ -189,7 +183,7 @@ async def dump_handler(msg: Message) -> None:
     Command("log"),
     ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID),
 )
-async def dump_handler(msg: Message) -> None:
+async def log_handler(msg: Message) -> None:
     """Отправляет базу данных пользователей и логи в админский чат."""
 
     try:
@@ -204,21 +198,19 @@ async def dump_handler(msg: Message) -> None:
     Command("college"),
     ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID),
 )
-async def dump_handler(msg: Message, state: FSMContext) -> None:
+async def college_handler(msg: Message, state: FSMContext) -> None:
     await msg.answer("Введите хэш запроса:")
     await state.set_state(BotHashStates.sending_hash)
+
 
 @router.message(
     StateFilter(BotHashStates.sending_hash),
     ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID),
 )
-async def college_handler(msg: Message, state: FSMContext) -> None:
+async def hash_handler(msg: Message, state: FSMContext) -> None:
     import aiohttp
 
-    data = {
-        "hash": msg.text,
-        "start": "download"
-    }
+    data = {"hash": msg.text, "start": "download"}
 
     async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(limit=20, ssl=False)) as session:
         try:
@@ -227,17 +219,19 @@ async def college_handler(msg: Message, state: FSMContext) -> None:
                 for attempt in range(max_retries):
                     try:
                         request_data = {**data, "teacherId": teacher_id}
-                        async with session.post(
-                                url=VOLSU_BOT_URL,
-                                json=request_data
-                        ) as response:
-                            print(f"{response.ok} {index + 1} из {len(COLLEGE_TEACHERS)} (Попытка {attempt + 1}/{max_retries})")
+                        async with session.post(url=VOLSU_BOT_URL, json=request_data) as response:
+                            print(
+                                f"{response.ok} {index + 1} из {len(COLLEGE_TEACHERS)} "
+                                f"(Попытка {attempt + 1}/{max_retries})"
+                            )
                             if response.ok:
                                 break
                             await asyncio.sleep(5)
                     except Exception as e:
                         print(
-                            f"Ошибка при отправке запроса для {teacher_name} ({teacher_id}): {e} (Попытка {attempt + 1}/{max_retries})")
+                            f"Ошибка при отправке запроса для {teacher_name} ({teacher_id}): "
+                            f"{e} (Попытка {attempt + 1}/{max_retries})"
+                        )
                         await asyncio.sleep(1)
                 else:
                     print(f"Не удалось выполнить запрос для {teacher_name} ({teacher_id}) после {max_retries} попыток")
@@ -279,7 +273,7 @@ async def update_handler(msg: Message) -> None:
     Command("track"),
     ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID),
 )
-async def handle_topic_command_track(msg: Message, command: CommandObject) -> None:
+async def track_command_track(msg: Message, command: CommandObject) -> None:
     """Включает/выключает трекинг для пользователя или для всех пользователей."""
 
     if command.args is None:
@@ -309,7 +303,7 @@ async def handle_topic_command_track(msg: Message, command: CommandObject) -> No
             users = await get_tracked_users()
             tracked = "\n".join([str(user) for user in users])
             await start.edit_text(
-                f"Трекаются: \n" + tracked if users else "Никто не трекается",
+                "Трекаются: \n" + tracked if users else "Никто не трекается",
                 parse_mode="MarkdownV2",
             )
 
@@ -318,7 +312,7 @@ async def handle_topic_command_track(msg: Message, command: CommandObject) -> No
     Command("info"),
     ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID),
 )
-async def handle_topic_command_info(msg: Message, command: CommandObject = None) -> None:
+async def info_command_info(msg: Message, command: CommandObject = None) -> None:
     """Присылает информацию о пользователе или о всех пользователях в зависимости от топика"""
 
     start = await msg.answer(text="Собираю статистику")
@@ -338,7 +332,7 @@ async def handle_topic_command_info(msg: Message, command: CommandObject = None)
     Command("teacher"),
     ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID),
 )
-async def handle_topic_command_teacher(msg: Message) -> None:
+async def teacher_command_teacher(msg: Message) -> None:
     start = await msg.answer("Изменяю тип пользователя...")
     if start.message_thread_id:
         user = User(topic_id=msg.message_thread_id)
@@ -350,7 +344,7 @@ async def handle_topic_command_teacher(msg: Message) -> None:
     Command("student"),
     ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID),
 )
-async def handle_topic_command_student(msg: Message) -> None:
+async def student_command_student(msg: Message) -> None:
     start = await msg.answer("Изменяю тип пользователя...")
     if start.message_thread_id:
         user = User(topic_id=msg.message_thread_id)
@@ -424,7 +418,8 @@ async def send_collected_messages(msg: Message):
 
     if hasattr(msg.bot, "collected_messages") and msg.bot.collected_messages:
         await msg.answer(
-            "Заменил файлы:\n" + "\n".join(msg.bot.collected_messages), reply_markup=kb.notify()
+            "Заменил файлы:\n" + "\n".join(msg.bot.collected_messages),
+            reply_markup=kb.notify(),
         )
         del msg.bot.collected_messages
 

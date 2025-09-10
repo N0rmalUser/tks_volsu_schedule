@@ -20,15 +20,33 @@ from app.config import COLLEGE_CONST, SCHEDULE_DB
 
 
 class Schedule:
-    days_of_week = ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", ]
+    days_of_week = [
+        "Понедельник",
+        "Вторник",
+        "Среда",
+        "Четверг",
+        "Пятница",
+        "Суббота",
+    ]
 
     def __init__(self):
         self.__conn = sqlite3.connect(SCHEDULE_DB)
         self.__cursor = self.__conn.cursor()
 
-    def add_schedule(self, time: str, day_name: str, week_type: str, group_id: int, teacher_id: int, room_id: int,
-            subject_id: int, subgroup: int = None, college: bool = False, ) -> None:
-        self.__cursor.execute("""
+    def add_schedule(
+        self,
+        time: str,
+        day_name: str,
+        week_type: str,
+        group_id: int,
+        teacher_id: int,
+        room_id: int,
+        subject_id: int,
+        subgroup: int = None,
+        college: bool = False,
+    ) -> None:
+        self.__cursor.execute(
+            """
             SELECT s.ScheduleID
             FROM (
                 SELECT ScheduleID, Time, DayOfWeek, WeekType, GroupID, TeacherID, RoomID, SubjectID FROM Schedule
@@ -36,25 +54,69 @@ class Schedule:
                 SELECT ScheduleID, Time, DayOfWeek, WeekType, GroupID, TeacherID, RoomID, SubjectID FROM CollegeSchedule
             ) s
             WHERE (Time, DayOfWeek, WeekType, GroupID, TeacherID, RoomID, SubjectID) = (?, ?, ?, ?, ?, ?, ?)
-            """, (time, day_name, week_type, group_id, teacher_id, room_id, subject_id), )
+            """,
+            (time, day_name, week_type, group_id, teacher_id, room_id, subject_id),
+        )
         if self.__cursor.fetchone():
             return
         if college:
-            params = [time, day_name, week_type, group_id, teacher_id, room_id, subject_id, ]
+            params = [
+                time,
+                day_name,
+                week_type,
+                group_id,
+                teacher_id,
+                room_id,
+                subject_id,
+            ]
             self.__cursor.execute("SELECT MAX(ScheduleID) FROM CollegeSchedule")
             max_id = self.__cursor.fetchone()[0]
             params.insert(0, max_id + 1 if max_id is not None else COLLEGE_CONST + 1)
             self.__cursor.execute(
-                "INSERT INTO CollegeSchedule (ScheduleID, Time, DayOfWeek, WeekType, GroupID, TeacherID, RoomID, SubjectID) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                tuple(params), )
+                """
+                INSERT INTO CollegeSchedule (
+                    ScheduleID,
+                    Time,
+                    DayOfWeek,
+                    WeekType,
+                    GroupID,
+                    TeacherID,
+                    RoomID,
+                    SubjectID
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                tuple(params),
+            )
         else:
-            params = [time, day_name, week_type, group_id, subgroup, teacher_id, room_id, subject_id, ]
+            params = [
+                time,
+                day_name,
+                week_type,
+                group_id,
+                subgroup,
+                teacher_id,
+                room_id,
+                subject_id,
+            ]
             self.__cursor.execute("SELECT MAX(ScheduleID) FROM Schedule")
             max_id = self.__cursor.fetchone()[0]
             params.insert(0, max_id + 1 if max_id is not None else 1)
             self.__cursor.execute(
-                "INSERT INTO Schedule (ScheduleID, Time, DayOfWeek, WeekType, GroupID, Subgroup, TeacherID, RoomID, SubjectID) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                tuple(params), )
+                """
+                INSERT INTO Schedule (
+                    ScheduleID,
+                    Time,
+                    DayOfWeek,
+                    WeekType,
+                    GroupID,
+                    Subgroup,
+                    TeacherID,
+                    RoomID,
+                    SubjectID
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                tuple(params),
+            )
         self.__conn.commit()
 
     def add_subject(self, subject_name: str) -> int:
@@ -65,8 +127,10 @@ class Schedule:
         self.__cursor.execute("SELECT MAX(SubjectID) FROM Subjects")
         max_id = self.__cursor.fetchone()[0]
         subject_id = max_id + 1 if max_id is not None else 1
-        self.__cursor.execute("INSERT INTO Subjects (SubjectName, SubjectID) VALUES (?, ?)",
-                              (subject_name, subject_id), )
+        self.__cursor.execute(
+            "INSERT INTO Subjects (SubjectName, SubjectID) VALUES (?, ?)",
+            (subject_name, subject_id),
+        )
         self.__conn.commit()
         return subject_id
 
@@ -134,12 +198,12 @@ class Schedule:
         return result[0] if result else None
 
     def clear_university(self) -> None:
-        self.__cursor.execute(f"DELETE FROM Schedule")
-        self.__cursor.execute(f"DELETE FROM sqlite_sequence WHERE name='Schedule'")
+        self.__cursor.execute("DELETE FROM Schedule")
+        self.__cursor.execute("DELETE FROM sqlite_sequence WHERE name='Schedule'")
 
     def clear_college(self) -> None:
-        self.__cursor.execute(f"DELETE FROM CollegeSchedule")
-        self.__cursor.execute(f"DELETE FROM sqlite_sequence WHERE name='CollegeSchedule'")
+        self.__cursor.execute("DELETE FROM CollegeSchedule")
+        self.__cursor.execute("DELETE FROM sqlite_sequence WHERE name='CollegeSchedule'")
 
     def __del__(self):
         self.__conn.close()

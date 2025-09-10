@@ -20,7 +20,13 @@ from aiogram import F, Router
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery
 
-from app.database import User, get_users_by_teacher_id, all_user_ids, student_ids, teachers_ids
+from app.database import (
+    User,
+    get_users_by_teacher_id,
+    all_user_ids,
+    student_ids,
+    teachers_ids,
+)
 from app.database.schedule import Schedule
 from app.misc import send_broadcast_message
 from app.misc.states import BroadcastStates
@@ -29,39 +35,41 @@ router = Router()
 
 
 @router.callback_query(F.data == "cancel_send")
-async def confirm_send(callback_query: CallbackQuery):
+async def confirm_send_handler(callback_query: CallbackQuery):
     await callback_query.answer("Отправка отменена.")
     await callback_query.message.delete()
 
 
 @router.callback_query(F.data == "cancel_sending")
-async def cancel_sending(callback: CallbackQuery, state: FSMContext):
+async def cancel_sending_handler(callback: CallbackQuery, state: FSMContext):
     await state.set_state(BroadcastStates.cancel_sending)
     await callback.answer("Отправка будет остановлена.")
     await callback.message.delete_reply_markup()
 
 
 @router.callback_query(F.data == "confirm_all")
-async def confirm_send_handler(callback: CallbackQuery, state: FSMContext):
+async def confirm_all_handler(callback: CallbackQuery, state: FSMContext):
     await callback.answer("Начинаем отправку сообщений всем!")
     await state.set_state(BroadcastStates.sending_messages)
     await send_broadcast_message(callback.message, state, callback.message.message_id - 1, all_user_ids())
 
 
 @router.callback_query(F.data == "confirm_students")
-async def confirm_send_handler(callback: CallbackQuery, state: FSMContext):
+async def confirm_students_handler(callback: CallbackQuery, state: FSMContext):
     await callback.answer("Начинаем отправку сообщений студентам!")
     await state.set_state(BroadcastStates.sending_messages)
     await send_broadcast_message(callback.message, state, callback.message.message_id - 1, student_ids())
 
+
 @router.callback_query(F.data == "confirm_teachers")
-async def confirm_send_handler(callback: CallbackQuery, state: FSMContext):
+async def confirm_teachers_handler(callback: CallbackQuery, state: FSMContext):
     await callback.answer("Начинаем отправку сообщений преподавателям!")
     await state.set_state(BroadcastStates.sending_messages)
     await send_broadcast_message(callback.message, state, callback.message.message_id - 1, teachers_ids())
 
+
 @router.callback_query(F.data == "notify")
-async def find_groups_handler(callback: CallbackQuery):
+async def notify_handler(callback: CallbackQuery):
     from app.database import get_users_by_group_id
 
     await callback.answer()
@@ -75,9 +83,7 @@ async def find_groups_handler(callback: CallbackQuery):
             for user_id in get_users_by_group_id(group_id):
                 user = User(user_id)
                 if not user.blocked and not user.banned:
-                    await callback.bot.send_message(
-                        user_id, f"Обновлено расписание для {group[0]}"
-                    )
+                    await callback.bot.send_message(user_id, f"Обновлено расписание для {group[0]}")
                     users += 1
                     await asyncio.sleep(1)
     elif len(found_teachers) > 0:
