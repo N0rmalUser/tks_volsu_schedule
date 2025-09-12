@@ -53,7 +53,7 @@ async def text_formatter(keyboard_type: str, day: int, week: int, value: int) ->
     return text
 
 
-@router.callback_query(DayCallbackFactory.filter(F.action == "day"))
+@router.callback_query(DayCallbackFactory.filter(F.action == "day" or None))
 async def day_handler(callback: CallbackQuery, callback_data: DayCallbackFactory) -> None:
     """Функция, обрабатывающая нажатие кнопки дня недели. Отправляет расписание на этот день для преподавателей,
     групп и аудиторий."""
@@ -75,7 +75,7 @@ async def day_handler(callback: CallbackQuery, callback_data: DayCallbackFactory
     await callback.answer()
 
 
-@router.callback_query(DayCallbackFactory.filter(F.action == "week"))
+@router.callback_query(DayCallbackFactory.filter(F.action == "week" or None))
 async def week_handler(callback: CallbackQuery, callback_data: DayCallbackFactory) -> None:
     """Функция, обрабатывающая нажатие кнопки недели. Отправляет расписание на следующую неделю для преподавателей,
     групп и аудиторий, сохраняя день."""
@@ -97,7 +97,7 @@ async def week_handler(callback: CallbackQuery, callback_data: DayCallbackFactor
     await callback.answer()
 
 
-@router.callback_query(ChangeCallbackFactory.filter(F.action == "room"))
+@router.callback_query(ChangeCallbackFactory.filter(F.action == "room" or None))
 async def room_handler(callback: CallbackQuery, callback_data: ChangeCallbackFactory) -> None:
     """Функция, обрабатывающая нажатие кнопки аудитории. Отправляет расписание на этот день для аудитории."""
 
@@ -113,7 +113,7 @@ async def room_handler(callback: CallbackQuery, callback_data: ChangeCallbackFac
     await callback.answer()
 
 
-@router.callback_query(ChangeCallbackFactory.filter(F.action == "teacher"))
+@router.callback_query(ChangeCallbackFactory.filter(F.action == "teacher" or None))
 async def teacher_handler(callback: CallbackQuery, callback_data: ChangeCallbackFactory) -> None:
     """Функция, обрабатывающая нажатие кнопки преподавателя. Отправляет расписание на этот день для преподавателя.
     Если преподаватель является учеником (указывается в config.toml), отправляет расписание его групп, смешанное с
@@ -138,7 +138,7 @@ async def teacher_handler(callback: CallbackQuery, callback_data: ChangeCallback
     await callback.answer()
 
 
-@router.callback_query(ChangeCallbackFactory.filter(F.action == "group"))
+@router.callback_query(ChangeCallbackFactory.filter(F.action == "group" or None))
 async def group_handler(callback: CallbackQuery, callback_data: ChangeCallbackFactory) -> None:
     """Функция, обрабатывающая нажатие кнопки группы. Отправляет расписание на этот день для группы."""
 
@@ -161,7 +161,7 @@ async def group_handler(callback: CallbackQuery, callback_data: ChangeCallbackFa
     await callback.answer()
 
 
-@router.callback_query(ChangeCallbackFactory.filter(F.action == "spreadsheet"))
+@router.callback_query(ChangeCallbackFactory.filter(F.action == "spreadsheet" or None))
 async def spreadsheet_handler(callback: CallbackQuery, callback_data: ChangeCallbackFactory) -> None:
     if callback_data.value == 1:
         ...
@@ -194,17 +194,17 @@ async def process_default_change(callback: CallbackQuery, callback_data: ChangeC
     await callback.answer()
 
 
-@router.callback_query(DefaultChangeCallbackFactory.filter(F.action == "default_teacher"))
+@router.callback_query(DefaultChangeCallbackFactory.filter(F.action == "default_teacher" or None))
 async def default_teacher_handler(callback: CallbackQuery, callback_data: ChangeCallbackFactory) -> None:
     await process_default_change(callback, callback_data)
 
 
-@router.callback_query(DefaultChangeCallbackFactory.filter(F.action == "default_group"))
+@router.callback_query(DefaultChangeCallbackFactory.filter(F.action == "default_group" or None))
 async def default_group_handler(callback: CallbackQuery, callback_data: ChangeCallbackFactory) -> None:
     await process_default_change(callback, callback_data)
 
 
-@router.callback_query(ChangeCallbackFactory.filter(F.action == "teacher_sheet"))
+@router.callback_query(ChangeCallbackFactory.filter(F.action == "teacher_sheet" or None))
 async def teacher_sheet_handler(callback: CallbackQuery, callback_data: ChangeCallbackFactory) -> None:
     if not callback_data.value:
         await callback.message.edit_text(
@@ -220,7 +220,7 @@ async def teacher_sheet_handler(callback: CallbackQuery, callback_data: ChangeCa
     await callback.answer()
 
 
-@router.callback_query(ChangeCallbackFactory.filter(F.action == "group_sheet"))
+@router.callback_query(ChangeCallbackFactory.filter(F.action == "group_sheet" or None))
 async def group_sheet_handler(callback: CallbackQuery, callback_data: ChangeCallbackFactory) -> None:
     if not callback_data.value:
         await callback.message.edit_text("Выберите группу", reply_markup=kb.get_sheet_groups(callback.from_user.id))
@@ -255,7 +255,7 @@ async def group_sheet_handler(callback: CallbackQuery, callback_data: ChangeCall
     await callback.answer()
 
 
-@router.callback_query(ChangeCallbackFactory.filter(F.action == "room_sheet"))
+@router.callback_query(ChangeCallbackFactory.filter(F.action == "room_sheet" or None))
 async def room_sheet_handler(callback: CallbackQuery, callback_data: ChangeCallbackFactory) -> None:
     if not callback_data.value:
         await callback.message.edit_text("Выберите аудиторию", reply_markup=kb.get_sheet_rooms())
