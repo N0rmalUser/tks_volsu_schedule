@@ -28,8 +28,6 @@ NUMERATOR: int = config["date"]["numerator"]
 
 BOT_TOKEN: str = config["bot"]["token"]
 ADMIN_CHAT_ID: int = config["bot"]["admin_chat_id"]
-ADMIN_ID: int = config["bot"]["admin_id"]
-
 
 LOG_LEVEL = config["logging"]["level"]
 EVENT_LEVEL = config["logging"]["event_level"]

@@ -1,7 +1,6 @@
 [bot]
 token = "your_token"
 admin_chat_id = -10000000
-admin_id = 000000
 
 
 [logging]
