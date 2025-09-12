@@ -229,9 +229,29 @@ async def group_sheet_handler(callback: CallbackQuery, callback_data: ChangeCall
         for group in GROUPS:
             await callback.message.answer_document(FSInputFile(GROUPS_SCHEDULE_PATH / f"{group}.docx"))
     else:
-        await callback.message.answer_document(
-            FSInputFile(GROUPS_SCHEDULE_PATH / f"{Schedule().get_group_name(callback_data.value)}.docx")
-        )
+        group_name = Schedule().get_group_name(callback_data.value)
+        file_path = GROUPS_SCHEDULE_PATH / f"{group_name}.docx"
+        if not file_path.exists():
+            prefix, number = group_name.split("-")  # напр. "ИТСб", "251"
+            if number.endswith("1"):
+                paired_number = number[:-1] + "2"
+                candidate = GROUPS_SCHEDULE_PATH / f"{prefix}-{number} {paired_number}.docx"
+                if candidate.exists():
+                    file_path = candidate
+            elif number.endswith("2"):
+                paired_number = number[:-1] + "1"
+                candidates = [
+                    f"{prefix}-{number} {paired_number}.docx",
+                    f"{prefix}-{paired_number} {number}.docx",
+                    f"{prefix}-{number}_{paired_number}.docx",
+                    f"{prefix}-{paired_number}_{number}.docx",
+                ]
+                for candidate_name in candidates:
+                    candidate_path = GROUPS_SCHEDULE_PATH / candidate_name
+                    if candidate_path.exists():
+                        file_path = candidate_path
+                        break
+        await callback.message.answer_document(FSInputFile(file_path))
     await callback.answer()
 
 
