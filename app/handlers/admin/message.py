@@ -50,10 +50,7 @@ from app.misc.states import BotHashStates
 router = Router()
 
 
-@router.message(
-    Command("month"),
-    ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID),
-)
+@router.message(Command("month"), ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID),)
 async def handle_send_daily_plot(msg: Message, command: CommandObject = None) -> None:
     """Отправляет график количества пользователей по дням."""
 
@@ -74,10 +71,7 @@ async def handle_send_daily_plot(msg: Message, command: CommandObject = None) ->
     await msg.answer_document(FSInputFile(PLOT_PATH / "activity_for_month.html"))
 
 
-@router.message(
-    Command("day"),
-    ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID),
-)
+@router.message(Command("day"), ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID))
 async def handle_send_hourly_plot(msg: Message, command: CommandObject = None) -> None:
     """Отправляет график количества пользователей по часам для определённого дня."""
 
@@ -95,18 +89,12 @@ async def handle_send_hourly_plot(msg: Message, command: CommandObject = None) -
     await msg.answer_document(FSInputFile(PLOT_PATH / "activity_for_day.html"))
 
 
-@router.message(
-    Command("menu"),
-    ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID),
-)
+@router.message(Command("menu"),ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID))
 async def menu_command_track(msg: Message) -> None:
     await msg.answer("Меню админа", reply_markup=kb.admin_menu())
 
 
-@router.message(
-    Command("ban"),
-    ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID),
-)
+@router.message(Command("ban"), ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID))
 async def ban_command_handler(msg: Message) -> None:
     """Банит пользователя. Изменяет значение столбца banned в базе данных."""
     user = User(topic_id=msg.message_thread_id)
@@ -116,10 +104,7 @@ async def ban_command_handler(msg: Message) -> None:
     logging.info(f"Забанен юзверь {user.id}")
 
 
-@router.message(
-    Command("unban"),
-    ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID),
-)
+@router.message(Command("unban"), ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID))
 async def unban_command_handler(msg: Message) -> None:
     """Разбанивает пользователя. Изменяет значение столбца banned в базе данных."""
 
@@ -130,10 +115,7 @@ async def unban_command_handler(msg: Message) -> None:
     logging.info(f"Разбанен юзверь {user.id}")
 
 
-@router.message(
-    Command("clear"),
-    ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID),
-)
+@router.message(Command("clear"), ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID))
 async def clear_handler(msg: Message) -> None:
     """Удаляет все файлы расписания."""
 
@@ -149,10 +131,7 @@ async def clear_handler(msg: Message) -> None:
     await start.edit_text("Ненужные файлы удалены")
 
 
-@router.message(
-    Command("dump"),
-    ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID),
-)
+@router.message(Command("dump"), ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID))
 async def dump_handler(msg: Message) -> None:
     """Отправляет базу данных пользователей и логи в админский чат."""
 
@@ -179,10 +158,7 @@ async def dump_handler(msg: Message) -> None:
         logging.error("Ошибка при выгрузке расписания", e)
 
 
-@router.message(
-    Command("log"),
-    ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID),
-)
+@router.message(Command("log"), ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID))
 async def log_handler(msg: Message) -> None:
     """Отправляет базу данных пользователей и логи в админский чат."""
 
@@ -243,10 +219,7 @@ async def hash_handler(msg: Message, state: FSMContext) -> None:
     await state.set_state(BotHashStates.waiting)
 
 
-@router.message(
-    Command("update"),
-    ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID),
-)
+@router.message(Command("update"), ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID))
 async def update_handler(msg: Message) -> None:
     from app.misc import schedule_parser
 
@@ -269,10 +242,7 @@ async def update_handler(msg: Message) -> None:
     logging.info("База данных расписания обновлена")
 
 
-@router.message(
-    Command("track"),
-    ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID),
-)
+@router.message(Command("track"), ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID),)
 async def track_command_track(msg: Message, command: CommandObject) -> None:
     """Включает/выключает трекинг для пользователя или для всех пользователей."""
 
@@ -308,10 +278,7 @@ async def track_command_track(msg: Message, command: CommandObject) -> None:
             )
 
 
-@router.message(
-    Command("info"),
-    ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID),
-)
+@router.message(Command("info"), ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID))
 async def info_command_info(msg: Message, command: CommandObject = None) -> None:
     """Присылает информацию о пользователе или о всех пользователях в зависимости от топика"""
 
@@ -328,10 +295,7 @@ async def info_command_info(msg: Message, command: CommandObject = None) -> None
         await start.edit_text(user_info(int(command.args)), parse_mode="MarkdownV2")
 
 
-@router.message(
-    Command("teacher"),
-    ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID),
-)
+@router.message(Command("teacher"), ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID))
 async def teacher_command_teacher(msg: Message) -> None:
     start = await msg.answer("Изменяю тип пользователя...")
     if start.message_thread_id:
@@ -340,10 +304,7 @@ async def teacher_command_teacher(msg: Message) -> None:
         await start.edit_text("Тип пользователя изменён на `teacher`")
 
 
-@router.message(
-    Command("student"),
-    ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID),
-)
+@router.message(Command("student"), ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID))
 async def student_command_student(msg: Message) -> None:
     start = await msg.answer("Изменяю тип пользователя...")
     if start.message_thread_id:
@@ -352,10 +313,7 @@ async def student_command_student(msg: Message) -> None:
         await start.edit_text("Тип пользователя изменён на `student`")
 
 
-@router.message(
-    F.document,
-    ChatTypeIdFilter(chat_type=["group", "supergroup"]),
-)
+@router.message(F.document, ChatTypeIdFilter(chat_type=["group", "supergroup"]))
 async def file_handler(msg: Message):
     """Ловит документы и заменяет файл schedule.db, users.db, activities.db на полученные."""
 
