@@ -444,13 +444,8 @@ async def handle_topic_message(msg: Message, state: FSMContext) -> None:
             message_id=msg.message_id,
         )
     else:
-        if msg.is_from_offline:
-            from app.misc import send_broadcast_message
-
-            await send_broadcast_message(msg, state, msg.message_id)
-        else:
-            await msg.answer(
-                "Кому отправить это сообщений?",
-                reply_markup=kb.message_confirm(),
-            )
-            await state.set_state(BroadcastStates.waiting_for_confirmation)
+        await msg.answer(
+            "Кому отправить это сообщений?",
+            reply_markup=kb.message_confirm(),
+        )
+        await state.set_state(BroadcastStates.waiting_for_confirmation)
