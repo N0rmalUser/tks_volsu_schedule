@@ -37,14 +37,12 @@ from aiogram.client.session.aiohttp import AiohttpSession
 from aiogram.fsm.storage.memory import MemoryStorage
 
 from app import middlewares
-from app.config import ADMIN_CHAT_ID, BOT_TOKEN
-from app.database.user import User
+from app.config import BOT_TOKEN
 from .handlers.user import callback as user_callback
 from .handlers.user import message as user_message
 from .handlers.user import status as user_status
 from .handlers.admin import message as admin_message
 from .handlers.admin import callback as admin_callback
-from app.markups import admin as kb
 
 
 async def main() -> None:

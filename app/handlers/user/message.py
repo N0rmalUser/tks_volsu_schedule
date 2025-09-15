@@ -39,8 +39,6 @@ async def start_handler(msg: Message) -> None:
         (kb.teacher_menu(), kb.get_teachers()) if user.type == "teacher" else (kb.student_menu(), kb.get_groups())
     )
 
-    import app
-
     await msg.answer(
         f"Привет, {msg.from_user.full_name}\n",
         reply_markup=menu,
