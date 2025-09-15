@@ -14,22 +14,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import time
-
-import app
 import asyncio
 import logging
-
 from datetime import datetime
 
-import pytz
-
-from app.config import EVENT_LEVEL, LOG_FILE, LOG_LEVEL, TIMEZONE
-
-start_time = time.monotonic()
+import app
+from app.config import EVENT_LEVEL, LOG_FILE, LOG_LEVEL, TZ
 
 if __name__ == "__main__":
-    logging.Formatter.converter = lambda *args: datetime.now(pytz.timezone(TIMEZONE)).timetuple()
+    logging.Formatter.converter = lambda *args: datetime.now(TZ).timetuple()
     levels = {
         "DEBUG": logging.DEBUG,
         "INFO": logging.INFO,
@@ -50,6 +43,4 @@ if __name__ == "__main__":
         force=True,
     )
     logging.getLogger("aiogram.event").setLevel(levels[EVENT_LEVEL])
-    logging.debug(f"Starting at {start_time}")
-    logging.critical(f"Bot started in {(time.monotonic() - start_time):.2f} seconds.")
     asyncio.run(app.main())

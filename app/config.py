@@ -18,6 +18,7 @@ import locale
 import platform
 from pathlib import Path
 
+import pytz
 import toml
 
 root_path = Path(__file__).parent.parent.resolve()
@@ -47,6 +48,7 @@ VOLSU_BOT_URL: str = config["college"]["bot_url"]
 ALIASES = config["aliases"]
 
 TIMEZONE: str = config["date"]["timezone"]
+TZ = pytz.timezone(TIMEZONE)
 
 DATA_PATH: Path = root_path / "data"
 DB_PATH: Path = DATA_PATH / "db"

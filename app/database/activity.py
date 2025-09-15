@@ -18,9 +18,8 @@ import sqlite3
 from datetime import datetime, timedelta
 
 import pandas as pd
-from pytz import timezone as tz
 
-from app.config import ACTIVITIES_DB, TIMEZONE
+from app.config import ACTIVITIES_DB, TZ
 from app.database import sql_kit
 
 
@@ -162,7 +161,7 @@ def get_top_users_by_hours(
 
 @sql_kit(ACTIVITIES_DB)
 def log_user_activity(user_id: int, cursor: sqlite3.Cursor):
-    now = datetime.now(tz(TIMEZONE))
+    now = datetime.now(TZ)
     date = now.strftime("%Y-%m-%d")
     hour = now.strftime("%Y-%m-%d %H:00")
 

@@ -17,22 +17,20 @@
 import logging
 from datetime import datetime
 
-import pytz
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
+from app.config import NUMERATOR, TZ
 from app.markups import admin
 from app.misc.states import BroadcastStates
-
-from ..config import TIMEZONE, NUMERATOR
 
 
 def get_today() -> tuple[int, int]:
     """Метод для получения сегодняшнего дня и недели"""
 
-    day = int(f"{datetime.now(pytz.timezone(TIMEZONE)).weekday() + 1}")
+    day = int(f"{datetime.now(TZ).weekday() + 1}")
     week_int = 2 if NUMERATOR == 0 else 1
-    week = week_int if datetime.now(pytz.timezone(TIMEZONE)).isocalendar()[1] % 2 == 0 else 3 - week_int
+    week = week_int if datetime.now(TZ).isocalendar()[1] % 2 == 0 else 3 - week_int
     if day == 7:
         return 1, week + 1 if week == 1 else week - 1
 
@@ -99,8 +97,9 @@ def create_progress_bar(completed: int, total: int) -> str:
 
 async def send_broadcast_message(msg: Message, state: FSMContext, message_id: int, user_ids: list[int]):
     from asyncio import sleep
-    from app.database.user import User
+
     from app.database import all_user_ids
+    from app.database.user import User
 
     user_ids = all_user_ids()
     sent_count = 0

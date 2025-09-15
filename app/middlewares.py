@@ -19,7 +19,6 @@ import logging
 from datetime import datetime
 from typing import Any, Awaitable, Callable, Dict
 
-import pytz
 from aiogram import BaseMiddleware
 from aiogram.exceptions import (
     TelegramBadRequest,
@@ -28,7 +27,7 @@ from aiogram.exceptions import (
 )
 from aiogram.types import Message, Update
 
-from app.config import TIMEZONE, ADMIN_CHAT_ID
+from app.config import ADMIN_CHAT_ID, TZ
 from app.database.activity import log_user_activity
 from app.database.user import User
 
@@ -122,7 +121,7 @@ class UserActivityMiddleware(BaseMiddleware):
         data: Dict[str, Any],
     ) -> Any:
         user_id = data["event_from_user"].id
-        User(user_id).last_date = datetime.now(pytz.timezone(TIMEZONE)).isoformat()
+        User(user_id).last_date = datetime.now(TZ).isoformat()
         log_user_activity(user_id)
         return await handler(event, data)
 
