@@ -20,8 +20,9 @@ from datetime import datetime
 from functools import wraps
 from pathlib import Path
 
-from ..config import ACTIVITIES_DB, SCHEDULE_DB, USERS_DB
+from dateutil.relativedelta import relativedelta
 
+from ..config import ACTIVITIES_DB, SCHEDULE_DB, USERS_DB
 from .user import User
 
 
@@ -57,7 +58,7 @@ def user_db_init(cursor: sqlite3.Cursor):
             user_id INTEGER PRIMARY KEY,
             user_type TEXT DEFAULT 'student',
             topic_id INTEGER,
-            start_date TIMESTAMP DEFAULT (datetime('now','localtime')),
+            start_date TIMESTAMP,
             last_date TIMESTAMP,
             blocked BOOLEAN DEFAULT false,
             banned BOOLEAN DEFAULT false,
@@ -162,26 +163,51 @@ def activity_db_init(cursor: sqlite3.Cursor):
     )
 
 
+def format_date(date: str) -> str:
+    """Преобразует relativedelta в строку вида 'X лет, Y мес., Z дн.'"""
+
+    from app.config import TZ
+
+    date_and_time: datetime = datetime.fromisoformat(date)
+    if date_and_time.tzinfo is None:
+        date_and_time = TZ.localize(date_and_time)
+    rd = relativedelta(datetime.now(TZ), date_and_time)
+    parts = [
+        (rd.years, "лет"),
+        (rd.months, "мес."),
+        (rd.days, "дн."),
+        (rd.hours, "ч"),
+        (rd.minutes, "мин"),
+        (rd.seconds, "сек"),
+    ]
+    # оставляем только ненулевые элементы
+    result = [f"{value} {name}" for value, name in parts if value]
+    return ", ".join(result) if result else "Только что"
+
+
 def user_info(user_id: int):
     """Возвращает информацию о пользователе, подготовленную к отправке админу"""
 
     from app.config import GROUPS, TEACHERS
 
     user_obj = User(user_id)
-    days_until = (datetime.fromisoformat(user_obj.last_date).date() - datetime.today().date()).days
     return f"""
-Информация о пользователе:
-<code>user type: </code> <code>{user_obj.type}</code>
-<code>start date:</code> <code>{user_obj.start_date}</code>
-<code>last_date: </code> <code>{user_obj.last_date}</code>
-<code>           </code> <code>{days_until} дней назад</code>
+Информация о {"СТУДЕНТ" if user_obj.type == "student" else "ПРЕПОДАВАТЕЛ"}Е:
+Дата регистрации:
+    <code>{datetime.fromisoformat(user_obj.start_date).strftime("%Y-%m-%d %H:%M:%S")}</code>
+    <code>{format_date(user_obj.start_date)}</code>
+Последняя активность:
+    <code>{datetime.fromisoformat(user_obj.last_date).strftime("%Y-%m-%d %H:%M:%S")}</code>
+    <code>{format_date(user_obj.last_date)}</code>
 
-<code>blocked:   </code> <code>{user_obj.blocked}</code>
-<code>banned:    </code> <code>{user_obj.banned}</code>
-<code>tracking:  </code> <code>{user_obj.tracking}</code>
-<code>teacher:   </code> <code>{TEACHERS[int(user_obj.teacher) - 1] if user_obj.teacher else "None"}</code>
-<code>group:     </code> <code>{GROUPS[int(user_obj.group) - 1].replace("-", "") if user_obj.group else "None"}</code>
-    """
+<code>Заблокировал: </code> <code>{user_obj.blocked}</code>
+<code>Забанен:      </code> <code>{user_obj.banned}</code>
+<code>Отслеживается:</code> <code>{user_obj.tracking}</code>
+<code>Преподаватель:</code> <code>{TEACHERS[int(user_obj.teacher) - 1] if user_obj.teacher else "None"}</code>
+<code>Группа:       </code> <code>{
+        GROUPS[int(user_obj.group) - 1].replace("-", "") if user_obj.group else "None"
+    }</code>
+"""
 
 
 # Не менять, должен обязательно список отправлять
@@ -253,7 +279,7 @@ def get_all_users_info(cursor: sqlite3.Cursor) -> str:
     cursor.execute("SELECT COUNT(*) FROM User_Info WHERE user_type = 'teacher'")
     teachers = cursor.fetchone()[0]
 
-    result = (
+    return (
         f"Пользователей: {users_count}\n\n"
         f"Из них:\n"
         f"Преподавателей {teachers}\n"
@@ -261,11 +287,10 @@ def get_all_users_info(cursor: sqlite3.Cursor) -> str:
         f"Активных:\n"
         f"За месяц - {month_users_count}\n"
         f"За неделю - {week_users_count}\n"
-        f"За день - {today_users_count}\n"
+        f"За сутки - {today_users_count}\n"
         f"Заблокировали бота: {blocked_count}\n"
         f"Забанено: {banned_count}"
     )
-    return result
 
 
 async def tracking_manage(tracking: bool) -> None:

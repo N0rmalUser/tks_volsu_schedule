@@ -132,7 +132,7 @@ class User:
             """,
             (self.__user_id,),
         )
-        return self.__cursor.fetchone()[0] or None
+        return row[0] if (row := self.__cursor.fetchone()) else None
 
     @type.setter
     def type(self, user_type) -> None:
@@ -159,7 +159,7 @@ class User:
             """,
             (self.__user_id,),
         )
-        return self.__cursor.fetchone()[0] or None
+        return row[0] if (row := self.__cursor.fetchone()) else None
 
     @teacher.setter
     def teacher(self, teacher_id: int) -> None:
@@ -186,7 +186,7 @@ class User:
             """,
             (self.__user_id,),
         )
-        return self.__cursor.fetchone()[0] or None
+        return row[0] if (row := self.__cursor.fetchone()) else None
 
     @group.setter
     def group(self, group_id: str) -> None:
@@ -213,7 +213,7 @@ class User:
             """,
             (self.__user_id,),
         )
-        return self.__cursor.fetchone()[0] or None
+        return row[0] if (row := self.__cursor.fetchone()) else None
 
     @topic_id.setter
     def topic_id(self, topic_id: int) -> None:
@@ -254,7 +254,7 @@ class User:
             """,
             (self.__user_id,),
         )
-        return self.__cursor.fetchone()[0] or None
+        return row[0] if (row := self.__cursor.fetchone()) else None
 
     @default.setter
     def default(self, default: str):
@@ -281,7 +281,7 @@ class User:
             """,
             (self.__user_id,),
         )
-        return self.__cursor.fetchone()[0] or None
+        return row[0] if (row := self.__cursor.fetchone()) else None
 
     @last_date.setter
     def last_date(self, date: str) -> None:
@@ -308,7 +308,7 @@ class User:
             """,
             (self.__user_id,),
         )
-        return self.__cursor.fetchone()[0] or None
+        return row[0] if (row := self.__cursor.fetchone()) else None
 
     def is_exists(self) -> bool:
         """Проверяет, есть ли пользователь в базе данных"""
@@ -321,7 +321,7 @@ class User:
             """,
             (self.__user_id,),
         )
-        return True if self.__cursor.fetchone() is not None else False
+        return True if self.__cursor.fetchone() else False
 
     def __user_id_from_topic(self, topic_id: int) -> int:
         """Возвращает значение поля user_id по значению поля topic_id"""
@@ -333,7 +333,7 @@ class User:
             """,
             (topic_id,),
         )
-        return self.__cursor.fetchone()[0] or None
+        return row[0] if (row := self.__cursor.fetchone()) else None
 
     def __del__(self):
         self.__conn.close()
