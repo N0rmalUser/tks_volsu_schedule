@@ -310,6 +310,18 @@ class User:
         )
         return row[0] if (row := self.__cursor.fetchone()) else None
 
+    @start_date.setter
+    def start_date(self, date: str) -> None:
+        self.__cursor.execute(
+            """
+            INSERT INTO User_Info(user_id, start_date)
+            VALUES(?, ?) ON CONFLICT(user_id) DO UPDATE
+            SET start_date=excluded.start_date;
+            """,
+            (self.__user_id, date),
+        )
+        self.__conn.commit()
+
     def is_exists(self) -> bool:
         """Проверяет, есть ли пользователь в базе данных"""
 
