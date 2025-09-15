@@ -50,7 +50,7 @@ from app.misc.states import BotHashStates
 router = Router()
 
 
-@router.message(Command("month"), ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID),)
+@router.message(Command("month"), ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID))
 async def handle_send_daily_plot(msg: Message, command: CommandObject = None) -> None:
     """Отправляет график количества пользователей по дням."""
 
@@ -82,7 +82,7 @@ async def handle_send_hourly_plot(msg: Message, command: CommandObject = None) -
     await msg.answer_document(FSInputFile(PLOT_PATH / "activity_for_day.html"))
 
 
-@router.message(Command("menu"),ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID))
+@router.message(Command("menu"), ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID))
 async def menu_command_track(msg: Message) -> None:
     await msg.answer("Меню админа", reply_markup=kb.admin_menu())
 
@@ -163,10 +163,7 @@ async def log_handler(msg: Message) -> None:
         logging.error("Ошибка при отчистке логов", e)
 
 
-@router.message(
-    Command("college"),
-    ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID),
-)
+@router.message(Command("college"), ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID))
 async def college_handler(msg: Message, state: FSMContext) -> None:
     await msg.answer("Введите хэш запроса:")
     await state.set_state(BotHashStates.sending_hash)
@@ -235,7 +232,7 @@ async def update_handler(msg: Message) -> None:
     logging.info("База данных расписания обновлена")
 
 
-@router.message(Command("track"), ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID),)
+@router.message(Command("track"), ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID))
 async def track_command_track(msg: Message, command: CommandObject) -> None:
     """Включает/выключает трекинг для пользователя или для всех пользователей."""
 
