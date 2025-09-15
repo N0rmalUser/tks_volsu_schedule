@@ -50,8 +50,7 @@ class User:
             """,
             (self.__user_id,),
         )
-        result = self.__cursor.fetchone()
-        return bool(result[0]) if result is not None else False
+        return bool(row[0]) if (row := self.__cursor.fetchone()) else False
 
     @blocked.setter
     def blocked(self, block: bool) -> None:
@@ -78,8 +77,7 @@ class User:
             """,
             (self.__user_id,),
         )
-        result = self.__cursor.fetchone()
-        return bool(result[0]) if result is not None else False
+        return bool(row[0]) if (row := self.__cursor.fetchone()) else False
 
     @banned.setter
     def banned(self, ban: bool) -> None:
@@ -107,8 +105,7 @@ class User:
             """,
             (self.__user_id,),
         )
-        result = self.__cursor.fetchone()
-        return bool(result[0]) if result is not None else False
+        return bool(row[0]) if (row := self.__cursor.fetchone()) else False
 
     @tracking.setter
     def tracking(self, tracking: bool) -> None:
@@ -135,8 +132,7 @@ class User:
             """,
             (self.__user_id,),
         )
-        result = self.__cursor.fetchone()
-        return result[0] if result else None
+        return self.__cursor.fetchone()[0] or None
 
     @type.setter
     def type(self, user_type) -> None:
@@ -163,8 +159,7 @@ class User:
             """,
             (self.__user_id,),
         )
-        result = self.__cursor.fetchone()
-        return result[0] if result else None
+        return self.__cursor.fetchone()[0] or None
 
     @teacher.setter
     def teacher(self, teacher_id: int) -> None:
@@ -191,8 +186,7 @@ class User:
             """,
             (self.__user_id,),
         )
-        result = self.__cursor.fetchone()
-        return result[0] if result else None
+        return self.__cursor.fetchone()[0] or None
 
     @group.setter
     def group(self, group_id: str) -> None:
@@ -219,8 +213,7 @@ class User:
             """,
             (self.__user_id,),
         )
-        result = self.__cursor.fetchone()
-        return result[0] if result else False
+        return self.__cursor.fetchone()[0] or None
 
     @topic_id.setter
     def topic_id(self, topic_id: int) -> None:
@@ -261,8 +254,7 @@ class User:
             """,
             (self.__user_id,),
         )
-        result = self.__cursor.fetchone()
-        return result[0] if result else None
+        return self.__cursor.fetchone()[0] or None
 
     @default.setter
     def default(self, default: str):
@@ -289,8 +281,7 @@ class User:
             """,
             (self.__user_id,),
         )
-        result = self.__cursor.fetchone()
-        return result[0] if result else None
+        return self.__cursor.fetchone()[0] or None
 
     @last_date.setter
     def last_date(self, date: str) -> None:
@@ -317,8 +308,7 @@ class User:
             """,
             (self.__user_id,),
         )
-        result = self.__cursor.fetchone()
-        return result[0] if result else None
+        return self.__cursor.fetchone()[0] or None
 
     def is_exists(self) -> bool:
         """Проверяет, есть ли пользователь в базе данных"""
@@ -343,8 +333,7 @@ class User:
             """,
             (topic_id,),
         )
-        result = self.__cursor.fetchone()
-        return result[0] if result else None
+        return self.__cursor.fetchone()[0] or None
 
     def __del__(self):
         self.__conn.close()
