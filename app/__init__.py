@@ -38,11 +38,11 @@ from aiogram.fsm.storage.memory import MemoryStorage
 
 from app import middlewares
 from app.config import BOT_TOKEN
-from .handlers.user import callback as user_callback
-from .handlers.user import message as user_message
-from .handlers.user import status as user_status
-from .handlers.admin import message as admin_message
-from .handlers.admin import callback as admin_callback
+from app.handlers.admin import callback as admin_callback
+from app.handlers.admin import message as admin_message
+from app.handlers.user import callback as user_callback
+from app.handlers.user import message as user_message
+from app.handlers.user import status as user_status
 
 
 async def main() -> None:
@@ -71,14 +71,14 @@ async def main() -> None:
 
 try:
     from .config import (
+        COLLEGE_SHEETS_PATH,
         DATA_PATH,
         DB_PATH,
-        SCHEDULE_PATH,
         GROUPS_SCHEDULE_PATH,
-        TEACHERS_SHEETS_PATH,
-        ROOMS_SHEETS_PATH,
-        COLLEGE_SHEETS_PATH,
         PLOT_PATH,
+        ROOMS_SHEETS_PATH,
+        SCHEDULE_PATH,
+        TEACHERS_SHEETS_PATH,
     )
 
     for path in [
