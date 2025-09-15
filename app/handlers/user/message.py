@@ -41,7 +41,11 @@ async def start_handler(msg: Message) -> None:
 
     import app
 
-    await app.start_message(msg, menu, keyboard)
+    await msg.answer(
+        f"Привет, {msg.from_user.full_name}\n",
+        reply_markup=menu,
+    )
+    await msg.answer("Выбери себя в списке", reply_markup=keyboard)
 
 
 @router.message(Command("help"), ChatTypeIdFilter(chat_type=["private"]))

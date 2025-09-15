@@ -63,11 +63,35 @@ class TopicCreatorMiddleware(BaseMiddleware):
         if (event.message and not event.message.from_user.is_bot) or (
             event.callback_query and not event.callback_query.from_user.is_bot
         ):
-            if not user.topic_id:
-                from app import topic_create
+            if not user.topic_id and (msg := event.message):
+                from aiogram.enums import ParseMode
+                from app.markups import admin as kb
 
-                if msg := event.message:
-                    await topic_create(msg)
+                user_db = User(msg.from_user.id)
+                if msg.from_user.username:
+                    topic_name = f"{msg.from_user.username} {msg.from_user.id}"
+                else:
+                    topic_name = f"{msg.from_user.full_name} {msg.from_user.id}"
+                result = await msg.bot.create_forum_topic(ADMIN_CHAT_ID, topic_name)
+                topic_id = result.message_thread_id
+                user_db.topic_id = topic_id
+                user_info = (
+                    f"Пользователь: <code>{msg.from_user.full_name}</code>\n"
+                    f"ID: <code>{msg.from_user.id}</code>\n"
+                    f"Username: @{msg.from_user.username}\n"
+                    f"Тип пользователя: {user_db.type}"
+                )
+                user_db.tracking = True
+                await msg.bot.send_message(
+                    ADMIN_CHAT_ID,
+                    message_thread_id=topic_id,
+                    text=user_info,
+                    reply_markup=kb.admin_menu(),
+                    parse_mode=ParseMode.HTML,
+                )
+                user_db.tracking = False
+                logging.info(f"Создан топик имени {msg.from_user.id} @{msg.from_user.username}")
+
             return await handler(event, data)
         return
 
