@@ -59,29 +59,27 @@ class TopicCreatorMiddleware(BaseMiddleware):
         event: Update,
         data: Dict[str, Any],
     ) -> Any:
-        user = User(data["event_from_user"].id)
-        if (event.message and not event.message.from_user.is_bot) or (
-            event.callback_query and not event.callback_query.from_user.is_bot
-        ):
-            if not user.topic_id and (msg := event.message):
-                from aiogram.enums import ParseMode
-                from app.markups import admin as kb
+        if (msg := event.message) and not event.message.from_user.is_bot:
+            from aiogram.enums import ParseMode
 
-                user_db = User(msg.from_user.id)
+            from app.markups import admin as kb
+
+            user = User(msg.from_user.id)
+            if not user.topic_id:
                 if msg.from_user.username:
                     topic_name = f"{msg.from_user.username} {msg.from_user.id}"
                 else:
                     topic_name = f"{msg.from_user.full_name} {msg.from_user.id}"
                 result = await msg.bot.create_forum_topic(ADMIN_CHAT_ID, topic_name)
                 topic_id = result.message_thread_id
-                user_db.topic_id = topic_id
+                user.topic_id = topic_id
+                user.start_date = datetime.now(TZ).isoformat()
                 user_info = (
                     f"Пользователь: <code>{msg.from_user.full_name}</code>\n"
                     f"ID: <code>{msg.from_user.id}</code>\n"
                     f"Username: @{msg.from_user.username}\n"
-                    f"Тип пользователя: {user_db.type}"
+                    f"Тип пользователя: {user.type}"
                 )
-                user_db.tracking = True
                 await msg.bot.send_message(
                     ADMIN_CHAT_ID,
                     message_thread_id=topic_id,
@@ -89,11 +87,9 @@ class TopicCreatorMiddleware(BaseMiddleware):
                     reply_markup=kb.admin_menu(),
                     parse_mode=ParseMode.HTML,
                 )
-                user_db.tracking = False
+                user.tracking = False
                 logging.info(f"Создан топик имени {msg.from_user.id} @{msg.from_user.username}")
-
-            return await handler(event, data)
-        return
+        return await handler(event, data)
 
 
 class CallbackTelegramErrorsMiddleware(BaseMiddleware):
