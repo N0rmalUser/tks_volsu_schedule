@@ -60,14 +60,9 @@ async def handle_send_daily_plot(msg: Message, command: CommandObject = None) ->
     from app.misc import user_activity
 
     month = (datetime.strptime(command.args, "%d.%m.%Y") if command.args else datetime.now()).strftime("%Y-%m-%d")
-    if msg.message_thread_id and msg.message_thread_id != 1:  # TODO: Починить топики
-        activity = db.get_user_activity_for_month(
-            user_id=User(topic_id=msg.message_thread_id).id,
-            date_str=month,
-        )
-    else:
-        activity = db.get_activity_for_month(date_str=month)
-    user_activity.plot_activity_for_month(activity, datetime.strptime(month, "%Y-%m-%d").strftime("%d %B %Y"))
+    user_activity.plot_activity_for_month(
+        db.get_activity_for_month(date_str=month), datetime.strptime(month, "%Y-%m-%d").strftime("%d %B %Y")
+    )
     await msg.answer_document(FSInputFile(PLOT_PATH / "activity_for_month.html"))
 
 
@@ -81,11 +76,9 @@ async def handle_send_hourly_plot(msg: Message, command: CommandObject = None) -
     from app.misc import user_activity
 
     date = (datetime.strptime(command.args, "%d.%m.%Y") if command.args else datetime.now()).strftime("%Y-%m-%d")
-    if msg.message_thread_id:
-        activity = db.get_user_activity_for_day(user_id=User(topic_id=msg.message_thread_id).id, date_str=date)
-    else:
-        activity = db.get_activity_for_day(date_str=date)
-    user_activity.plot_activity_for_day(activity, datetime.strptime(date, "%Y-%m-%d").strftime("%d %B %Y"))
+    user_activity.plot_activity_for_day(
+        db.get_activity_for_day(date_str=date), datetime.strptime(date, "%Y-%m-%d").strftime("%d %B %Y")
+    )
     await msg.answer_document(FSInputFile(PLOT_PATH / "activity_for_day.html"))
 
 
