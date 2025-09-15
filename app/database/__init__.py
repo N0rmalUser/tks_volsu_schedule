@@ -168,11 +168,7 @@ def user_info(user_id: int):
     from app.config import GROUPS, TEACHERS
 
     user_obj = User(user_id)
-    # TODO: Убрать этот костыль. В бд привести в формат iso
-    try:
-        days_until = (datetime.fromisoformat(user_obj.last_date).date() - datetime.today().date()).days
-    except Exception:
-        days_until = (datetime.fromisoformat(user_obj.last_date) - datetime.today().date()).days
+    days_until = (datetime.fromisoformat(user_obj.last_date).date() - datetime.today().date()).days
     return f"""
 Информация о пользователе:
 <code>user type: </code> <code>{user_obj.type}</code>
@@ -239,11 +235,7 @@ def get_all_users_info(cursor: sqlite3.Cursor) -> str:
     month_users_count, week_users_count, today_users_count = 0, 0, 0
     today = datetime.today().date()
     for (last_date_str,) in users:
-        # TODO: Убрать этот костыль. В бд привести в формат iso
-        try:
-            last_date = datetime.fromisoformat(last_date_str).date()
-        except Exception:
-            last_date = datetime.strptime(last_date_str, "%d-%m-%Y %H:%M:%S").date()
+        last_date = datetime.fromisoformat(last_date_str).date()
         days_until = (last_date - today).days
         if days_until >= -30:
             month_users_count += 1
