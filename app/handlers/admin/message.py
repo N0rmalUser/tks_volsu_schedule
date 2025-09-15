@@ -395,7 +395,7 @@ async def handle_topic_message(msg: Message, state: FSMContext) -> None:
         await msg.answer("Нет такой команды, но я тебя спас, не бойся")
         return
 
-    if msg.message_thread_id is not None:
+    if msg.message_thread_id:
         await msg.bot.copy_message(
             chat_id=User(topic_id=msg.message_thread_id).id,
             from_chat_id=msg.chat.id,
