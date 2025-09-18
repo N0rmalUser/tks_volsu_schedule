@@ -248,24 +248,41 @@ async def hash_handler(msg: Message, state: FSMContext) -> None:
     ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID),
 )
 async def update_handler(msg: Message) -> None:
-    from app.misc import schedule_parser
+    from app.misc.schedule_parser import university_schedule_parser, college_schedule_parser
+    from app.misc.compare import compare_snapshots, snapshot
 
-    start = await msg.answer("Подождите...")
+    start = await msg.answer("Обновляю расписание...")
+    before = snapshot()
     try:
-        schedule_parser.university_schedule_parser()
+        university_schedule_parser()
     except Exception as e:
         await start.edit_text("Ошибка обновления базы данных расписания университета")
         logging.error(e)
         return
 
     try:
-        schedule_parser.college_schedule_parser()
+        college_schedule_parser()
     except Exception as e:
         await start.edit_text("Ошибка обновления базы данных расписания колледжа")
         logging.error(e)
         return
 
-    await start.edit_text("База данных расписания обновлена")
+    after = snapshot()
+    changes = compare_snapshots(before, after)
+    msg.bot.last_schedule_changes = changes
+
+    added = []
+    removed = []
+    text = []
+    if changes["added"]:
+        added.append(f"  {row}" for row in changes["added"])
+    if changes["removed"]:
+        removed.append(f"  {row}" for row in changes["removed"])
+    if not added and not removed:
+        text = ["Изменений нет."]
+    text.append('\n'.join(added))
+    text.append('\n'.join(removed))
+    await start.edit_text(text, reply_markup=kb.notify())
     logging.info("База данных расписания обновлена")
 
 
@@ -363,15 +380,15 @@ async def file_handler(msg: Message):
     file_map = {
         "schedule.db": {
             "path": DATA_PATH / "db",
-            "message": "Заменили расписание",
+            "message": "Расписание",
         },
         "users.db": {
             "path": DATA_PATH / "db",
-            "message": "Заменили базу данных пользователей",
+            "message": "База данных пользователей",
         },
         "activities.db": {
             "path": DATA_PATH / "db",
-            "message": "Заменили базу данных активности пользователей",
+            "message": "База данных активности пользователей",
         },
         ".xlsx": {
             "path": COLLEGE_SHEETS_PATH,
@@ -395,8 +412,12 @@ async def file_handler(msg: Message):
 
             if not hasattr(msg.bot, "collected_messages"):
                 msg.bot.collected_messages = []
+            if not hasattr(msg.bot, "updated_files"):
+                msg.bot.updated_files = []
 
             msg.bot.collected_messages.append(file_map[key]["message"])
+            msg.bot.updated_files.append(file_name)
+
             logging.info(file_map[key]["message"])
 
         else:
@@ -417,11 +438,13 @@ async def send_collected_messages(msg: Message):
     await asyncio.sleep(5)
 
     if hasattr(msg.bot, "collected_messages") and msg.bot.collected_messages:
-        await msg.answer(
-            "Заменил файлы:\n" + "\n".join(msg.bot.collected_messages),
-            reply_markup=kb.notify(),
-        )
+        await msg.answer("Заменил файлы:\n" + "\n".join(msg.bot.collected_messages))
         del msg.bot.collected_messages
+
+    if hasattr(msg.bot, "updated_files"):
+        if any(f.endswith(".docx") or f.endswith(".xlsx") for f in msg.bot.updated_files):
+            await update_handler(msg)
+        msg.bot.updated_files = []
 
 
 @router.message(ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID))
