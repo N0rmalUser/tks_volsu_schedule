@@ -197,6 +197,38 @@ class Schedule:
         result = self.__cursor.fetchone()
         return result[0] if result else None
 
+    def get_all_schedule(self) -> list[tuple]:
+        """Возвращает список всех записей"""
+
+        result = []
+        self.__cursor.execute(
+            """
+        SELECT
+            s.Time,
+            s.DayOfWeek,
+            s.WeekType,
+            g.GroupName,
+            t.TeacherName,
+            r.RoomName,
+            sub.SubjectName,
+            s.Subgroup
+        FROM (
+            SELECT ScheduleID, Time, SubjectID, GroupID, RoomID, TeacherID, DayOfWeek, WeekType, Subgroup
+            FROM Schedule
+            UNION ALL
+            SELECT ScheduleID, Time, SubjectID, GroupID, RoomID, TeacherID, DayOfWeek, WeekType, 0 AS Subgroup
+            FROM CollegeSchedule
+        ) s
+        JOIN Subjects sub ON s.SubjectID = sub.SubjectID
+        JOIN Groups g ON s.GroupID = g.GroupID
+        JOIN Rooms r ON s.RoomID = r.RoomID
+        JOIN Teachers t ON s.TeacherID = t.TeacherID
+            """
+        )
+        result.extend(self.__cursor.fetchall())
+
+        return result
+
     def clear_university(self) -> None:
         self.__cursor.execute("DELETE FROM Schedule")
         self.__cursor.execute("DELETE FROM sqlite_sequence WHERE name='Schedule'")
