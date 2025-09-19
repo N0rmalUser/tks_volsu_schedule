@@ -271,18 +271,9 @@ async def update_handler(msg: Message) -> None:
     changes = compare_snapshots(before, after)
     msg.bot.last_schedule_changes = changes
 
-    added = []
-    removed = []
-    text = []
-    if changes["added"]:
-        added.append(f"  {row}" for row in changes["added"])
-    if changes["removed"]:
-        removed.append(f"  {row}" for row in changes["removed"])
-    if not added and not removed:
-        text = ["Изменений нет."]
-    text.append('\n'.join(added))
-    text.append('\n'.join(removed))
-    await start.edit_text(text, reply_markup=kb.notify())
+    if not changes["added"] and not changes["removed"]:
+        changes = ["Изменений нет."]
+    await start.edit_text("\n".join(changes), reply_markup=kb.notify())
     logging.info("База данных расписания обновлена")
 
 

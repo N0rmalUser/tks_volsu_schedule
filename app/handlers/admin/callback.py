@@ -66,5 +66,12 @@ async def confirm_teachers_handler(callback: CallbackQuery, state: FSMContext):
 @router.callback_query(F.data == "notify")
 async def notify_handler(callback: CallbackQuery):
     changes = getattr(callback.bot, "last_schedule_changes", None)
+    for i in changes["added"]:
+        for j in i:
+            print(j)
+    for i in changes["removed"]:
+        for j in i:
+            print(j)
 
-    await callback.message.edit_text("\n".join(text))
+
+    await callback.message.answer("Типа рассылка")
