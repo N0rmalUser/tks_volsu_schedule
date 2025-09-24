@@ -14,91 +14,87 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+from aiohttp import ClientSession
+import asyncio
 import logging
 import os
 import re
 
-import openpyxl
-import pandas as pd
+from datetime import datetime, timedelta
 from docx import Document
 
 from app import config
-from app.config import COLLEGE_SHEETS_PATH, GROUPS, GROUPS_SCHEDULE_PATH
+from app.config import GROUPS, GROUPS_SCHEDULE_PATH, GROUPS_URL, API_URL, COLLEGE_TEACHERS
 from app.database.schedule import Schedule
 
 
 async def college_schedule_parser():
-    days = {
-        "ПН": "Понедельник",
-        "ВТ": "Вторник",
-        "СР": "Среда",
-        "ЧТ": "Четверг",
-        "ПТ": "Пятница",
-        "CБ": "Суббота",  # Тут английская буква "C" вместо русской "С"
+    days_map = {
+        "monday": "Понедельник",
+        "tuesday": "Вторник",
+        "wednesday": "Среда",
+        "thursday": "Четверг",
+        "friday": "Пятница",
+        "saturday": "Суббота",
+        "sunday": "Воскресенье",
     }
 
-    schedule_db = Schedule()
-    schedule_db.clear_college()
-    files = [f for f in os.listdir(COLLEGE_SHEETS_PATH) if f.endswith(".xlsx")]
-    for file in files:
-        file_path = os.path.join(COLLEGE_SHEETS_PATH, file)
-        teacher_name = re.sub(
-            r"_",
-            r".",
-            re.sub(
-                r"([А-ЯЁа-яёA-Za-z]{2,})_",
-                r"\1 ",
-                re.findall(r"расписание_занятий_(\w+_\w[.|_]\w\.)", file)[0],
-            ),
-        )
-        df = pd.read_excel(file_path)
+    week_map = {"numerator": "Числитель", "denominator": "Знаменатель"}
 
-        excel = openpyxl.load_workbook(filename=file_path)
-        sheet = excel.worksheets[0]
+    def _get_week_timestamps():
+        now = datetime.now()
+        start_of_week = now - timedelta(days=now.weekday())
+        start_of_week = start_of_week.replace(hour=0, minute=0, second=0, microsecond=0)
+        end_of_next_week = start_of_week + timedelta(days=13, hours=23, minutes=59, seconds=59)
+        return int(start_of_week.timestamp() * 1000), int(end_of_next_week.timestamp() * 1000)
 
-        for r in sheet.merged_cells.ranges:
-            cl, rl, cr, rr = r.bounds
-            rl -= 2
-            rr -= 1
-            cl -= 1
-            base_value = df.iloc[rl, cl]
-            df.iloc[rl:rr, cl:cr] = base_value
+    async def parse_teacher_schedule(teacher_name: str, teacher_id: str, schedule: Schedule):
+        min_ts, max_ts = _get_week_timestamps()
+        url = f"{API_URL.format(teacher_id=teacher_id)}?minTimestamp={min_ts}&maxTimestamp={max_ts}"
+        async with session.get(url) as response:
+            lessons = await response.json()
 
-        last_time = "None"
-        for index, row in df.iterrows():
-            day_name = days.get(row["Unnamed: 0"])
-            time = row["время"].split("-")[0]
-            week_name = "Числитель" if row["время"] is not last_time else "Знаменатель"
-            last_time = row["время"]
-            if pd.isna(row[teacher_name]):
-                continue
+        for lesson in lessons:
+            start_time_str = str(lesson["startTime"]).zfill(4)
+            time_str = f"{start_time_str[:2]}:{start_time_str[2:]}"
 
-            split_result = re.split(r"\.\s*", row[teacher_name], maxsplit=1)
-            if len(split_result) != 2:
-                logging.error(f"Неверный формат группы и предмета: {row[teacher_name]}")
-                continue
-            parts = re.split(r"\s*преп\.\s*|\s*ауд\.\s*", split_result[1].strip())
-            if len(parts) != 3:
-                logging.error(f"Неверный формат данных: {split_result[1]}")
-                continue
-            subject = parts[0].strip().rstrip(",. ")
-            room_str = parts[2].strip()
-            room_name = re.sub(r"\s*ауд\.?\s*", "", room_str, flags=re.IGNORECASE).strip()
-            groups = [g.strip() for g in split_result[0].split(",")]
+            day_name = days_map.get(lesson["day"].lower(), lesson["day"])
+            week_type = week_map.get(lesson["week"], lesson["week"])
 
-            for group in groups:
-                if group not in GROUPS:
-                    schedule_db.add_schedule(
-                        college=True,
-                        time=re.sub(r"\b8:30\b", "08:30", re.sub(r"\s*", "", time)),
-                        day_name=day_name,
-                        week_type=week_name,
-                        group_id=schedule_db.add_group(group),
-                        teacher_id=schedule_db.add_teacher(teacher_name),
-                        room_id=schedule_db.add_room(room_name),
-                        subject_id=schedule_db.add_subject(subject),
-                    )
-    logging.info("Расписания колледжа успешно сохранены в базу данных.")
+            subject = lesson["subject"].strip()
+            room_match = re.search(r",?\s*ауд\.?\s*(\d+[-\d]*[А-Яа-я]*)", subject, re.IGNORECASE)
+            room_name = room_match.group(1) if room_match else "Не указано"
+
+            subject = re.sub(rf",?\s*?преп\.?\s*{teacher_name}", "", subject, flags=re.IGNORECASE)
+            subject = re.sub(r",?\s*ауд\.?\s*[\w-]*", "", subject, flags=re.IGNORECASE)
+
+            group = groups_map[lesson["groupId"]]
+
+            if group not in GROUPS:
+                schedule.add_schedule(
+                    college=True,
+                    time=re.sub(r"\b8:30\b", "08:30", time_str),
+                    day_name=str(day_name),
+                    week_type=str(week_type),
+                    group_id=schedule.add_group(group),
+                    teacher_id=schedule.add_teacher(teacher_name),
+                    room_id=schedule.add_room(room_name),
+                    subject_id=schedule.add_subject(subject),
+                )
+
+    async with ClientSession() as session:
+        async with session.get(GROUPS_URL, headers={"provider": "volsu-system-bot"}) as resp:
+            data = await resp.json()
+            groups_map = {g["id"]: g["name"] for g in data}
+
+        schedule_db = Schedule()
+        schedule_db.clear_college()
+        logging.info("Очистил расписание колледжа и начал парсить новое")
+
+        tasks = [parse_teacher_schedule(name, tid, schedule_db) for name, tid in COLLEGE_TEACHERS.items()]
+        await asyncio.gather(*tasks)
+
+    logging.info("Обновлено расписание колледжа для всех преподавателей")
 
 
 def set_default(schedule_db: Schedule):
