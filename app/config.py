@@ -26,6 +26,9 @@ root_path = Path(__file__).parent.parent.resolve()
 config = toml.load(root_path / "config.toml")
 
 NUMERATOR: int = config["date"]["numerator"]
+TIMEZONE: str = config["date"]["timezone"]
+TZ = pytz.timezone(TIMEZONE)
+COLLEGE_CRON: str = config["date"]["college_cron"]
 
 BOT_TOKEN: str = config["bot"]["token"]
 ADMIN_CHAT_ID: int = config["bot"]["admin_chat_id"]
@@ -47,9 +50,6 @@ API_URL = config["college"]["api_url"]
 GROUPS_URL = config["college"]["groups_url"]
 
 ALIASES = config["aliases"]
-
-TIMEZONE: str = config["date"]["timezone"]
-TZ = pytz.timezone(TIMEZONE)
 
 DATA_PATH: Path = root_path / "data"
 DB_PATH: Path = DATA_PATH / "db"

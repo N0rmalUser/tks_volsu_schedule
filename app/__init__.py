@@ -37,7 +37,7 @@ from aiogram.client.session.aiohttp import AiohttpSession
 from aiogram.fsm.storage.memory import MemoryStorage
 
 from app import middlewares
-from app.config import BOT_TOKEN, TZ
+from app.config import BOT_TOKEN, TZ, COLLEGE_CRON
 from app.handlers.admin import callback as admin_callback
 from app.handlers.admin import message as admin_message
 from app.handlers.user import callback as user_callback
@@ -49,7 +49,7 @@ from .misc.schedule_parser import college_schedule_parser
 async def main() -> None:
     """Функция запуска бота. Удаляет веб хуки и стартует polling."""
 
-    aiocron.crontab("07 17 * * *", func=college_schedule_parser, tz=TZ)
+    aiocron.crontab(COLLEGE_CRON, func=college_schedule_parser, tz=TZ)
     session = AiohttpSession()
     bot = Bot(token=BOT_TOKEN, session=session)
     dp = Dispatcher(storage=MemoryStorage())
@@ -74,7 +74,6 @@ async def main() -> None:
 
 try:
     from .config import (
-        COLLEGE_SHEETS_PATH,
         DATA_PATH,
         DB_PATH,
         GROUPS_SCHEDULE_PATH,
@@ -91,7 +90,6 @@ try:
         GROUPS_SCHEDULE_PATH,
         TEACHERS_SHEETS_PATH,
         ROOMS_SHEETS_PATH,
-        COLLEGE_SHEETS_PATH,
         PLOT_PATH,
     ]:
         path.mkdir(parents=True, exist_ok=True)
