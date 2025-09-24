@@ -234,7 +234,7 @@ async def update_handler(msg: Message) -> None:
 
 
 @router.message(Command("track"), ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID))
-async def track_command_track(msg: Message, command: CommandObject) -> None:
+async def track_command_handler(msg: Message, command: CommandObject) -> None:
     """Включает/выключает трекинг для пользователя или для всех пользователей."""
 
     if command.args is None:
@@ -270,7 +270,7 @@ async def track_command_track(msg: Message, command: CommandObject) -> None:
 
 
 @router.message(Command("info"), ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID))
-async def info_command_info(msg: Message, command: CommandObject = None) -> None:
+async def info_command_handler(msg: Message, command: CommandObject = None) -> None:
     """Присылает информацию о пользователе или о всех пользователях в зависимости от топика"""
 
     start = await msg.answer(text="Собираю статистику")
@@ -287,7 +287,7 @@ async def info_command_info(msg: Message, command: CommandObject = None) -> None
 
 
 @router.message(Command("teacher"), ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID))
-async def teacher_command_teacher(msg: Message) -> None:
+async def teacher_command_handler(msg: Message) -> None:
     start = await msg.answer("Изменяю тип пользователя...")
     if start.message_thread_id:
         user = User(topic_id=msg.message_thread_id)
@@ -296,7 +296,7 @@ async def teacher_command_teacher(msg: Message) -> None:
 
 
 @router.message(Command("student"), ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID))
-async def student_command_student(msg: Message) -> None:
+async def student_command_handler(msg: Message) -> None:
     start = await msg.answer("Изменяю тип пользователя...")
     if start.message_thread_id:
         user = User(topic_id=msg.message_thread_id)
@@ -374,7 +374,7 @@ async def send_collected_messages(msg: Message):
 
 
 @router.message(ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID))
-async def handle_topic_message(msg: Message, state: FSMContext) -> None:
+async def topic_message_handler(msg: Message, state: FSMContext) -> None:
     """Отправляет сообщение в личный топик пользователя"""
 
     from app.misc.states import BroadcastStates
