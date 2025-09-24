@@ -394,7 +394,7 @@ async def topic_message_handler(msg: Message, state: FSMContext) -> None:
         )
     else:
         await msg.answer(
-            "Кому отправить это сообщений?",
+            "Кому отправить это сообщение?",
             reply_markup=kb.message_confirm(),
         )
         await state.set_state(BroadcastStates.waiting_for_confirmation)
