@@ -43,7 +43,6 @@ ALL_PERSONAL = sorted(set(TEACHERS) | set(STUDENTS.keys()))
 COLLEGE_CONST: int = config["college"]["id_const"]
 COLLEGE_TEACHERS: dict[str, str] = config["college"]["teachers"]
 COLLEGE_TEACHERS_ID: list = list(config["college"]["teachers"].values())
-VOLSU_BOT_URL: str = config["college"]["bot_url"]
 API_URL = config["college"]["api_url"]
 GROUPS_URL = config["college"]["groups_url"]
 
@@ -63,7 +62,6 @@ SCHEDULE_PATH: Path = DATA_PATH / "schedule"
 GROUPS_SCHEDULE_PATH: Path = SCHEDULE_PATH / "groups"
 TEACHERS_SHEETS_PATH: Path = SCHEDULE_PATH / "teachers"
 ROOMS_SHEETS_PATH: Path = SCHEDULE_PATH / "rooms"
-COLLEGE_SHEETS_PATH: Path = SCHEDULE_PATH / "college"
 
 PLOT_PATH: Path = DATA_PATH / "plot"
 
