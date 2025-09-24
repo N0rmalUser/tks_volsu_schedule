@@ -16,25 +16,21 @@
 
 import asyncio
 import logging
-import os
 
 from aiogram import F, Router
-from aiogram.filters import Command, CommandObject, StateFilter
+from aiogram.filters import Command, CommandObject
 from aiogram.fsm.context import FSMContext
 from aiogram.types import FSInputFile, Message
 
 from app.config import (
     ACTIVITIES_DB,
     ADMIN_CHAT_ID,
-    COLLEGE_SHEETS_PATH,
-    COLLEGE_TEACHERS,
     DATA_PATH,
     GROUPS_SCHEDULE_PATH,
     LOG_FILE,
     PLOT_PATH,
     SCHEDULE_DB,
     USERS_DB,
-    VOLSU_BOT_URL,
 )
 from app.database import (
     get_all_users_info,
@@ -45,7 +41,6 @@ from app.database import (
 from app.database.user import User
 from app.filters import ChatTypeIdFilter
 from app.markups import admin as kb
-from app.misc.states import BotHashStates
 
 router = Router()
 
@@ -109,22 +104,6 @@ async def unban_command_handler(msg: Message) -> None:
     logging.info(f"Разбанен юзверь {user.id}")
 
 
-@router.message(Command("clear"), ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID))
-async def clear_handler(msg: Message) -> None:
-    """Удаляет все файлы расписания."""
-
-    start = await msg.answer("Удаляю ненужные файлы")
-    for i in (GROUPS_SCHEDULE_PATH, COLLEGE_SHEETS_PATH):
-        for filename in os.listdir(i):
-            file_path = os.path.join(COLLEGE_SHEETS_PATH, filename)
-            if os.path.isfile(file_path):
-                try:
-                    os.remove(file_path)
-                except Exception as e:
-                    logging.error(e)
-    await start.edit_text("Ненужные файлы удалены")
-
-
 @router.message(Command("dump"), ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID))
 async def dump_handler(msg: Message) -> None:
     """Отправляет базу данных пользователей и логи в админский чат."""
@@ -164,57 +143,11 @@ async def log_handler(msg: Message) -> None:
         logging.error("Ошибка при отчистке логов", e)
 
 
-@router.message(Command("college"), ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID))
-async def college_handler(msg: Message, state: FSMContext) -> None:
-    await msg.answer("Введите хэш запроса:")
-    await state.set_state(BotHashStates.sending_hash)
-
-
-@router.message(
-    StateFilter(BotHashStates.sending_hash),
-    ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID),
-)
-async def hash_handler(msg: Message, state: FSMContext) -> None:
-    import aiohttp
-
-    data = {"hash": msg.text, "start": "download"}
-
-    async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(limit=20, ssl=False)) as session:
-        try:
-            for index, (teacher_name, teacher_id) in enumerate(COLLEGE_TEACHERS.items()):
-                max_retries = 5
-                for attempt in range(max_retries):
-                    try:
-                        request_data = {**data, "teacherId": teacher_id}
-                        async with session.post(url=VOLSU_BOT_URL, json=request_data) as response:
-                            print(
-                                f"{response.ok} {index + 1} из {len(COLLEGE_TEACHERS)} "
-                                f"(Попытка {attempt + 1}/{max_retries})"
-                            )
-                            if response.ok:
-                                break
-                            await asyncio.sleep(5)
-                    except Exception as e:
-                        print(
-                            f"Ошибка при отправке запроса для {teacher_name} ({teacher_id}): "
-                            f"{e} (Попытка {attempt + 1}/{max_retries})"
-                        )
-                        await asyncio.sleep(1)
-                else:
-                    print(f"Не удалось выполнить запрос для {teacher_name} ({teacher_id}) после {max_retries} попыток")
-                await asyncio.sleep(1)
-            logging.info("Расписание преподавателей колледжа успешно скачано")
-        except Exception as e:
-            await msg.answer("Ошибка вытаскивания расписания из колледжского бота")
-            logging.error(e)
-    await state.set_state(BotHashStates.waiting)
-
-
 @router.message(Command("update"), ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID))
 async def update_handler(msg: Message) -> None:
     from app.misc import schedule_parser
 
-    start = await msg.answer("Подождите...")
+    start = await msg.answer("Обновляю расписание университета...")
     try:
         await schedule_parser.university_schedule_parser()
     except Exception as e:
@@ -222,6 +155,7 @@ async def update_handler(msg: Message) -> None:
         logging.error(e)
         return
 
+    await start.edit_text("Обновляю расписание колледжа...")
     try:
         await schedule_parser.college_schedule_parser()
     except Exception as e:
@@ -322,10 +256,6 @@ async def file_handler(msg: Message):
             "path": DATA_PATH / "db",
             "message": "Заменили базу данных активности пользователей",
         },
-        ".xlsx": {
-            "path": COLLEGE_SHEETS_PATH,
-            "message": file_name,
-        },
         ".docx": {
             "path": GROUPS_SCHEDULE_PATH,
             "message": file_name,
@@ -366,10 +296,7 @@ async def send_collected_messages(msg: Message):
     await asyncio.sleep(5)
 
     if hasattr(msg.bot, "collected_messages") and msg.bot.collected_messages:
-        await msg.answer(
-            "Заменил файлы:\n" + "\n".join(msg.bot.collected_messages),
-            reply_markup=kb.notify(),
-        )
+        await msg.answer("Заменил файлы:\n" + "\n".join(msg.bot.collected_messages))
         del msg.bot.collected_messages
 
 
