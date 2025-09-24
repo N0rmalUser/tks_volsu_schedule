@@ -32,6 +32,8 @@ rooms = ["rooms"]
 # ВСЕГДА должно быть больше максимального id занятий университета!
 id_const = 1000
 bot_url = "https://volsu.1450983-cl92470.tw1.ru/api/bot/select-teacher"
+api_url = "https://app.volsu.ru/api/schedule/lesson/teacher/{teacher_id}"
+groups_url = "https://app.volsu.ru/api/group/bot"
 
 # преподаватель и его id в *bot_url
 [college.teachers]
