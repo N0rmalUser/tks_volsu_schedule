@@ -181,7 +181,7 @@ async def university_schedule_parser():
             if not info:
                 continue
             # лекция всегда общая
-            if re.search(r"\((?:Л|Лекция)\)", info["subject"], flags=re.IGNORECASE) or "Лекция" in info["subject"]:
+            if re.search(r"\((?:Л|Лекция)\)", str(info["subject"]), flags=re.IGNORECASE) or "Лекция" in info["subject"]:
                 subgroup = 0
             else:
                 subgroup = idx
@@ -200,7 +200,6 @@ async def university_schedule_parser():
         table = doc.tables[0]
         rows = table.rows
 
-        # --- вытащим список групп из заголовка ---
         header = [c.text.strip() for c in rows[0].cells]
         groups = []
         col = 2
@@ -256,8 +255,8 @@ async def university_schedule_parser():
                                 week_type="Числитель",
                                 group_id=schedule_db.add_group(group_name),
                                 teacher_id=schedule_db.add_teacher(teacher),
-                                room_id=schedule_db.add_room(info["classroom"]),
-                                subject_id=schedule_db.add_subject(info["subject"]),
+                                room_id=schedule_db.add_room(str(info["classroom"])),
+                                subject_id=schedule_db.add_subject(str(info["subject"])),
                                 subgroup=subgroup,
                             )
                     # Знаменатель
@@ -274,8 +273,8 @@ async def university_schedule_parser():
                                 week_type="Знаменатель",
                                 group_id=schedule_db.add_group(group_name),
                                 teacher_id=schedule_db.add_teacher(teacher),
-                                room_id=schedule_db.add_room(info["classroom"]),
-                                subject_id=schedule_db.add_subject(info["subject"]),
+                                room_id=schedule_db.add_room(str(info["classroom"])),
+                                subject_id=schedule_db.add_subject(str(info["subject"])),
                                 subgroup=subgroup,
                             )
                 else:
@@ -294,8 +293,8 @@ async def university_schedule_parser():
                                     week_type=week_type,
                                     group_id=schedule_db.add_group(group_name),
                                     teacher_id=schedule_db.add_teacher(teacher),
-                                    room_id=schedule_db.add_room(info["classroom"]),
-                                    subject_id=schedule_db.add_subject(info["subject"]),
+                                    room_id=schedule_db.add_room(str(info["classroom"])),
+                                    subject_id=schedule_db.add_subject(str(info["subject"])),
                                     subgroup=subgroup,
                                 )
 
