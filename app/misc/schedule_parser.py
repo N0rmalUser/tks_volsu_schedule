@@ -27,7 +27,7 @@ from app.config import COLLEGE_SHEETS_PATH, GROUPS, GROUPS_SCHEDULE_PATH
 from app.database.schedule import Schedule
 
 
-def college_schedule_parser():
+async def college_schedule_parser():
     days = {
         "ПН": "Понедельник",
         "ВТ": "Вторник",
@@ -110,9 +110,7 @@ def set_default(schedule_db: Schedule):
         schedule_db.add_room(i)
 
 
-def university_schedule_parser():
-    import re
-
+async def university_schedule_parser():
     def _parse_info(text: str):
         """Парсит строку вида 'Предмет (Лаб), [должность] Фамилия И.О., Ауд. 1-23 К'
         -> dict(subject, teachers[list], classroom[str])"""

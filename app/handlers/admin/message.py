@@ -216,14 +216,14 @@ async def update_handler(msg: Message) -> None:
 
     start = await msg.answer("Подождите...")
     try:
-        schedule_parser.university_schedule_parser()
+        await schedule_parser.university_schedule_parser()
     except Exception as e:
         await start.edit_text("Ошибка обновления базы данных расписания университета")
         logging.error(e)
         return
 
     try:
-        schedule_parser.college_schedule_parser()
+        await schedule_parser.college_schedule_parser()
     except Exception as e:
         await start.edit_text("Ошибка обновления базы данных расписания колледжа")
         logging.error(e)
