@@ -90,6 +90,7 @@ async def menu_command_track(msg: Message) -> None:
 @router.message(Command("ban"), ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID))
 async def ban_command_handler(msg: Message) -> None:
     """Банит пользователя. Изменяет значение столбца banned в базе данных."""
+
     user = User(topic_id=msg.message_thread_id)
     user.banned = True
     await msg.answer("Мы его забанили!!!")
