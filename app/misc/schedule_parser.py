@@ -114,6 +114,7 @@ async def university_schedule_parser():
     def _parse_info(text: str):
         """Парсит строку вида 'Предмет (Лаб), [должность] Фамилия И.О., Ауд. 1-23 К'
         -> dict(subject, teachers[list], classroom[str])"""
+
         if not text:
             return None
         raw = text.strip()
@@ -155,6 +156,7 @@ async def university_schedule_parser():
 
     def _process_group_cells(left: str, right: str = None, single_column: bool = False):
         """Возвращает список [(subgroup, info_dict)]."""
+
         left = left.strip() if left else ""
         right = right.strip() if right else ""
 
@@ -228,7 +230,7 @@ async def university_schedule_parser():
             row = rows[i]
             day, time = _row_day_time(row)
 
-            # проверяем на пару (числитель/знаменатель)
+            # числитель/знаменатель
             pair = None
             if i + 1 < n:
                 day2, time2 = _row_day_time(rows[i + 1])
@@ -277,7 +279,6 @@ async def university_schedule_parser():
                                 subgroup=subgroup,
                             )
                 else:
-                    # одинарная строка -> и числитель, и знаменатель одинаковые
                     right_text = row.cells[col2].text if col2 and col2 < len(row.cells) else ""
                     entries = _process_group_cells(row.cells[col1].text, right_text, single_column)
                     for week_type in ("Числитель", "Знаменатель"):
