@@ -68,11 +68,3 @@ def message_confirm():
             [InlineKeyboardButton(text="❌ Никому", callback_data="cancel_send")],
         ]
     )
-
-
-def notify():
-    return InlineKeyboardMarkup(
-        inline_keyboard=[
-            [InlineKeyboardButton(text="Оповестить", callback_data="notify")],
-        ]
-    )

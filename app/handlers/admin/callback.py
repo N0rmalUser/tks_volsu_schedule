@@ -13,21 +13,16 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
-import asyncio
-import re
 
 from aiogram import F, Router
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery
 
 from app.database import (
-    User,
-    get_users_by_teacher_id,
     all_user_ids,
     student_ids,
     teachers_ids,
 )
-from app.database.schedule import Schedule
 from app.misc import send_broadcast_message
 from app.misc.states import BroadcastStates
 
@@ -66,34 +61,3 @@ async def confirm_teachers_handler(callback: CallbackQuery, state: FSMContext):
     await callback.answer("Начинаем отправку сообщений преподавателям!")
     await state.set_state(BroadcastStates.sending_messages)
     await send_broadcast_message(callback.message, state, callback.message.message_id - 1, teachers_ids())
-
-
-@router.callback_query(F.data == "notify")
-async def notify_handler(callback: CallbackQuery):
-    from app.database import get_users_by_group_id
-
-    await callback.answer()
-
-    found_groups = re.findall(r"(\w+-\d{3}(_\d)?)", callback.message.text)
-    found_teachers = re.findall(r"расписание_занятий_(\w+_\w[.|_]\w\.)", callback.message.text)
-    users = 0
-    if len(found_groups) > 0:
-        for group in found_groups:
-            group_id: int = Schedule().get_group_id(group[0])
-            for user_id in get_users_by_group_id(group_id):
-                user = User(user_id)
-                if not user.blocked and not user.banned:
-                    await callback.bot.send_message(user_id, f"Обновлено расписание для {group[0]}")
-                    users += 1
-                    await asyncio.sleep(1)
-    elif len(found_teachers) > 0:
-        for teacher in found_teachers:
-            teacher = re.sub(r"_", r".", re.sub(r"([А-ЯЁа-яё]{2,})_", r"\1 ", teacher))
-            teacher_id: int = Schedule().get_teacher_id(teacher)
-            for user_id in get_users_by_teacher_id(teacher_id):
-                user = User(user_id)
-                if not user.blocked and not user.banned:
-                    await callback.bot.send_message(user_id, f"Обновлено расписание для {teacher}")
-                    users += 1
-                    await asyncio.sleep(1)
-    await callback.message.edit_text(f"Оповещено пользователей: {users}")
