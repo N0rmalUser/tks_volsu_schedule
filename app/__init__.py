@@ -31,23 +31,25 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import logging
-
+import aiocron
 from aiogram import Bot, Dispatcher
 from aiogram.client.session.aiohttp import AiohttpSession
 from aiogram.fsm.storage.memory import MemoryStorage
 
 from app import middlewares
-from app.config import BOT_TOKEN
+from app.config import BOT_TOKEN, TZ
 from app.handlers.admin import callback as admin_callback
 from app.handlers.admin import message as admin_message
 from app.handlers.user import callback as user_callback
 from app.handlers.user import message as user_message
 from app.handlers.user import status as user_status
+from .misc.schedule_parser import college_schedule_parser
 
 
 async def main() -> None:
     """Функция запуска бота. Удаляет веб хуки и стартует polling."""
 
+    aiocron.crontab("07 17 * * *", func=college_schedule_parser, tz=TZ)
     session = AiohttpSession()
     bot = Bot(token=BOT_TOKEN, session=session)
     dp = Dispatcher(storage=MemoryStorage())
