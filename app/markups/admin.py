@@ -59,7 +59,7 @@ def message_confirm():
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
-                InlineKeyboardButton(text="✅ Подтвердить", callback_data="confirm_all"),
+                InlineKeyboardButton(text="✅ Всем", callback_data="confirm_all"),
             ],
             [
                 InlineKeyboardButton(text="👫 Студентам", callback_data="confirm_students"),
