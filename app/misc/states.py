@@ -28,8 +28,3 @@ class BroadcastStates(StatesGroup):
     waiting_for_confirmation = State()
     sending_messages = State()
     cancel_sending = State()
-
-
-class BotHashStates(StatesGroup):
-    waiting = State()
-    sending_hash = State()
