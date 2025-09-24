@@ -288,8 +288,8 @@ async def file_handler(msg: Message):
             msg.bot.send_message_task.cancel()
 
         msg.bot.send_message_task = asyncio.create_task(send_collected_messages(msg))
-    except Exception:
-        pass
+    except Exception as e:
+        logging.error(f"Ошибка при загрузке файлов: {e}")
 
 
 async def send_collected_messages(msg: Message):
