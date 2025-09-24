@@ -26,6 +26,10 @@ def admin_menu():
     return ReplyKeyboardMarkup(
         keyboard=[
             [
+                KeyboardButton(text="/student"),
+                KeyboardButton(text="/teacher"),
+            ],
+            [
                 KeyboardButton(text="/log"),
                 KeyboardButton(text="/track stop"),
                 KeyboardButton(text="/track status"),
