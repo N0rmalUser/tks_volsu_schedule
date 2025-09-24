@@ -36,7 +36,7 @@ def admin_menu():
             ],
             [
                 KeyboardButton(text="/dump"),
-                KeyboardButton(text="/college"),
+                KeyboardButton(text="/menu"),
                 KeyboardButton(text="/update"),
             ],
             [
