@@ -100,15 +100,6 @@ async def college_schedule_parser():
     logging.info("Обновлено расписание колледжа для всех преподавателей")
 
 
-def set_default(schedule_db: Schedule):
-    for i in sorted(config.GROUPS):
-        schedule_db.add_group(i)
-    for i in sorted(config.ALL_PERSONAL):
-        schedule_db.add_teacher(i)
-    for i in sorted(config.ROOMS):
-        schedule_db.add_room(i)
-
-
 async def university_schedule_parser():
     def _parse_info(text: str):
         """Парсит строку вида 'Предмет (Лаб), [должность] Фамилия И.О., Ауд. 1-23 К'
@@ -153,6 +144,14 @@ async def university_schedule_parser():
         time = re.sub(r"\b8:30\b", "08:30", re.sub(r"\s*", "", start))
         return day, time
 
+    def _set_default():
+        for i in sorted(config.GROUPS):
+            schedule_db.add_group(i)
+        for i in sorted(config.ALL_PERSONAL):
+            schedule_db.add_teacher(i)
+        for i in sorted(config.ROOMS):
+            schedule_db.add_room(i)
+
     def _process_group_cells(left: str, right: str = None, single_column: bool = False):
         """Возвращает список [(subgroup, info_dict)]."""
 
@@ -189,7 +188,7 @@ async def university_schedule_parser():
 
     schedule_db = Schedule()
     schedule_db.clear_university()
-    set_default(schedule_db)
+    _set_default()
 
     files = [f for f in os.listdir(GROUPS_SCHEDULE_PATH) if f.endswith(".docx")]
 
