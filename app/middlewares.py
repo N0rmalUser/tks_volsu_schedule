@@ -16,8 +16,9 @@
 
 
 import logging
+from collections.abc import Awaitable, Callable, Coroutine
 from datetime import datetime
-from typing import Any, Awaitable, Callable, Dict
+from typing import Any
 
 from aiogram import BaseMiddleware
 from aiogram.exceptions import (
@@ -37,14 +38,15 @@ class BanUsersMiddleware(BaseMiddleware):
 
     async def __call__(
         self,
-        handler: Callable[[Update, Dict[str, Any]], Awaitable[Any]],
+        handler: Callable[[Update, dict[str, Any]], Awaitable[Any]],
         event: Update,
-        data: Dict[str, Any],
-    ) -> Any:
+        data: dict[str, Any],
+    ) -> Coroutine[Any, Any, Any] | None:
         user = User(data["event_from_user"].id)
         if user.is_exists:
             if not user.banned:
                 return await handler(event, data)
+            return None
         else:
             return await handler(event, data)
 
@@ -54,10 +56,10 @@ class TopicCreatorMiddleware(BaseMiddleware):
 
     async def __call__(
         self,
-        handler: Callable[[Update, Dict[str, Any]], Awaitable[Any]],
+        handler: Callable[[Update, dict[str, Any]], Awaitable[Any]],
         event: Update,
-        data: Dict[str, Any],
-    ) -> Any:
+        data: dict[str, Any],
+    ) -> Coroutine[Any, Any, Any]:
         if (msg := event.message) and not event.message.from_user.is_bot:
             from aiogram.enums import ParseMode
 
@@ -96,10 +98,10 @@ class CallbackTelegramErrorsMiddleware(BaseMiddleware):
 
     async def __call__(
         self,
-        handler: Callable[[Message, Dict[str, Any]], Awaitable[Any]],
+        handler: Callable[[Message, dict[str, Any]], Awaitable[Any]],
         event: Message,
-        data: Dict[str, Any],
-    ) -> Any:
+        data: dict[str, Any],
+    ) -> None:
         try:
             await handler(event, data)
         except TelegramBadRequest as e:
@@ -116,10 +118,10 @@ class UserActivityMiddleware(BaseMiddleware):
 
     async def __call__(
         self,
-        handler: Callable[[Update, Dict[str, Any]], Awaitable[Any]],
+        handler: Callable[[Update, dict[str, Any]], Awaitable[Any]],
         event: Update,
-        data: Dict[str, Any],
-    ) -> Any:
+        data: dict[str, Any],
+    ) -> Coroutine[Any, Any, Any]:
         user_id = data["event_from_user"].id
         User(user_id).last_date = datetime.now(TZ).isoformat()
         log_user_activity(user_id)
@@ -131,10 +133,10 @@ class TrackingMiddleware(BaseMiddleware):
 
     async def __call__(
         self,
-        handler: Callable[[Update, Dict[str, Any]], Awaitable[Any]],
+        handler: Callable[[Update, dict[str, Any]], Awaitable[Any]],
         event: Update,
-        data: Dict[str, Any],
-    ) -> Any:
+        data: dict[str, Any],
+    ) -> Coroutine[Any, Any, Any]:
         user = User(data["event_from_user"].id)
         if (event.message and event.message.chat.id == ADMIN_CHAT_ID) or (
             event.callback_query and event.callback_query.message.chat.id == ADMIN_CHAT_ID

@@ -19,24 +19,24 @@ from math import ceil
 import pandas as pd
 from lets_plot import (
     LetsPlot,
+    aes,
+    element_rect,
+    element_text,
+    flavor_high_contrast_dark,
+    geom_bar,
     ggplot,
     ggsize,
-    aes,
-    geom_bar,
     ggtitle,
-    element_text,
+    scale_y_continuous,
+    theme,
     xlab,
     ylab,
-    scale_y_continuous,
-    flavor_high_contrast_dark,
-    theme,
-    element_rect,
 )
 
 from app.config import PLOT_PATH
 
 
-def plot_activity_for_day(df: pd.DataFrame, date: str):
+def plot_activity_for_day(df: pd.DataFrame, date: str) -> None:
     LetsPlot.setup_html(no_js=True)
     df["Hour"] = pd.to_datetime(df["Hour"], format="%Y-%m-%d %H:%M").dt.strftime("%H")
 
@@ -60,7 +60,7 @@ def plot_activity_for_day(df: pd.DataFrame, date: str):
     ).to_html(str(PLOT_PATH / "activity_for_day.html"))
 
 
-def plot_activity_for_month(df: pd.DataFrame, month: str):
+def plot_activity_for_month(df: pd.DataFrame, month: str) -> None:
     LetsPlot.setup_html(no_js=True)
     df["Date"] = pd.to_datetime(df["Date"], format="%Y-%m-%d")
 

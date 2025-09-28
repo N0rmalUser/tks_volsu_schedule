@@ -17,17 +17,12 @@
 import re
 import sqlite3
 
-from app.config import STUDENTS, SCHEDULE_DB, ALIASES
+from app.config import ALIASES, SCHEDULE_DB, STUDENTS
 from app.database import sql_kit
 
 
 @sql_kit(SCHEDULE_DB)
-def get_group_schedule(
-    day: int,
-    week: int,
-    group_name: str,
-    cursor: sqlite3.Cursor = None,
-):
+def get_group_schedule(day: int, week: int, group_name: str, cursor: sqlite3.Cursor = None) -> str:
     """Возвращает отформатированное расписание для указанной группы на указанный день и неделю"""
 
     from app.misc import get_lesson_label, get_time_symbol, time_to_minutes
@@ -99,12 +94,7 @@ def get_group_schedule(
 
 
 @sql_kit(SCHEDULE_DB)
-def get_teacher_schedule(
-    day: int,
-    week: int,
-    teacher_name: str,
-    cursor: sqlite3.Cursor = None,
-):
+def get_teacher_schedule(day: int, week: int, teacher_name: str, cursor: sqlite3.Cursor = None) -> str:
     """Возвращает отформатированное расписание для указанного преподавателя на указанный день и неделю. Если
     преподаватель обучается в какой-либо группе (указывается в config.py), то возвращает расписание для этой группы,
     смешанное с расписанием преподавателя."""
@@ -227,7 +217,7 @@ def get_teacher_schedule(
 
 
 @sql_kit(SCHEDULE_DB)
-def get_room_schedule(day, week, room_name, cursor: sqlite3.Cursor = None):
+def get_room_schedule(day: int, week: int, room_name: str, cursor: sqlite3.Cursor = None) -> str:
     """Возвращает отформатированное расписание для указанной аудитории на указанный день и неделю. Если аудитория
     имеет несколько вариантов (например, 2-13М и 2-13аМ), то возвращает расписание для всех вариантов."""
 

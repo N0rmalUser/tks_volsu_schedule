@@ -25,7 +25,7 @@ router = Router()
 
 
 @router.my_chat_member(ChatMemberUpdatedFilter(member_status_changed=KICKED))
-async def user_blocked_bot(event: ChatMemberUpdated):
+async def user_blocked_bot(event: ChatMemberUpdated) -> None:
     """Хендлер для считывания блокировки бота пользователем."""
 
     user = User(event.from_user.id)
@@ -38,7 +38,7 @@ async def user_blocked_bot(event: ChatMemberUpdated):
 
 
 @router.my_chat_member(ChatMemberUpdatedFilter(member_status_changed=MEMBER))
-async def user_unblocked_bot(event: ChatMemberUpdated):
+async def user_unblocked_bot(event: ChatMemberUpdated) -> None:
     """Хендлер для считывания разблокировки бота пользователем."""
 
     user = User(event.from_user.id)

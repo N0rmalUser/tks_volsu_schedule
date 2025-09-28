@@ -31,18 +31,20 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import logging
+
 import aiocron
 from aiogram import Bot, Dispatcher
 from aiogram.client.session.aiohttp import AiohttpSession
 from aiogram.fsm.storage.memory import MemoryStorage
 
 from app import middlewares
-from app.config import BOT_TOKEN, TZ, COLLEGE_CRON
+from app.config import BOT_TOKEN, COLLEGE_CRON, TZ
 from app.handlers.admin import callback as admin_callback
 from app.handlers.admin import message as admin_message
 from app.handlers.user import callback as user_callback
 from app.handlers.user import message as user_message
 from app.handlers.user import status as user_status
+
 from .misc.schedule_parser import college_schedule_parser
 
 

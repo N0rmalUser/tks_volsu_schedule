@@ -29,7 +29,7 @@ class Schedule:
         "Суббота",
     ]
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.__conn = sqlite3.connect(SCHEDULE_DB)
         self.__cursor = self.__conn.cursor()
 
@@ -205,5 +205,5 @@ class Schedule:
         self.__cursor.execute("DELETE FROM CollegeSchedule")
         self.__cursor.execute("DELETE FROM sqlite_sequence WHERE name='CollegeSchedule'")
 
-    def __del__(self):
+    def __del__(self) -> None:
         self.__conn.close()

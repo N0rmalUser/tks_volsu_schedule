@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-from aiogram import types, MagicFilter
+from aiogram import MagicFilter, types
 from aiogram.filters import BaseFilter
 
 from app.config import ADMIN_CHAT_ID
@@ -23,17 +23,18 @@ from app.config import ADMIN_CHAT_ID
 class ChatTypeIdFilter(BaseFilter):
     """Фильтр, проверяющий тип чата и id, если указан, и возвращающий True или False"""
 
-    def __init__(self, chat_type: list, chat_id: int = None):
+    def __init__(self, chat_type: list, chat_id: int = None) -> None:
         self.chat_id = chat_id
         self.chat_type = chat_type
 
-    async def __call__(self, message: types.Message) -> bool:
+    async def __call__(self, message: types.Message) -> bool | None:
         if not bool(message.from_user.is_bot):
             if message.chat.type in self.chat_type and self.chat_id is not None:
                 return str(message.chat.id) == str(ADMIN_CHAT_ID)
             return message.chat.type in self.chat_type
+        return None
 
 
 class IgnoreFilter(MagicFilter):
-    def resolve(self, factory):
+    def resolve(self, factory):  # noqa: ANN001, ANN201
         return "ignore" in factory.action

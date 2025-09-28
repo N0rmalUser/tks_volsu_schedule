@@ -22,7 +22,7 @@ from aiogram.types import (
 )
 
 
-def admin_menu():
+def admin_menu() -> ReplyKeyboardMarkup:
     return ReplyKeyboardMarkup(
         keyboard=[
             [
@@ -49,13 +49,13 @@ def admin_menu():
     )
 
 
-def cancel_sending():
+def cancel_sending() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[[InlineKeyboardButton(text="❌ Отменить отправку", callback_data="cancel_sending")]]
     )
 
 
-def message_confirm():
+def message_confirm() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [

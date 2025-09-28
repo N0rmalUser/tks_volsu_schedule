@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Optional
 
 from aiogram.filters.callback_data import CallbackData
 
@@ -22,22 +21,22 @@ from aiogram.filters.callback_data import CallbackData
 class ChangeCallbackFactory(CallbackData, prefix="start_change"):
     """Фабрика для создания CallbackData для клавиатур выбора преподавателя, группы или аудитории."""
 
-    action: Optional[str] = None
-    value: Optional[int] = None
+    action: str | None = None
+    value: int | None = None
 
 
 class DayCallbackFactory(CallbackData, prefix="day_change"):
     """Фабрика для создания CallbackData для клавиатур изменения дня или недели."""
 
-    action: Optional[str] = None
-    value: Optional[int] = None
-    day: Optional[int] = None
-    week: Optional[int] = None
-    keyboard_type: Optional[str] = None
+    action: str | None = None
+    value: int | None = None
+    day: int | None = None
+    week: int | None = None
+    keyboard_type: str | None = None
 
 
 class DefaultChangeCallbackFactory(CallbackData, prefix="default_change"):
     """Фабрика для создания CallbackData для клавиатур выбора преподавателя, группы или аудитории."""
 
-    action: Optional[str] = None
-    value: Optional[int] = None
+    action: str | None = None
+    value: int | None = None

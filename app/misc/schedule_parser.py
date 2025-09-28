@@ -14,21 +14,23 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-from aiohttp import ClientSession
 import asyncio
 import logging
 import os
 import re
-
 from datetime import datetime, timedelta
+from typing import Any
+
+from aiohttp import ClientSession
 from docx import Document
+from docx.table import _Row
 
 from app import config
-from app.config import GROUPS, GROUPS_SCHEDULE_PATH, GROUPS_URL, API_URL, COLLEGE_TEACHERS, TEACHERS_URL
+from app.config import API_URL, COLLEGE_TEACHERS, GROUPS, GROUPS_SCHEDULE_PATH, GROUPS_URL, TEACHERS_URL
 from app.database.schedule import Schedule
 
 
-async def college_schedule_parser():
+async def college_schedule_parser() -> None:
     days_map = {
         "monday": "Понедельник",
         "tuesday": "Вторник",
@@ -41,14 +43,14 @@ async def college_schedule_parser():
 
     week_map = {"numerator": "Числитель", "denominator": "Знаменатель"}
 
-    def _get_week_timestamps():
+    def _get_week_timestamps() -> tuple[int, int]:
         now = datetime.now()
         start_of_week = now - timedelta(days=now.weekday())
         start_of_week = start_of_week.replace(hour=0, minute=0, second=0, microsecond=0)
         end_of_next_week = start_of_week + timedelta(days=13, hours=23, minutes=59, seconds=59)
-        return int(start_of_week.timestamp() * 1000), int(end_of_next_week.timestamp() * 1000)
+        return int(start_of_week.timestamp() * 1000), int(end_of_next_week.timestamp() * 100)
 
-    async def parse_teacher_schedule(teacher_name: str, teacher_id: str, schedule: Schedule):
+    async def parse_teacher_schedule(teacher_name: str, teacher_id: str, schedule: Schedule) -> None:
         min_ts, max_ts = _get_week_timestamps()
         url = f"{API_URL.format(teacher_id=teacher_id)}?minTimestamp={min_ts}&maxTimestamp={max_ts}"
         async with session.get(url) as response:
@@ -82,26 +84,29 @@ async def college_schedule_parser():
                     subject_id=schedule.add_subject(subject),
                 )
 
-    async with ClientSession() as session:
-        teachers = await (await session.get(TEACHERS_URL)).json()
-        groups = await (await session.get(GROUPS_URL)).json()
-        teacher_map = {
-            f"{t['firstName']} {t['surname'][0]}.{t['patronymic'][0]}.": t["id"]
-            for t in teachers
-            if f"{t['firstName']} {t['surname'][0]}.{t['patronymic'][0]}." in COLLEGE_TEACHERS
-        }
-        groups_map = {g["id"]: g["name"] for g in groups}
+    async with ClientSession(headers={"provider": "volsu-system-bot"}) as session:
+        try:
+            teachers = await (await session.get(TEACHERS_URL)).json()
+            groups = await (await session.get(GROUPS_URL)).json()
+            teacher_map = {
+                f"{t['firstName']} {t['surname'][0]}.{t['patronymic'][0]}.": t["id"]
+                for t in teachers
+                if f"{t['firstName']} {t['surname'][0]}.{t['patronymic'][0]}." in COLLEGE_TEACHERS
+            }
+            groups_map = {g["id"]: g["name"] for g in groups}
 
-        schedule_db = Schedule()
-        schedule_db.clear_college()
-        logging.info("Очистил расписание колледжа, начинаю парсинг")
+            schedule_db = Schedule()
+            schedule_db.clear_college()
+            logging.info("Очистил расписание колледжа, начинаю парсинг")
 
-        await asyncio.gather(*(parse_teacher_schedule(name, tid, schedule_db) for name, tid in teacher_map.items()))
+            await asyncio.gather(*(parse_teacher_schedule(name, tid, schedule_db) for name, tid in teacher_map.items()))
+        except Exception as e:
+            logging.error(e)
     logging.info("Обновлено расписание колледжа для всех преподавателей")
 
 
-async def university_schedule_parser():
-    def _parse_info(text: str):
+async def university_schedule_parser() -> None:
+    def _parse_info(text: str) -> dict[str, str | list[Any]] | None:
         """Парсит строку вида 'Предмет (Лаб), [должность] Фамилия И.О., Ауд. 1-23 К'
         -> dict(subject, teachers[list], classroom[str])"""
 
@@ -138,13 +143,13 @@ async def university_schedule_parser():
 
         return {"subject": subject, "teachers": teachers, "classroom": classroom}
 
-    def _row_day_time(row):
+    def _row_day_time(row: _Row) -> tuple[str, str]:
         day = re.sub(r"\s+", "", row.cells[0].text.strip())
         start = row.cells[1].text.strip().split("-")[0]
         time = re.sub(r"\b8:30\b", "08:30", re.sub(r"\s*", "", start))
         return day, time
 
-    def _set_default():
+    def _set_default() -> None:
         for i in sorted(config.GROUPS):
             schedule_db.add_group(i)
         for i in sorted(config.ALL_PERSONAL):
@@ -152,7 +157,9 @@ async def university_schedule_parser():
         for i in sorted(config.ROOMS):
             schedule_db.add_room(i)
 
-    def _process_group_cells(left: str, right: str = None, single_column: bool = False):
+    def _process_group_cells(
+        left: str, right: str = None, single_column: bool = False
+    ) -> list[tuple[int, dict[str, str]]] | list[Any]:
         """Возвращает список [(subgroup, info_dict)]."""
 
         left = left.strip() if left else ""

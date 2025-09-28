@@ -29,7 +29,7 @@ line-length = 120
 exclude = ["__pycache__", "venv", "uv.lock"]
 
 [tool.ruff.lint]
-select = ["E", "F", "W"]
+select = ["E", "F", "I", "N", "UP", "B", "A", "C4", "ANN", "Q"]
 extend-select = ["E501"]
 
 [tool.ruff.format]

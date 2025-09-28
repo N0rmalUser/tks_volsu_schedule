@@ -22,7 +22,7 @@ from openpyxl import load_workbook
 from openpyxl.styles import Border, Side
 from pandas import concat, read_sql_query
 
-from app.config import ROOMS_SHEETS_PATH, SCHEDULE_DB, TEACHERS_SHEETS_PATH, STUDENTS
+from app.config import ROOMS_SHEETS_PATH, SCHEDULE_DB, STUDENTS, TEACHERS_SHEETS_PATH
 
 
 def teacher(teacher_name: str) -> str:
@@ -153,7 +153,7 @@ def teacher(teacher_name: str) -> str:
     return str(file_name)
 
 
-def room(room_name: str):
+def room(room_name: str) -> str:
     days = ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота"]
     times = ["08", "10", "12", "13", "15", "17", "18"]
 

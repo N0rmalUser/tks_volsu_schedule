@@ -26,7 +26,7 @@ from ..config import ACTIVITIES_DB, SCHEDULE_DB, USERS_DB
 from .user import User
 
 
-def sql_kit(db: Path = ":memory:"):
+def sql_kit(db: Path = ":memory:"):  # noqa: ANN201
     """
     Декоратор для работы с базой данных. Он открывает соединение с базой данных, выполняет функцию и закрывает
     соединение.
@@ -34,9 +34,9 @@ def sql_kit(db: Path = ":memory:"):
     :return:  Результат выполнения функции
     """
 
-    def decorator(func):
+    def decorator(func):  # noqa: ANN001, ANN202
         @wraps(func)
-        def wrapper(*args, **kwargs):
+        def wrapper(*args, **kwargs):  # noqa: ANN002, ANN003, ANN202
             conn = sqlite3.connect(db)
             try:
                 result = func(*args, **kwargs, cursor=conn.cursor())
@@ -51,7 +51,7 @@ def sql_kit(db: Path = ":memory:"):
 
 
 @sql_kit(USERS_DB)
-def user_db_init(cursor: sqlite3.Cursor):
+def user_db_init(cursor: sqlite3.Cursor) -> None:
     cursor.execute(
         """
         CREATE TABLE IF NOT EXISTS User_Info (
@@ -81,7 +81,7 @@ def user_db_init(cursor: sqlite3.Cursor):
 
 
 @sql_kit(SCHEDULE_DB)
-def schedule_db_init(cursor: sqlite3.Cursor):
+def schedule_db_init(cursor: sqlite3.Cursor) -> None:
     cursor.execute(
         """CREATE TABLE IF NOT EXISTS Rooms (
             RoomID INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -141,7 +141,7 @@ def schedule_db_init(cursor: sqlite3.Cursor):
 
 
 @sql_kit(ACTIVITIES_DB)
-def activity_db_init(cursor: sqlite3.Cursor):
+def activity_db_init(cursor: sqlite3.Cursor) -> None:
     cursor.execute(
         """
         CREATE TABLE IF NOT EXISTS daily_activity (
@@ -185,7 +185,7 @@ def format_date(date: str) -> str:
     return ", ".join(result) if result else "Только что"
 
 
-def user_info(user_id: int):
+def user_info(user_id: int) -> str:
     """Возвращает информацию о пользователе, подготовленную к отправке админу"""
 
     from app.config import GROUPS, TEACHERS
@@ -318,7 +318,7 @@ async def get_tracked_users() -> list:
 
 
 @sql_kit(USERS_DB)
-def get_users_by_group_id(group_id: int, cursor: sqlite3.Cursor):
+def get_users_by_group_id(group_id: int, cursor: sqlite3.Cursor) -> str | None:
     cursor.execute(
         """
         SELECT u.user_id
@@ -328,12 +328,11 @@ def get_users_by_group_id(group_id: int, cursor: sqlite3.Cursor):
         """,
         (group_id,),
     )
-    result = cursor.fetchone()
-    return result[0] if result else None
+    return row[0] if (row := cursor.fetchone()) else None
 
 
 @sql_kit(USERS_DB)
-def get_users_by_teacher_id(group_id: int, cursor: sqlite3.Cursor):
+def get_users_by_teacher_id(group_id: int, cursor: sqlite3.Cursor) -> str | None:
     cursor.execute(
         """
         SELECT u.user_id
@@ -343,8 +342,7 @@ def get_users_by_teacher_id(group_id: int, cursor: sqlite3.Cursor):
         """,
         (group_id,),
     )
-    result = cursor.fetchone()
-    return result[0] if result else None
+    return row[0] if (row := cursor.fetchone()) else None
 
 
 try:

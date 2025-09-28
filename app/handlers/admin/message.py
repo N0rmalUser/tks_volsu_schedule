@@ -239,7 +239,7 @@ async def student_command_handler(msg: Message) -> None:
 
 
 @router.message(F.document, ChatTypeIdFilter(chat_type=["group", "supergroup"]))
-async def file_handler(msg: Message):
+async def file_handler(msg: Message) -> None:
     """Ловит документы и заменяет файл schedule.db, users.db, activities.db на полученные."""
 
     file_name = msg.document.file_name
@@ -292,7 +292,7 @@ async def file_handler(msg: Message):
         logging.error(f"Ошибка при загрузке файлов: {e}")
 
 
-async def send_collected_messages(msg: Message):
+async def send_collected_messages(msg: Message) -> None:
     await asyncio.sleep(5)
 
     if hasattr(msg.bot, "collected_messages") and msg.bot.collected_messages:

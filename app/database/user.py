@@ -20,7 +20,7 @@ from app.config import USERS_DB
 
 
 class User:
-    def __init__(self, user_id: int = None, topic_id: int = None):
+    def __init__(self, user_id: int = None, topic_id: int = None) -> None:
         """Класс для работы с базой данных пользователей. Позволяет получать и устанавливать данные пользователя в
         базе данных."""
 
@@ -135,7 +135,7 @@ class User:
         return row[0] if (row := self.__cursor.fetchone()) else None
 
     @type.setter
-    def type(self, user_type) -> None:
+    def type(self, user_type: str) -> None:
         """Устанавливает тип пользователя в базе данных. Могут быть student или teacher"""
 
         self.__cursor.execute(
@@ -230,7 +230,7 @@ class User:
         self.__conn.commit()
 
     @topic_id.deleter
-    def topic_id(self):
+    def topic_id(self) -> None:
         """Удаляет topic_id пользователя из базы данных"""
 
         self.__cursor.execute(
@@ -244,7 +244,7 @@ class User:
         self.__conn.commit()
 
     @property
-    def default(self):
+    def default(self) -> str | None:
         """Возвращает группу или преподавателя по умолчанию"""
 
         self.__cursor.execute(
@@ -257,7 +257,7 @@ class User:
         return row[0] if (row := self.__cursor.fetchone()) else None
 
     @default.setter
-    def default(self, default: str):
+    def default(self, default: str) -> None:
         """Устанавливает группу или преподавателя по умолчанию"""
 
         self.__cursor.execute(
@@ -271,7 +271,7 @@ class User:
         self.__conn.commit()
 
     @property
-    def last_date(self):
+    def last_date(self) -> str | None:
         """Возвращает последнюю дату использования бота пользователем"""
 
         self.__cursor.execute(
@@ -347,5 +347,5 @@ class User:
         )
         return row[0] if (row := self.__cursor.fetchone()) else None
 
-    def __del__(self):
+    def __del__(self) -> None:
         self.__conn.close()

@@ -18,13 +18,14 @@ import sqlite3
 from datetime import datetime, timedelta
 
 import pandas as pd
+from pandas import DataFrame
 
 from app.config import ACTIVITIES_DB, TZ
 from app.database import sql_kit
 
 
 @sql_kit(ACTIVITIES_DB)
-def get_activity_for_month(date_str: str, cursor: sqlite3.Cursor):
+def get_activity_for_month(date_str: str, cursor: sqlite3.Cursor) -> DataFrame:
     """Возвращает статистику активности пользователей за месяц по дням."""
 
     date = datetime.strptime(date_str, "%Y-%m-%d")
@@ -45,7 +46,7 @@ def get_activity_for_month(date_str: str, cursor: sqlite3.Cursor):
 
 
 @sql_kit(ACTIVITIES_DB)
-def get_activity_for_day(date_str: str, cursor: sqlite3.Cursor):
+def get_activity_for_day(date_str: str, cursor: sqlite3.Cursor) -> DataFrame:
     """Возвращает статистику активности пользователей за день по часам."""
 
     date = datetime.strptime(date_str, "%Y-%m-%d")
@@ -64,7 +65,7 @@ def get_activity_for_day(date_str: str, cursor: sqlite3.Cursor):
 
 
 @sql_kit(ACTIVITIES_DB)
-def get_user_activity_for_month(user_id: str, date_str: str, cursor: sqlite3.Cursor) -> pd.DataFrame:
+def get_user_activity_for_month(user_id: str, date_str: str, cursor: sqlite3.Cursor) -> DataFrame:
     """Возвращает статистику активности пользователя за день по часам."""
 
     date = datetime.strptime(date_str, "%Y-%m-%d")
@@ -85,7 +86,7 @@ def get_user_activity_for_month(user_id: str, date_str: str, cursor: sqlite3.Cur
 
 
 @sql_kit(ACTIVITIES_DB)
-def get_user_activity_for_day(user_id: str, date_str: str, cursor: sqlite3.Cursor):
+def get_user_activity_for_day(user_id: str, date_str: str, cursor: sqlite3.Cursor) -> DataFrame:
     """Возвращает статистику активности пользователя за месяц по дням."""
 
     date = datetime.strptime(date_str, "%Y-%m-%d")
@@ -109,7 +110,7 @@ def get_top_users_by_days(
     month_str: str | None = None,
     year_str: str | None = None,
     cursor: sqlite3.Cursor | None = None,
-):
+) -> DataFrame:
     user_day_count = {}
     query = "SELECT date, user_ids FROM daily_activity"
     params = ()
@@ -137,7 +138,7 @@ def get_top_users_by_hours(
     month_str: str | None = None,
     year_str: str | None = None,
     cursor: sqlite3.Cursor | None = None,
-):
+) -> DataFrame:
     user_hour_count = {}
     query = "SELECT datetime, user_ids FROM hourly_activity"
     params = ()
@@ -160,7 +161,7 @@ def get_top_users_by_hours(
 
 
 @sql_kit(ACTIVITIES_DB)
-def log_user_activity(user_id: int, cursor: sqlite3.Cursor):
+def log_user_activity(user_id: int, cursor: sqlite3.Cursor) -> None:
     now = datetime.now(TZ)
     date = now.strftime("%Y-%m-%d")
     hour = now.strftime("%Y-%m-%d %H:00")

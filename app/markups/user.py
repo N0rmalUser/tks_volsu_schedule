@@ -23,7 +23,7 @@ from app.database.user import User
 from app.markups import keyboard_factory
 
 
-def student_menu():
+def student_menu() -> ReplyKeyboardMarkup:
     return ReplyKeyboardMarkup(
         keyboard=[
             [KeyboardButton(text="Расписание на сегодня")],
@@ -33,7 +33,7 @@ def student_menu():
     )
 
 
-def teacher_menu():
+def teacher_menu() -> ReplyKeyboardMarkup:
     return ReplyKeyboardMarkup(
         keyboard=[
             [KeyboardButton(text="Расписание на сегодня")],
@@ -123,7 +123,7 @@ def get_default_teachers() -> InlineKeyboardMarkup:
     return builder.as_markup()
 
 
-def get_default_groups():
+def get_default_groups() -> InlineKeyboardMarkup:
     """Возвращает клавиатуру с группами, указанными в config.toml."""
 
     builder = InlineKeyboardBuilder()
@@ -218,7 +218,7 @@ def get_sheets(user_id: int) -> InlineKeyboardMarkup:
     return builder.as_markup()
 
 
-def get_sheet_teachers(user_id: int):
+def get_sheet_teachers(user_id: int) -> InlineKeyboardMarkup:
     """Возвращает клавиатуру с преподавателями, указанными в config.toml."""
 
     from app.database.schedule import Schedule
@@ -243,7 +243,7 @@ def get_sheet_teachers(user_id: int):
     return builder.as_markup()
 
 
-def get_sheet_groups(user_id: int):
+def get_sheet_groups(user_id: int) -> InlineKeyboardMarkup:
     """Возвращает клавиатуру с группами, указанными в config.toml."""
 
     from app.database.schedule import Schedule
@@ -276,7 +276,7 @@ def get_sheet_groups(user_id: int):
     return builder.as_markup()
 
 
-def get_sheet_rooms():
+def get_sheet_rooms() -> InlineKeyboardMarkup:
     """Возвращает клавиатуру с аудиториями, указанными в config.toml."""
 
     from app.database.schedule import Schedule

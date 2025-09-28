@@ -30,34 +30,34 @@ router = Router()
 
 
 @router.callback_query(F.data == "cancel_send")
-async def confirm_send_handler(callback_query: CallbackQuery):
+async def confirm_send_handler(callback_query: CallbackQuery) -> None:
     await callback_query.answer("Отправка отменена.")
     await callback_query.message.delete()
 
 
 @router.callback_query(F.data == "cancel_sending")
-async def cancel_sending_handler(callback: CallbackQuery, state: FSMContext):
+async def cancel_sending_handler(callback: CallbackQuery, state: FSMContext) -> None:
     await state.set_state(BroadcastStates.cancel_sending)
     await callback.answer("Отправка будет остановлена.")
     await callback.message.delete_reply_markup()
 
 
 @router.callback_query(F.data == "confirm_all")
-async def confirm_all_handler(callback: CallbackQuery, state: FSMContext):
+async def confirm_all_handler(callback: CallbackQuery, state: FSMContext) -> None:
     await callback.answer("Начинаем отправку сообщений всем!")
     await state.set_state(BroadcastStates.sending_messages)
     await send_broadcast_message(callback.message, state, callback.message.message_id - 1, all_user_ids())
 
 
 @router.callback_query(F.data == "confirm_students")
-async def confirm_students_handler(callback: CallbackQuery, state: FSMContext):
+async def confirm_students_handler(callback: CallbackQuery, state: FSMContext) -> None:
     await callback.answer("Начинаем отправку сообщений студентам!")
     await state.set_state(BroadcastStates.sending_messages)
     await send_broadcast_message(callback.message, state, callback.message.message_id - 1, student_ids())
 
 
 @router.callback_query(F.data == "confirm_teachers")
-async def confirm_teachers_handler(callback: CallbackQuery, state: FSMContext):
+async def confirm_teachers_handler(callback: CallbackQuery, state: FSMContext) -> None:
     await callback.answer("Начинаем отправку сообщений преподавателям!")
     await state.set_state(BroadcastStates.sending_messages)
     await send_broadcast_message(callback.message, state, callback.message.message_id - 1, teachers_ids())

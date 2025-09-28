@@ -95,13 +95,11 @@ def create_progress_bar(completed: int, total: int) -> str:
     return f"[{bar}]"
 
 
-async def send_broadcast_message(msg: Message, state: FSMContext, message_id: int, user_ids: list[int]):
+async def send_broadcast_message(msg: Message, state: FSMContext, message_id: int, user_ids: list[int]) -> None:
     from asyncio import sleep
 
-    from app.database import all_user_ids
     from app.database.user import User
 
-    user_ids = all_user_ids()
     sent_count = 0
     total_users = len(user_ids)
     try:
