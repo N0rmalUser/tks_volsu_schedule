@@ -24,7 +24,7 @@ from datetime import datetime, timedelta
 from docx import Document
 
 from app import config
-from app.config import GROUPS, GROUPS_SCHEDULE_PATH, GROUPS_URL, API_URL, COLLEGE_TEACHERS
+from app.config import GROUPS, GROUPS_SCHEDULE_PATH, GROUPS_URL, API_URL, COLLEGE_TEACHERS, TEACHERS_URL
 from app.database.schedule import Schedule
 
 
@@ -83,17 +83,20 @@ async def college_schedule_parser():
                 )
 
     async with ClientSession() as session:
-        async with session.get(GROUPS_URL, headers={"provider": "volsu-system-bot"}) as resp:
-            data = await resp.json()
-            groups_map = {g["id"]: g["name"] for g in data}
+        teachers = await (await session.get(TEACHERS_URL)).json()
+        groups = await (await session.get(GROUPS_URL)).json()
+        teacher_map = {
+            f"{t['firstName']} {t['surname'][0]}.{t['patronymic'][0]}.": t["id"]
+            for t in teachers
+            if f"{t['firstName']} {t['surname'][0]}.{t['patronymic'][0]}." in COLLEGE_TEACHERS
+        }
+        groups_map = {g["id"]: g["name"] for g in groups}
 
         schedule_db = Schedule()
         schedule_db.clear_college()
-        logging.info("Очистил расписание колледжа и начал парсить новое")
+        logging.info("Очистил расписание колледжа, начинаю парсинг")
 
-        tasks = [parse_teacher_schedule(name, tid, schedule_db) for name, tid in COLLEGE_TEACHERS.items()]
-        await asyncio.gather(*tasks)
-
+        await asyncio.gather(*(parse_teacher_schedule(name, tid, schedule_db) for name, tid in teacher_map.items()))
     logging.info("Обновлено расписание колледжа для всех преподавателей")
 
 

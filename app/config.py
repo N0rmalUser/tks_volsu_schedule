@@ -44,10 +44,10 @@ STUDENTS = config["university"]["students"]
 ALL_PERSONAL = sorted(set(TEACHERS) | set(STUDENTS.keys()))
 
 COLLEGE_CONST: int = config["college"]["id_const"]
-COLLEGE_TEACHERS: dict[str, str] = config["college"]["teachers"]
-COLLEGE_TEACHERS_ID: list = list(config["college"]["teachers"].values())
-API_URL = config["college"]["api_url"]
-GROUPS_URL = config["college"]["groups_url"]
+COLLEGE_TEACHERS: list = config["college"]["teachers"]
+API_URL: str = config["college"]["api_url"]
+GROUPS_URL: str = config["college"]["groups_url"]
+TEACHERS_URL: str = config["college"]["teachers_url"]
 
 ALIASES = config["aliases"]
 

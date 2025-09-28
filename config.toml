@@ -34,11 +34,10 @@ rooms = ["rooms"]
 id_const = 1000
 api_url = "https://app.volsu.ru/api/schedule/lesson/teacher/{teacher_id}"
 groups_url = "https://app.volsu.ru/api/group/bot"
-
-# преподаватель и его id в *bot_url
-[college.teachers]
-"teacher" = "fffffffffffff"
-
+teachers_url = "https://volsu.1450983-cl92470.tw1.ru/api/teacher/bot"
+teachers = [
+    "teachers"
+]
 
 # Преподаватели с ошибкой в фамилии в расписаниях
 [aliases]
