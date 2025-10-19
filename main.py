@@ -34,7 +34,7 @@ if __name__ == "__main__":
     }
     logging.basicConfig(
         level=levels[LOG_LEVEL],
-        format="%(asctime)s %(levelname)s  %(message)s",
+        format="%(asctime)s %(levelname)s [%(funcName)s] %(message)s",
         datefmt="%H:%M:%S %d-%m-%Y",
         handlers=[
             logging.FileHandler(LOG_FILE, encoding="utf-8"),
