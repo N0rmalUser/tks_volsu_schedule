@@ -48,7 +48,7 @@ async def college_schedule_parser() -> None:
         start_of_week = now - timedelta(days=now.weekday())
         start_of_week = start_of_week.replace(hour=0, minute=0, second=0, microsecond=0)
         end_of_next_week = start_of_week + timedelta(days=13, hours=23, minutes=59, seconds=59)
-        return int(start_of_week.timestamp() * 1000), int(end_of_next_week.timestamp() * 100)
+        return int(start_of_week.timestamp() * 1000), int(end_of_next_week.timestamp() * 1000)
 
     async def parse_teacher_schedule(teacher_name: str, teacher_id: str, schedule: Schedule) -> None:
         min_ts, max_ts = _get_week_timestamps()
