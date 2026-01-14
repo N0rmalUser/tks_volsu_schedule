@@ -167,6 +167,23 @@ async def update_handler(msg: Message) -> None:
     logging.info("База данных расписания обновлена")
 
 
+
+@router.message(Command("college"), ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID))
+async def update_handler(msg: Message) -> None:
+    from app.misc import schedule_parser
+
+    start = await msg.answer("Обновляю расписание колледжа...")
+    try:
+        await schedule_parser.college_schedule_parser()
+    except Exception as e:
+        await start.edit_text("Ошибка обновления базы данных расписания колледжа")
+        logging.error(e)
+        return
+
+    await start.edit_text("База данных расписания колледжа обновлена")
+    logging.info("База данных расписания колледжа обновлена")
+
+
 @router.message(Command("track"), ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID))
 async def track_command_handler(msg: Message, command: CommandObject) -> None:
     """Включает/выключает трекинг для пользователя или для всех пользователей."""
