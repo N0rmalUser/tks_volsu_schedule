@@ -18,8 +18,9 @@ import asyncio
 import logging
 import os
 import re
+from collections.abc import Coroutine
 from datetime import date, datetime, timedelta
-from typing import Any, Coroutine
+from typing import Any
 
 from aiohttp import ClientSession
 from docx import Document
