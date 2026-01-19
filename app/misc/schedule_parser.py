@@ -146,7 +146,7 @@ async def college_schedule_parser() -> None:
                         time=time_str,
                         day_name=str(day_name),
                         week_type=str(week_type),
-                        group_id=schedule.add_group(group_name),
+                        group_id=schedule.add_group(str(group_name)),
                         teacher_id=schedule.add_teacher(teacher_name),
                         room_id=schedule.add_room(room_name),
                         subject_id=schedule.add_subject(subject),
