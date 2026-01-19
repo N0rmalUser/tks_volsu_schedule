@@ -19,7 +19,7 @@ import logging
 import os
 import re
 from datetime import date, datetime, timedelta
-from typing import Any
+from typing import Any, Coroutine
 
 from aiohttp import ClientSession
 from docx import Document
@@ -27,16 +27,20 @@ from docx.table import _Row
 
 from app import config
 from app.config import (
+    API_URL,
+    APP_URL,
     COLLEGE_GROUPS,
     COLLEGE_TEACHERS,
-    GROUP_API_URL,
     GROUPS,
     GROUPS_SCHEDULE_PATH,
-    GROUPS_URL,
-    TEACHER_API_URL,
-    TEACHERS_URL,
 )
 from app.database.schedule import Schedule
+
+# Предполагается, что следующие глобальные константы / структуры
+# определены в окружении, из которого вызывается функция:
+# APP_URL, API_URL, COLLEGE_TEACHERS (set/list of teacher short names),
+# COLLEGE_GROUPS (list of group prefixes), GROUPS (iterable of group names)
+# Класс Schedule с методами: clear_college, add_group, add_teacher, add_room, add_subject, add_schedule
 
 
 async def college_schedule_parser() -> None:
@@ -49,101 +53,36 @@ async def college_schedule_parser() -> None:
         "saturday": "Суббота",
         "sunday": "Воскресенье",
     }
-
     week_map = {"numerator": "Числитель", "denominator": "Знаменатель"}
 
-    def _get_week_timestamps() -> tuple[int, int]:
+    def get_week_timestamps() -> tuple[int, int]:
         now = datetime.now()
-        start_of_week = now - timedelta(days=now.weekday())
-        start_of_week = start_of_week.replace(hour=0, minute=0, second=0, microsecond=0)
-        end_of_next_week = start_of_week + timedelta(days=13, hours=23, minutes=59, seconds=59)
-        return int(start_of_week.timestamp() * 1000), int(end_of_next_week.timestamp() * 1000)
+        start = now - timedelta(days=now.weekday())
+        start = start.replace(hour=0, minute=0, second=0, microsecond=0)
+        end = start + timedelta(days=13, hours=23, minutes=59, seconds=59)
+        return int(start.timestamp() * 1000), int(end.timestamp() * 1000)
 
     def get_semester(admission_year: int, now_date: date) -> int:
         start = date(admission_year, 9, 1)
         if now_date < start:
             return 0
-        semester = 1
-        full_years = now_date.year - admission_year
-        semester += full_years * 2
-        if now_date.year == admission_year:
-            if now_date.month < 9:
-                return 0
-        else:
-            if now_date.month < 1:
-                semester -= 2
-            elif now_date.month < 9:
-                semester -= 1
+        semester = 1 + (now_date.year - admission_year) * 2
+        if now_date.year == admission_year and now_date.month < 9:
+            return 0
+        if now_date.month < 1:
+            semester -= 2
+        elif now_date.month < 9:
+            semester -= 1
         return semester
 
-    async def parse_group_schedule(group_name: str, group_id: str, semester: int, schedule: Schedule) -> None:
-        min_ts, max_ts = _get_week_timestamps()
-        url = (
-            f"{GROUP_API_URL.format(group_id=group_id)}?minTimestamp={min_ts}&maxTimestamp={max_ts}&semester={semester}"
-        )
-        async with session.get(url) as response:
-            lessons = await response.json()
-
-        for lesson in lessons:
-            if lesson["subject"] == "":
-                return
-            start_time_str = str(lesson["startTime"]).zfill(4)
-            time_str = f"{start_time_str[:2]}:{start_time_str[2:]}"
-
-            day_name = days_map.get(lesson["day"].lower(), lesson["day"])
-            week_type = week_map.get(lesson["week"], lesson["week"])
-            room_name = lesson["classrooms"][0]
-
-            subject = lesson["subject"].strip()
-            teacher_match = re.search(r"преп\.?\s+([А-яЁё]+\s+[А-ЯЁ]\.[А-ЯЁ]\.)", subject, re.IGNORECASE)
-            teacher_name = teacher_match.group(1) if teacher_match else "Не указано"
-            subject = re.sub(r",?\s*?преп.*", "", subject, flags=re.IGNORECASE)
-
-            schedule.add_schedule(
-                college=True,
-                time=re.sub(r"\b8:30\b", "08:30", time_str),
-                day_name=str(day_name),
-                week_type=str(week_type),
-                group_id=schedule.add_group(group_name),
-                teacher_id=schedule.add_teacher(teacher_name),
-                room_id=schedule.add_room(room_name),
-                subject_id=schedule.add_subject(subject),
-            )
-
-    async def parse_teacher_schedule(teacher_name: str, teacher_id: str, schedule: Schedule) -> None:
-        min_ts, max_ts = _get_week_timestamps()
-        url = f"{TEACHER_API_URL.format(teacher_id=teacher_id)}?minTimestamp={min_ts}&maxTimestamp={max_ts}"
-        async with session.get(url) as response:
-            lessons = await response.json()
-        for lesson in lessons:
-            start_time_str = str(lesson["startTime"]).zfill(4)
-            time_str = f"{start_time_str[:2]}:{start_time_str[2:]}"
-
-            day_name = days_map.get(lesson["day"].lower(), lesson["day"])
-            week_type = week_map.get(lesson["week"], lesson["week"])
-            room_name = lesson["classrooms"][0]
-
-            subject = lesson["subject"].strip()
-            subject = re.sub(r",?\s*?преп.*", "", subject, flags=re.IGNORECASE)
-
-            group = all_groups_map[lesson["groupId"]]
-
-            if group not in GROUPS:
-                schedule.add_schedule(
-                    college=True,
-                    time=re.sub(r"\b8:30\b", "08:30", time_str),
-                    day_name=str(day_name),
-                    week_type=str(week_type),
-                    group_id=schedule.add_group(group),
-                    teacher_id=schedule.add_teacher(teacher_name),
-                    room_id=schedule.add_room(room_name),
-                    subject_id=schedule.add_subject(subject),
-                )
+    min_ts, max_ts = get_week_timestamps()
+    now_date = date.today()
 
     async with ClientSession(headers={"provider": "volsu-system-bot"}) as session:
         try:
-            teachers = await (await session.get(TEACHERS_URL)).json()
-            groups = await (await session.get(GROUPS_URL)).json()
+            teachers = await (await session.get(API_URL.format(type="teacher"))).json()
+            groups = await (await session.get(API_URL.format(type="group"))).json()
+
             tks_teacher_map = {
                 f"{t['firstName']} {t['surname'][0]}.{t['patronymic'][0]}.": t["id"]
                 for t in teachers
@@ -155,23 +94,67 @@ async def college_schedule_parser() -> None:
                 for g in groups
                 if any(g["name"].startswith(college) for college in COLLEGE_GROUPS)
             }
-            schedule_db = Schedule()
-            schedule_db.clear_college()
+
+            schedule = Schedule()
+            schedule.clear_college()
             logging.info("Очистил расписание колледжа, начинаю парсинг")
 
-            print(tks_groups_map)
-            now_date = date.today()
-            await asyncio.gather(
-                *(parse_teacher_schedule(name, tid, schedule_db) for name, tid in tks_teacher_map.items())
-            )
-            await asyncio.gather(
-                *(
-                    parse_group_schedule(group, gid, get_semester(year, now_date), schedule_db)
-                    for group, (gid, year) in tks_groups_map.items()
-                )
-            )
+            async def fetch(url: str) -> Coroutine:
+                async with session.get(url) as r:
+                    return await r.json()
+
+            tasks = []
+
+            for teacher_name, teacher_id in tks_teacher_map.items():
+                url = f"{APP_URL}/teacher/{teacher_id}?minTimestamp={min_ts}&maxTimestamp={max_ts}"
+                tasks.append(("teacher", teacher_name, fetch(url)))
+
+            for group_name, (group_id, year) in tks_groups_map.items():
+                semester = get_semester(year, now_date)
+                url = f"{APP_URL}/group/{group_id}?minTimestamp={min_ts}&maxTimestamp={max_ts}&semester={semester}"
+                tasks.append(("group", group_name, fetch(url)))
+
+            results = await asyncio.gather(*(t[2] for t in tasks))
+
+            for (kind, name, _), lessons in zip(tasks, results, strict=False):
+                for lesson in lessons:
+                    if kind == "group" and lesson["subject"] == "":
+                        continue
+
+                    start_time = str(lesson["startTime"]).zfill(4)
+                    time_str = re.sub(r"\b8:30\b", "08:30", f"{start_time[:2]}:{start_time[2:]}")
+                    day_name = days_map.get(lesson["day"].lower(), lesson["day"])
+                    week_type = week_map.get(lesson["week"], lesson["week"])
+                    room_name = lesson["classrooms"][0]
+
+                    subject = lesson["subject"].strip()
+                    teacher_name = name if kind == "teacher" else "Не указано"
+
+                    match = re.search(r"преп\.?\s+([А-яЁё]+\s+[А-ЯЁ]\.[А-ЯЁ]\.)", subject, re.IGNORECASE)
+                    if match:
+                        teacher_name = match.group(1)
+
+                    subject = re.sub(r",?\s*?преп.*", "", subject, flags=re.IGNORECASE)
+
+                    group_name = name if kind == "group" else all_groups_map.get(lesson["groupId"])
+
+                    if kind == "teacher" and group_name in GROUPS:
+                        continue
+
+                    schedule.add_schedule(
+                        college=True,
+                        time=time_str,
+                        day_name=str(day_name),
+                        week_type=str(week_type),
+                        group_id=schedule.add_group(group_name),
+                        teacher_id=schedule.add_teacher(teacher_name),
+                        room_id=schedule.add_room(room_name),
+                        subject_id=schedule.add_subject(subject),
+                    )
+
         except Exception as e:
             logging.error(e)
+
     logging.info("Обновлено расписание колледжа для всех преподавателей")
 
 
