@@ -45,7 +45,9 @@ ALL_PERSONAL = sorted(set(TEACHERS) | set(STUDENTS.keys()))
 
 COLLEGE_CONST: int = config["college"]["id_const"]
 COLLEGE_TEACHERS: list = config["college"]["teachers"]
-API_URL: str = config["college"]["api_url"]
+COLLEGE_GROUPS: list = config["college"]["groups"]
+TEACHER_API_URL: str = config["college"]["teacher_api_url"]
+GROUP_API_URL: str = config["college"]["group_api_url"]
 GROUPS_URL: str = config["college"]["groups_url"]
 TEACHERS_URL: str = config["college"]["teachers_url"]
 

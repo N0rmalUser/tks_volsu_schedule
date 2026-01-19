@@ -18,7 +18,7 @@ import asyncio
 import logging
 import os
 import re
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from typing import Any
 
 from aiohttp import ClientSession
@@ -26,7 +26,16 @@ from docx import Document
 from docx.table import _Row
 
 from app import config
-from app.config import API_URL, COLLEGE_TEACHERS, GROUPS, GROUPS_SCHEDULE_PATH, GROUPS_URL, TEACHERS_URL
+from app.config import (
+    COLLEGE_GROUPS,
+    COLLEGE_TEACHERS,
+    GROUP_API_URL,
+    GROUPS,
+    GROUPS_SCHEDULE_PATH,
+    GROUPS_URL,
+    TEACHER_API_URL,
+    TEACHERS_URL,
+)
 from app.database.schedule import Schedule
 
 
@@ -50,27 +59,74 @@ async def college_schedule_parser() -> None:
         end_of_next_week = start_of_week + timedelta(days=13, hours=23, minutes=59, seconds=59)
         return int(start_of_week.timestamp() * 1000), int(end_of_next_week.timestamp() * 1000)
 
-    async def parse_teacher_schedule(teacher_name: str, teacher_id: str, schedule: Schedule) -> None:
+    def get_semester(admission_year: int, now_date: date) -> int:
+        start = date(admission_year, 9, 1)
+        if now_date < start:
+            return 0
+        semester = 1
+        full_years = now_date.year - admission_year
+        semester += full_years * 2
+        if now_date.year == admission_year:
+            if now_date.month < 9:
+                return 0
+        else:
+            if now_date.month < 1:
+                semester -= 2
+            elif now_date.month < 9:
+                semester -= 1
+        return semester
+
+    async def parse_group_schedule(group_name: str, group_id: str, semester: int, schedule: Schedule) -> None:
         min_ts, max_ts = _get_week_timestamps()
-        url = f"{API_URL.format(teacher_id=teacher_id)}?minTimestamp={min_ts}&maxTimestamp={max_ts}"
+        url = (
+            f"{GROUP_API_URL.format(group_id=group_id)}?minTimestamp={min_ts}&maxTimestamp={max_ts}&semester={semester}"
+        )
         async with session.get(url) as response:
             lessons = await response.json()
 
+        for lesson in lessons:
+            if lesson["subject"] == "":
+                return
+            start_time_str = str(lesson["startTime"]).zfill(4)
+            time_str = f"{start_time_str[:2]}:{start_time_str[2:]}"
+
+            day_name = days_map.get(lesson["day"].lower(), lesson["day"])
+            week_type = week_map.get(lesson["week"], lesson["week"])
+            room_name = lesson["classrooms"][0]
+
+            subject = lesson["subject"].strip()
+            teacher_match = re.search(r"преп\.?\s+([А-яЁё]+\s+[А-ЯЁ]\.[А-ЯЁ]\.)", subject, re.IGNORECASE)
+            teacher_name = teacher_match.group(1) if teacher_match else "Не указано"
+            subject = re.sub(r",?\s*?преп.*", "", subject, flags=re.IGNORECASE)
+
+            schedule.add_schedule(
+                college=True,
+                time=re.sub(r"\b8:30\b", "08:30", time_str),
+                day_name=str(day_name),
+                week_type=str(week_type),
+                group_id=schedule.add_group(group_name),
+                teacher_id=schedule.add_teacher(teacher_name),
+                room_id=schedule.add_room(room_name),
+                subject_id=schedule.add_subject(subject),
+            )
+
+    async def parse_teacher_schedule(teacher_name: str, teacher_id: str, schedule: Schedule) -> None:
+        min_ts, max_ts = _get_week_timestamps()
+        url = f"{TEACHER_API_URL.format(teacher_id=teacher_id)}?minTimestamp={min_ts}&maxTimestamp={max_ts}"
+        async with session.get(url) as response:
+            lessons = await response.json()
         for lesson in lessons:
             start_time_str = str(lesson["startTime"]).zfill(4)
             time_str = f"{start_time_str[:2]}:{start_time_str[2:]}"
 
             day_name = days_map.get(lesson["day"].lower(), lesson["day"])
             week_type = week_map.get(lesson["week"], lesson["week"])
+            room_name = lesson["classrooms"][0]
 
             subject = lesson["subject"].strip()
-            room_match = re.search(r",?\s*ауд\.?\s*(\d+[-\d]*[А-Яа-я]*)", subject, re.IGNORECASE)
-            room_name = room_match.group(1) if room_match else "Не указано"
+            subject = re.sub(r",?\s*?преп.*", "", subject, flags=re.IGNORECASE)
 
-            subject = re.sub(rf",?\s*?преп\.?\s*{teacher_name}", "", subject, flags=re.IGNORECASE)
-            subject = re.sub(r",?\s*ауд\.?\s*[\w-]*", "", subject, flags=re.IGNORECASE)
-
-            group = groups_map[lesson["groupId"]]
+            group = all_groups_map[lesson["groupId"]]
 
             if group not in GROUPS:
                 schedule.add_schedule(
@@ -88,18 +144,32 @@ async def college_schedule_parser() -> None:
         try:
             teachers = await (await session.get(TEACHERS_URL)).json()
             groups = await (await session.get(GROUPS_URL)).json()
-            teacher_map = {
+            tks_teacher_map = {
                 f"{t['firstName']} {t['surname'][0]}.{t['patronymic'][0]}.": t["id"]
                 for t in teachers
                 if f"{t['firstName']} {t['surname'][0]}.{t['patronymic'][0]}." in COLLEGE_TEACHERS
             }
-            groups_map = {g["id"]: g["name"] for g in groups}
-
+            all_groups_map = {g["id"]: g["name"] for g in groups}
+            tks_groups_map = {
+                g["name"]: (g["id"], g["admissionYear"])
+                for g in groups
+                if any(g["name"].startswith(college) for college in COLLEGE_GROUPS)
+            }
             schedule_db = Schedule()
             schedule_db.clear_college()
             logging.info("Очистил расписание колледжа, начинаю парсинг")
 
-            await asyncio.gather(*(parse_teacher_schedule(name, tid, schedule_db) for name, tid in teacher_map.items()))
+            print(tks_groups_map)
+            now_date = date.today()
+            await asyncio.gather(
+                *(parse_teacher_schedule(name, tid, schedule_db) for name, tid in tks_teacher_map.items())
+            )
+            await asyncio.gather(
+                *(
+                    parse_group_schedule(group, gid, get_semester(year, now_date), schedule_db)
+                    for group, (gid, year) in tks_groups_map.items()
+                )
+            )
         except Exception as e:
             logging.error(e)
     logging.info("Обновлено расписание колледжа для всех преподавателей")
