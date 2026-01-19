@@ -12,7 +12,7 @@ event_level = "WARNING"
 # если 1 сентября — это числитель, то параметр равен 0, а если знаменатель — то 1.
 numerator = 1
 timezone = "Europe/Moscow"
-college_cron = "0 1 * * *"
+college_cron = "0 */3 * * *"
 
 [university]
 groups = [
