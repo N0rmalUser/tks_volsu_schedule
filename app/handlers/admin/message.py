@@ -167,9 +167,8 @@ async def update_handler(msg: Message) -> None:
     logging.info("База данных расписания обновлена")
 
 
-
 @router.message(Command("college"), ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID))
-async def update_handler(msg: Message) -> None:
+async def college_handler(msg: Message) -> None:
     from app.misc import schedule_parser
 
     start = await msg.answer("Обновляю расписание колледжа...")
