@@ -37,12 +37,6 @@ from app.config import (
 )
 from app.database.schedule import Schedule
 
-# Предполагается, что следующие глобальные константы / структуры
-# определены в окружении, из которого вызывается функция:
-# APP_URL, API_URL, COLLEGE_TEACHERS (set/list of teacher short names),
-# COLLEGE_GROUPS (list of group prefixes), GROUPS (iterable of group names)
-# Класс Schedule с методами: clear_college, add_group, add_teacher, add_room, add_subject, add_schedule
-
 
 async def college_schedule_parser() -> None:
     days_map = {
@@ -63,21 +57,23 @@ async def college_schedule_parser() -> None:
         end = start + timedelta(days=13, hours=23, minutes=59, seconds=59)
         return int(start.timestamp() * 1000), int(end.timestamp() * 1000)
 
+
     def get_semester(admission_year: int, now_date: date) -> int:
         start = date(admission_year, 9, 1)
         if now_date < start:
             return 0
-        semester = 1 + (now_date.year - admission_year) * 2
+        now_semester = 1 + (now_date.year - admission_year) * 2
         if now_date.year == admission_year and now_date.month < 9:
             return 0
+
         if now_date.month < 1:
-            semester -= 2
+            return now_semester - 2
         elif now_date.month < 9:
-            semester -= 1
-        return semester
+            return now_semester - 1
+        else:
+            return now_semester
 
     min_ts, max_ts = get_week_timestamps()
-    now_date = date.today()
 
     async with ClientSession(headers={"provider": "volsu-system-bot"}) as session:
         try:
@@ -100,8 +96,8 @@ async def college_schedule_parser() -> None:
             schedule.clear_college()
             logging.info("Очистил расписание колледжа, начинаю парсинг")
 
-            async def fetch(url: str) -> Coroutine:
-                async with session.get(url) as r:
+            async def fetch(uri: str) -> Coroutine:
+                async with session.get(uri) as r:
                     return await r.json()
 
             tasks = []
@@ -111,7 +107,7 @@ async def college_schedule_parser() -> None:
                 tasks.append(("teacher", teacher_name, fetch(url)))
 
             for group_name, (group_id, year) in tks_groups_map.items():
-                semester = get_semester(year, now_date)
+                semester = get_semester(year, date.today())
                 url = f"{APP_URL}/group/{group_id}?minTimestamp={min_ts}&maxTimestamp={max_ts}&semester={semester}"
                 tasks.append(("group", group_name, fetch(url)))
 
