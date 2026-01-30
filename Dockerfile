@@ -1,4 +1,4 @@
-FROM astral/uv:python3.13-bookworm-slim
+FROM astral/uv:python3.14-bookworm-slim
 LABEL authors="N0rmalUser"
 
 WORKDIR /schedule
@@ -14,7 +14,7 @@ RUN localedef -i ru_RU -f UTF-8 ru_RU.UTF-8 || true
 
 COPY pyproject.toml uv.lock* ./
 
-RUN uv sync --frozen --no-cache
+RUN uv sync --frozen --no-cache --no-dev
 
 COPY app app
 COPY main.py main.py

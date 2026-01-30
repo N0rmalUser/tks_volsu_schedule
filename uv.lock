@@ -959,7 +959,7 @@ wheels = [
 [[package]]
 name = "tks-volsu-schedule"
 version = "0.1.0"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
     { name = "aiocron" },
     { name = "aiogram" },
@@ -969,7 +969,6 @@ dependencies = [
     { name = "openpyxl" },
     { name = "pandas" },
     { name = "pandas-stubs" },
-    { name = "pre-commit" },
     { name = "python-docx" },
     { name = "pytz" },
     { name = "toml" },
@@ -977,6 +976,7 @@ dependencies = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "pre-commit" },
     { name = "ruff" },
 ]
 
@@ -990,14 +990,16 @@ requires-dist = [
     { name = "openpyxl", specifier = ">=3.1.5" },
     { name = "pandas", specifier = ">=2.2.2" },
     { name = "pandas-stubs", specifier = ">=2.3.2.250926" },
-    { name = "pre-commit", specifier = ">=4.3.0" },
     { name = "python-docx", specifier = ">=1.1.2" },
     { name = "pytz", specifier = ">=2024.1" },
     { name = "toml", specifier = ">=0.10.2" },
 ]
 
 [package.metadata.requires-dev]
-dev = [{ name = "ruff", specifier = ">=0.13.2" }]
+dev = [
+    { name = "pre-commit", specifier = ">=4.3.0" },
+    { name = "ruff", specifier = ">=0.13.2" },
+]
 
 [[package]]
 name = "toml"
