@@ -36,6 +36,8 @@ from app.config import (
     GROUPS_SCHEDULE_PATH,
 )
 from app.database.schedule import Schedule
+from app.misc import get_semester
+
 
 # Предполагается, что следующие глобальные константы / структуры
 # определены в окружении, из которого вызывается функция:
@@ -62,19 +64,6 @@ async def college_schedule_parser() -> None:
         start = start.replace(hour=0, minute=0, second=0, microsecond=0)
         end = start + timedelta(days=13, hours=23, minutes=59, seconds=59)
         return int(start.timestamp() * 1000), int(end.timestamp() * 1000)
-
-    def get_semester(admission_year: int, now_date: date) -> int:
-        start = date(admission_year, 9, 1)
-        if now_date < start:
-            return 0
-        semester = 1 + (now_date.year - admission_year) * 2
-        if now_date.year == admission_year and now_date.month < 9:
-            return 0
-        if now_date.month < 1:
-            semester -= 2
-        elif now_date.month < 9:
-            semester -= 1
-        return semester
 
     min_ts, max_ts = get_week_timestamps()
     now_date = date.today()

@@ -15,7 +15,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import logging
-from datetime import datetime
+from datetime import datetime, date
 
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
@@ -128,3 +128,17 @@ async def send_broadcast_message(msg: Message, state: FSMContext, message_id: in
         await msg.edit_text("Рассылка завершена!")
     except TypeError:
         await msg.edit_text("Ошибка при отправке сообщения")
+
+
+def get_semester(admission_year: int, now_date: date) -> int:
+    start = date(admission_year, 9, 1)
+    if now_date < start:
+        return 0
+    semester = 1 + (now_date.year - admission_year) * 2
+    if now_date.year == admission_year and now_date.month < 9:
+        return 0
+    if now_date.month < 1:
+        semester -= 2
+    elif now_date.month < 9:
+        semester -= 1
+    return semester
