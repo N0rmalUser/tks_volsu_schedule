@@ -126,10 +126,10 @@ async def college_schedule_parser() -> None:
                     time_str = re.sub(r"\b8:30\b", "08:30", f"{start_time[:2]}:{start_time[2:]}")
                     day_name = days_map.get(lesson["day"].lower(), lesson["day"])
                     week_type = week_map.get(lesson["week"], lesson["week"])
-                    room_name = lesson["classrooms"][0]
+                    room_name = lesson["classrooms"][0] if lesson["classrooms"] else "Не указано"
 
                     subject = lesson["subject"].strip()
-                    teacher_name = name if kind == "teacher" else "Не указано"
+                    teacher_name = name if kind == "teacher" else "N/A"
 
                     match = re.search(r"преп\.?\s+([А-яЁё]+\s+[А-ЯЁ]\.[А-ЯЁ]\.)", subject, re.IGNORECASE)
                     if match:
