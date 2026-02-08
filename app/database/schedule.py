@@ -45,20 +45,6 @@ class Schedule:
         subgroup: int = None,
         college: bool = False,
     ) -> None:
-        self.__cursor.execute(
-            """
-            SELECT s.ScheduleID
-            FROM (
-                SELECT ScheduleID, Time, DayOfWeek, WeekType, GroupID, TeacherID, RoomID, SubjectID FROM Schedule
-                UNION ALL
-                SELECT ScheduleID, Time, DayOfWeek, WeekType, GroupID, TeacherID, RoomID, SubjectID FROM CollegeSchedule
-            ) s
-            WHERE (Time, DayOfWeek, WeekType, GroupID, TeacherID, RoomID, SubjectID) = (?, ?, ?, ?, ?, ?, ?)
-            """,
-            (time, day_name, week_type, group_id, teacher_id, room_id, subject_id),
-        )
-        if self.__cursor.fetchone():
-            return
         if college:
             params = [
                 time,
