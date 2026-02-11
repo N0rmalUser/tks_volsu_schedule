@@ -32,11 +32,15 @@ def get_group_schedule(day: int, week: int, group_name: str, cursor: sqlite3.Cur
 
     query = """
         SELECT
-            GROUP_CONCAT(s.ScheduleID, ', '),
-            s.Time, sub.SubjectName,
+            GROUP_CONCAT(s.ScheduleID, ', ') AS schedule_ids,
+            s.Time,
+            sub.SubjectName,
             r.RoomName,
             t.TeacherName,
-            Subgroup
+            CASE
+                WHEN COUNT(DISTINCT s.Subgroup) > 1 THEN 0
+                ELSE MAX(s.Subgroup)
+            END AS Subgroup
         FROM (
             SELECT ScheduleID, Time, SubjectID, GroupID, RoomID, TeacherID, DayOfWeek, WeekType, Subgroup
             FROM Schedule
@@ -49,8 +53,8 @@ def get_group_schedule(day: int, week: int, group_name: str, cursor: sqlite3.Cur
         JOIN Rooms r ON s.RoomID = r.RoomID
         JOIN Teachers t ON s.TeacherID = t.TeacherID
         WHERE g.GroupName = ? AND s.DayOfWeek = ? AND s.WeekType = ?
-        GROUP BY s.Time, sub.SubjectName, r.RoomName
-        ORDER BY s.Time
+        GROUP BY s.Time, sub.SubjectName, r.RoomName, t.TeacherName
+        ORDER BY s.Time, Subgroup
         """
 
     cursor.execute(query, (group_name, days_of_week[day - 1], week_type))
