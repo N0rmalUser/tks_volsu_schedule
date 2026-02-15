@@ -14,15 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import logging
 from datetime import datetime, date
 
-from aiogram.fsm.context import FSMContext
-from aiogram.types import Message
-
 from app.config import NUMERATOR, TZ
-from app.markups import admin
-from app.misc.states import BroadcastStates
+from app.common.states import BroadcastStates
 
 
 def get_today() -> tuple[int, int]:
@@ -95,41 +90,6 @@ def create_progress_bar(completed: int, total: int) -> str:
     return f"[{bar}]"
 
 
-async def send_broadcast_message(msg: Message, state: FSMContext, message_id: int, user_ids: list[int]) -> None:
-    from asyncio import sleep
-
-    from app.database.user import User
-
-    sent_count = 0
-    total_users = len(user_ids)
-    try:
-        for user_id in user_ids:
-            if await state.get_state() == BroadcastStates.cancel_sending.state:
-                await msg.edit_text(text="Отправка отменена")
-                break
-            if not User(user_id).blocked:
-                try:
-                    await msg.bot.copy_message(
-                        chat_id=user_id,
-                        from_chat_id=msg.chat.id,
-                        message_id=message_id,
-                    )
-                    sent_count += 1
-                except Exception as e:
-                    logging.error(f"Не удалось отправить сообщение пользователю {user_id}: {e}")
-                finally:
-                    await msg.edit_text(
-                        text=f"Отправлено {sent_count} из {total_users} сообщений\n"
-                        f"{create_progress_bar(sent_count, total_users)}",
-                        reply_markup=admin.cancel_sending(),
-                    )
-                    await sleep(1)
-        logging.info("Отправлено сообщение всем пользователям")
-        await msg.edit_text("Рассылка завершена!")
-    except TypeError:
-        await msg.edit_text("Ошибка при отправке сообщения")
-
-
 def get_semester(admission_year: int, now_date: date) -> int:
     start = date(admission_year, 9, 1)
     if now_date < start:
@@ -142,3 +102,36 @@ def get_semester(admission_year: int, now_date: date) -> int:
     elif now_date.month < 9:
         semester -= 1
     return semester
+
+
+from datetime import datetime
+import logging
+
+from app.config import TZ, LOG_LEVEL, LOG_FILE
+
+
+def set_logging(logger: str):
+    logging.Formatter.converter = lambda *args: datetime.now(TZ).timetuple()
+    levels = {
+        "DEBUG": logging.DEBUG,
+        "INFO": logging.INFO,
+        "WARNING": logging.WARN,
+        "ERROR": logging.ERROR,
+        "CRITICAL": logging.CRITICAL,
+        "FATAL": logging.FATAL,
+        "EXCEPTION": logging.ERROR
+    }
+    logging.basicConfig(
+        level=levels[LOG_LEVEL],
+        format="%(asctime)s %(levelname)s [%(funcName)s] %(message)s",
+        datefmt="%H:%M:%S %d-%m-%Y",
+        handlers=[
+            logging.FileHandler(
+                LOG_FILE,
+                encoding="utf-8"
+            ),
+            logging.StreamHandler()
+        ],
+        force=True
+    )
+    logging.getLogger(logger).setLevel(levels[LOG_LEVEL])

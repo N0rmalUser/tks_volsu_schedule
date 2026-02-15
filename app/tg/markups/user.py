@@ -20,7 +20,7 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 from app import config
 from app.database.schedule import Schedule
 from app.database.user import User
-from app.markups import keyboard_factory
+from app.tg.markups import keyboard_factory
 
 
 def student_menu() -> ReplyKeyboardMarkup:

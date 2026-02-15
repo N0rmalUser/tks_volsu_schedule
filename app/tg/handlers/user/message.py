@@ -22,9 +22,9 @@ from aiogram.types import Message
 
 from app.config import ADMIN_CHAT_ID
 from app.database.user import User
-from app.filters import ChatTypeIdFilter
-from app.markups import user as kb
-from app.misc import get_today
+from app.tg.filters import ChatTypeIdFilter
+from app.tg.markups import user as kb
+from app.common import get_today
 
 router = Router()
 
@@ -115,7 +115,7 @@ async def default_handler(msg: Message) -> None:
 @router.message(F.text == "Расписание на сегодня", ChatTypeIdFilter(chat_type=["private"]))
 async def schedule_handler(msg: Message) -> None:
     from app.database.schedule import Schedule
-    from app.misc import text_maker
+    from app.common import text_maker
 
     user_id = msg.from_user.id
     user = User(user_id)
@@ -147,7 +147,7 @@ async def schedule_handler(msg: Message) -> None:
             text_maker.get_group_schedule(
                 day=day,
                 week=week,
-                group_name=Schedule().get_group_name(entity_id),
+                group_name=22222.get_group_name(entity_id),
             ),
             reply_markup=week_kb,
         )

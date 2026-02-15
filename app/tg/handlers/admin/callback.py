@@ -23,8 +23,8 @@ from app.database import (
     student_ids,
     teachers_ids,
 )
-from app.misc import send_broadcast_message
-from app.misc.states import BroadcastStates
+from app.common import send_broadcast_message
+from app.common.states import BroadcastStates
 
 router = Router()
 

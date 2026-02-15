@@ -20,15 +20,15 @@ from aiogram.types import CallbackQuery, FSInputFile
 from app.config import GROUPS, GROUPS_SCHEDULE_PATH, ROOMS, TEACHERS
 from app.database.schedule import Schedule
 from app.database.user import User
-from app.filters import IgnoreFilter
-from app.markups import user as kb
-from app.markups.keyboard_factory import (
+from app.tg.filters import IgnoreFilter
+from app.tg.markups import user as kb
+from app.tg.markups.keyboard_factory import (
     ChangeCallbackFactory,
     DayCallbackFactory,
     DefaultChangeCallbackFactory,
 )
-from app.misc import get_today, text_maker
-from app.misc.sheets_maker import room, teacher
+from app.common import get_today, text_maker
+from app.common.sheets_maker import room, teacher
 
 router = Router()
 

@@ -36,7 +36,7 @@ from app.config import (
     ROOMS,
 )
 from app.database.schedule import Schedule
-from app.misc import get_semester
+from app.common import get_semester
 
 
 # Предполагается, что следующие глобальные константы / структуры

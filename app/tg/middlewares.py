@@ -63,7 +63,7 @@ class TopicCreatorMiddleware(BaseMiddleware):
         if (msg := event.message) and not event.message.from_user.is_bot:
             from aiogram.enums import ParseMode
 
-            from app.markups import admin as kb
+            from app.tg.markups import admin as kb
 
             user = User(msg.from_user.id)
             if not user.topic_id:
