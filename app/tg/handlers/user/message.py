@@ -147,7 +147,7 @@ async def schedule_handler(msg: Message) -> None:
             text_maker.get_group_schedule(
                 day=day,
                 week=week,
-                group_name=22222.get_group_name(entity_id),
+                group_name=Schedule().get_group_name(entity_id),
             ),
             reply_markup=week_kb,
         )
