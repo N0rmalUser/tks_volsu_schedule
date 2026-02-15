@@ -8,6 +8,7 @@ dependencies = [
     "aiocron>=2.1",
     "aiogram==3.24.0",
     "asyncio>=3.4.3",
+    "keyboard>=0.13.5",
     "lets-plot==4.8.2",
     "matplotlib==3.10.8",
     "openpyxl>=3.1.5",
@@ -17,6 +18,7 @@ dependencies = [
     "pytz>=2024.1",
     "toml>=0.10.2",
     "types-pytz==2025.2.0.20251108",
+    "vkbottle>=4.6.2",
 ]
 
 [dependency-groups]

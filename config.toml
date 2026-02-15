@@ -2,6 +2,7 @@
 token = "your_token"
 admin_chat_id = -10000000
 
+vk_token = "your_vk_token"
 
 [logging]
 level = "INFO"
