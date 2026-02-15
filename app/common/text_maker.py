@@ -309,3 +309,18 @@ def get_room_schedule(day: int, week: int, room_name: str, cursor: sqlite3.Curso
         return text
     else:
         return f"{header}Сегодня пар нет!"
+
+
+async def text_formatter(keyboard_type: str, day: int, week: int, value: int) -> str:
+    from app.database.schedule import Schedule
+
+    text = "Ошибка. Напишите админу /admin"
+
+    if keyboard_type == "teacher":
+        text = get_teacher_schedule(day=day, week=week, teacher_name=Schedule().get_teacher_name(value))
+    elif keyboard_type == "group":
+        text = get_group_schedule(day=day, week=week, group_name=Schedule().get_group_name(value))
+    elif keyboard_type == "room":
+        text = get_room_schedule(day=day, week=week, room_name=Schedule().get_room_name(value))
+
+    return text

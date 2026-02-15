@@ -17,6 +17,9 @@
 from aiogram import F, Router
 from aiogram.types import CallbackQuery, FSInputFile
 
+from app.common import get_today, text_maker
+from app.common.sheets_maker import room, teacher
+from app.common.text_maker import text_formatter
 from app.config import GROUPS, GROUPS_SCHEDULE_PATH, ROOMS, TEACHERS
 from app.database.schedule import Schedule
 from app.database.user import User
@@ -27,8 +30,6 @@ from app.tg.markups.keyboard_factory import (
     DayCallbackFactory,
     DefaultChangeCallbackFactory,
 )
-from app.common import get_today, text_maker
-from app.common.sheets_maker import room, teacher
 
 router = Router()
 
@@ -38,19 +39,6 @@ async def ignore_handler(callback: CallbackQuery) -> None:
     """Функция, сбрасывающая нажатия кнопки без функционала."""
 
     await callback.answer("Сейчас эта неделя")
-
-
-async def text_formatter(keyboard_type: str, day: int, week: int, value: int) -> str:
-    text = "Ошибка. Напишите админу /admin"
-
-    if keyboard_type == "teacher":
-        text = text_maker.get_teacher_schedule(day=day, week=week, teacher_name=Schedule().get_teacher_name(value))
-    elif keyboard_type == "group":
-        text = text_maker.get_group_schedule(day=day, week=week, group_name=Schedule().get_group_name(value))
-    elif keyboard_type == "room":
-        text = text_maker.get_room_schedule(day=day, week=week, room_name=Schedule().get_room_name(value))
-
-    return text
 
 
 @router.callback_query(DayCallbackFactory.filter(F.action == "day" or None))
