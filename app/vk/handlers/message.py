@@ -24,17 +24,19 @@ from app.vk import markups
 
 router = BotLabeler()
 
-@router.message(command='start')
+
+@router.message(command="start")
 async def start_handler(msg: Message):
     await msg.answer(
         message="Привет!\n",
         keyboard=markups.menu(),
     )
 
-@router.message(command='help')
+
+@router.message(command="help")
 async def help_handler(msg: Message):
     await msg.answer(
-            """
+        """
 Привет, это бот расписания кафедры ТКС!
 
 Кнопка `Расписание на сегодня` показывает расписание на сегодняшний день для выбранного преподавателя.
@@ -45,6 +47,7 @@ async def help_handler(msg: Message):
 ✅ показывает, что выбрана эта неделя, для изменения недели нужно нажать кнопку с ➡️
 """
     )
+
 
 @router.message(text="Расписание на сегодня")
 async def schedule_handler(msg: Message):
@@ -57,7 +60,9 @@ async def schedule_handler(msg: Message):
         await msg.answer(
             f"Сначала выберите {'ФИО преподавателя' if user.type == 'teacher' else 'группу'}, "
             f"нажав на соответствующую кнопку.",
-            keyboard=markups.days(keyboard_type="group" if user.type == "student" else "teacher", week=week, day=day, value=entity_id)
+            keyboard=markups.days(
+                keyboard_type="group" if user.type == "student" else "teacher", week=week, day=day, value=entity_id
+            ),
         )
         return
 
@@ -87,6 +92,7 @@ async def schedule_handler(msg: Message):
         logging.info(f"{msg.from_user.id} неправильный тип пользователя")
         await msg.answer("Ошибка! Напишите админу /admin")
 
+
 @router.message(text="Кабинеты")
 async def rooms_handler(msg: Message):
     await msg.answer("Выберите кабинет", keyboard=markups.rooms())
@@ -94,9 +100,9 @@ async def rooms_handler(msg: Message):
 
 @router.message(text="Группы")
 async def groups_handler(msg: Message) -> None:
-    await msg.answer("Выберите группу",  keyboard=markups.groups())
+    await msg.answer("Выберите группу", keyboard=markups.groups())
 
 
 @router.message(text="Преподаватели")
 async def teachers_handler(msg: Message) -> None:
-    await msg.answer("Выберите преподавателя",  keyboard=markups.teachers())
+    await msg.answer("Выберите преподавателя", keyboard=markups.teachers())

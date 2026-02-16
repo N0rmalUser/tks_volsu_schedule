@@ -18,13 +18,13 @@ from aiogram import F, Router
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery
 
+from app.common import send_broadcast_message
+from app.common.states import BroadcastStates
 from app.database import (
     all_user_ids,
     student_ids,
     teachers_ids,
 )
-from app.common import send_broadcast_message
-from app.common.states import BroadcastStates
 
 router = Router()
 

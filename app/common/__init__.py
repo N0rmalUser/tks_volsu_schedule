@@ -14,10 +14,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-from datetime import datetime, date
+import logging
+from datetime import date, datetime
 
-from app.config import NUMERATOR, TZ
 from app.common.states import BroadcastStates
+from app.config import LOG_FILE, LOG_LEVEL, NUMERATOR, TZ
 
 
 def get_today() -> tuple[int, int]:
@@ -104,12 +105,6 @@ def get_semester(admission_year: int, now_date: date) -> int:
     return semester
 
 
-from datetime import datetime
-import logging
-
-from app.config import TZ, LOG_LEVEL, LOG_FILE
-
-
 def set_logging(logger: str):
     logging.Formatter.converter = lambda *args: datetime.now(TZ).timetuple()
     levels = {
@@ -119,19 +114,13 @@ def set_logging(logger: str):
         "ERROR": logging.ERROR,
         "CRITICAL": logging.CRITICAL,
         "FATAL": logging.FATAL,
-        "EXCEPTION": logging.ERROR
+        "EXCEPTION": logging.ERROR,
     }
     logging.basicConfig(
         level=levels[LOG_LEVEL],
         format="%(asctime)s %(levelname)s [%(funcName)s] %(message)s",
         datefmt="%H:%M:%S %d-%m-%Y",
-        handlers=[
-            logging.FileHandler(
-                LOG_FILE,
-                encoding="utf-8"
-            ),
-            logging.StreamHandler()
-        ],
-        force=True
+        handlers=[logging.FileHandler(LOG_FILE, encoding="utf-8"), logging.StreamHandler()],
+        force=True,
     )
     logging.getLogger(logger).setLevel(levels[LOG_LEVEL])

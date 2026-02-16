@@ -51,8 +51,8 @@ async def handle_send_daily_plot(msg: Message, command: CommandObject = None) ->
 
     from datetime import datetime
 
-    from app.database import activity as db
     from app.common import user_activity
+    from app.database import activity as db
 
     month = (datetime.strptime(command.args, "%d.%m.%Y") if command.args else datetime.now()).strftime("%Y-%m-%d")
     user_activity.plot_activity_for_month(
@@ -67,8 +67,8 @@ async def handle_send_hourly_plot(msg: Message, command: CommandObject = None) -
 
     from datetime import datetime
 
-    from app.database import activity as db
     from app.common import user_activity
+    from app.database import activity as db
 
     date = (datetime.strptime(command.args, "%d.%m.%Y") if command.args else datetime.now()).strftime("%Y-%m-%d")
     user_activity.plot_activity_for_day(

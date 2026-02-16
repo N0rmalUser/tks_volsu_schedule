@@ -1,24 +1,16 @@
-from vkbottle import Keyboard, Callback, Text, KeyboardButtonColor
+from vkbottle import Callback, Keyboard, KeyboardButtonColor, Text
 
-from app.config import TEACHERS, ROOMS, GROUPS
+from app.config import GROUPS, ROOMS, TEACHERS
 from app.database.schedule import Schedule
 
 
 def menu() -> str:
-    keyboard = Keyboard(one_time=True, inline=False)
-    keyboard.add(
-        Text("Расписание на сегодня"), color=KeyboardButtonColor.POSITIVE
-    )
+    keyboard = Keyboard()
+    keyboard.add(Text("Расписание на сегодня"), color=KeyboardButtonColor.POSITIVE)
     keyboard.row()
-    keyboard.add(
-        Text("Группы")
-    )
-    keyboard.add(
-        Text("Преподаватели")
-    )
-    keyboard.add(
-        Text("Кабинеты")
-    )
+    keyboard.add(Text("Группы"))
+    keyboard.add(Text("Преподаватели"))
+    keyboard.add(Text("Кабинеты"))
     return keyboard.get_json()
 
 
@@ -87,10 +79,8 @@ def days(keyboard_type: str, week: int, day: int, value: int) -> str:
             )
         )
     else:
-        keyboard.add(
-            Callback("Неизвестная неделя", {"action": "ignore"})
-        )
-
+        keyboard.add(Callback("Неизвестная неделя", {"action": "ignore"}))
+    print(keyboard.get_json())
     return keyboard.get_json()
 
 
@@ -111,8 +101,10 @@ def rooms() -> str:
 
         if i % 3 == 0:
             keyboard.row()
+    print(keyboard.get_json())
 
     return keyboard.get_json()
+
 
 def groups() -> str:
     keyboard = Keyboard(inline=True)
@@ -134,17 +126,13 @@ def groups() -> str:
 
     return keyboard.get_json()
 
-from vkbottle import Keyboard, Callback
-
-PER_PAGE = 8  # 6 строк по 2 кнопки
-
 
 def teachers(page: int = 0) -> str:
     keyboard = Keyboard(inline=True)
 
     schedule = Schedule()
-    start = page * PER_PAGE
-    end = start + PER_PAGE
+    start = page * 8
+    end = start + 8
     chunk = TEACHERS[start:end]
 
     for i, teacher in enumerate(chunk, start=1):
@@ -161,7 +149,6 @@ def teachers(page: int = 0) -> str:
         if i % 2 == 0:
             keyboard.row()
 
-    # --- навигация ---
     keyboard.row()
 
     if page > 0:
@@ -179,5 +166,6 @@ def teachers(page: int = 0) -> str:
                 {"action": "teachers_page", "page": page + 1},
             )
         )
+    print(keyboard.get_json())
 
     return keyboard.get_json()

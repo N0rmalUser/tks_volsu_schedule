@@ -14,5 +14,5 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-from .admin import message, callback
-from .user import message, callback
+from .admin import callback, message
+from .user import callback, message

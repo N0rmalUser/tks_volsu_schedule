@@ -26,13 +26,13 @@ from aiogram.types import Message
 
 from app.common import BroadcastStates, create_progress_bar, set_logging
 from app.common.schedule_parser import college_schedule_parser
-from app.config import COLLEGE_CRON, TG_BOT_TOKEN
-from app.config import TZ
-from app.tg import handlers
-from app.tg import markups
-from app.tg import middlewares
-from app.tg.handlers.admin import callback as admin_callback, message as admin_message
-from app.tg.handlers.user import message as user_message, callback as user_callback, status as user_status
+from app.config import COLLEGE_CRON, TG_BOT_TOKEN, TZ
+from app.tg import handlers, markups, middlewares
+from app.tg.handlers.admin import callback as admin_callback
+from app.tg.handlers.admin import message as admin_message
+from app.tg.handlers.user import callback as user_callback
+from app.tg.handlers.user import message as user_message
+from app.tg.handlers.user import status as user_status
 
 
 async def send_broadcast_message(msg: Message, state: FSMContext, message_id: int, user_ids: list[int]) -> None:
@@ -60,7 +60,7 @@ async def send_broadcast_message(msg: Message, state: FSMContext, message_id: in
                 finally:
                     await msg.edit_text(
                         text=f"Отправлено {sent_count} из {total_users} сообщений\n"
-                             f"{create_progress_bar(sent_count, total_users)}",
+                        f"{create_progress_bar(sent_count, total_users)}",
                         reply_markup=markups.admin.cancel_sending(),
                     )
                     await sleep(1)
@@ -78,8 +78,13 @@ async def main() -> None:
     bot = Bot(token=TG_BOT_TOKEN, session=session)
     dp = Dispatcher(storage=MemoryStorage())
 
-    dp.include_routers(user_callback.router, user_message.router, user_status.router, admin_message.router,
-                       admin_callback.router, )
+    dp.include_routers(
+        user_callback.router,
+        user_message.router,
+        user_status.router,
+        admin_message.router,
+        admin_callback.router,
+    )
 
     dp.update.middleware(middlewares.BanUsersMiddleware())
     dp.update.middleware(middlewares.TopicCreatorMiddleware())

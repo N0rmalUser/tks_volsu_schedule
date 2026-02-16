@@ -18,7 +18,7 @@ from vkbottle import Bot
 
 from app.common import set_logging
 from app.config import VK_BOT_TOKEN
-from app.vk.handlers import message, callback
+from app.vk.handlers import callback, message
 
 
 def main() -> None:

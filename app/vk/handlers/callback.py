@@ -16,19 +16,137 @@
 
 from vkbottle.bot import BotLabeler, MessageEvent
 
-from app.vk.markups import teachers
+from app.common import get_today, text_maker
+from app.common.text_maker import text_formatter
+from app.database.schedule import Schedule
+from app.vk.markups import days, teachers
 
 router = BotLabeler()
 
-@router.raw_event("message_event", dataclass=MessageEvent)
+
+@router.raw_event(
+    "message_event",
+    dataclass=MessageEvent,
+    payload_contains={"action": "teachers_page"},
+)
 async def teachers_page(event: MessageEvent):
-    print(type(event))
-    print(event.payload.get("action"))
-    if event.payload.get("action") == "teachers_page":
-        page = event.payload["page"]
-        await event.ctx_api.messages.edit(
-            peer_id=event.object.peer_id,
-            conversation_message_id=event.object.conversation_message_id,
-            keyboard=teachers(page),
-            message="Выберите преподавателя",
-        )
+    page = event.payload["page"]
+
+    await event.ctx_api.messages.edit(
+        peer_id=event.peer_id,
+        conversation_message_id=event.conversation_message_id,
+        keyboard=teachers(page),
+        message="Выберите преподавателя",
+    )
+
+
+@router.raw_event(
+    "message_event",
+    dataclass=MessageEvent,
+    payload_contains={"action": "teacher"},
+)
+async def teacher_open(event: MessageEvent):
+    day, week = get_today()
+    value = event.payload.get("value")
+
+    await event.ctx_api.messages.edit(
+        peer_id=event.peer_id,
+        conversation_message_id=event.conversation_message_id,
+        keyboard=days("teacher", day, week, value),
+        message=text_maker.get_teacher_schedule(
+            day=day,
+            week=week,
+            teacher_name=Schedule().get_teacher_name(value),
+        ),
+    )
+
+
+@router.raw_event(
+    "message_event",
+    dataclass=MessageEvent,
+    payload_contains={"action": "group"},
+)
+async def teacher_open(event: MessageEvent):
+    day, week = get_today()
+    value = event.payload.get("value")
+
+    await event.ctx_api.messages.edit(
+        peer_id=event.peer_id,
+        conversation_message_id=event.conversation_message_id,
+        keyboard=days("group", day, week, value),
+        message=text_maker.get_group_schedule(
+            day=day,
+            week=week,
+            teacher_name=Schedule().get_group_name(value),
+        ),
+    )
+
+
+@router.raw_event(
+    "message_event",
+    dataclass=MessageEvent,
+    payload_contains={"action": "room"},
+)
+async def teacher_open(event: MessageEvent):
+    day, week = get_today()
+    value = event.payload.get("value")
+
+    await event.ctx_api.messages.edit(
+        peer_id=event.peer_id,
+        conversation_message_id=event.conversation_message_id,
+        keyboard=days("room", day, week, value),
+        message=text_maker.get_room_schedule(
+            day=day,
+            week=week,
+            teacher_name=Schedule().get_room_name(value),
+        ),
+    )
+
+
+@router.raw_event(
+    "message_event",
+    dataclass=MessageEvent,
+    payload_contains={"action": "week"},
+)
+async def teacher_open(event: MessageEvent):
+    week = 1 if int(event.payload.get("week")) != 2 else 2
+    day = event.payload.get("day")
+    value = event.payload.get("value")
+    keyboard_type = event.payload.get("keyboard_type")
+
+    await event.ctx_api.messages.edit(
+        peer_id=event.peer_id,
+        conversation_message_id=event.conversation_message_id,
+        keyboard=days(keyboard_type, day, week, value),
+        message=await text_formatter(
+            keyboard_type=keyboard_type,
+            day=day,
+            week=week,
+            value=value,
+        ),
+    )
+
+
+@router.raw_event(
+    "message_event",
+    dataclass=MessageEvent,
+    payload_contains={"action": "day"},
+)
+async def teacher_open(event: MessageEvent):
+    keyboard_type = event.payload.get("keyboard_type")
+    value = event.payload.get("value")
+    day = event.payload.get("day")
+    week =  event.payload.get("week")
+
+    await event.ctx_api.messages.edit(
+        peer_id=event.peer_id,
+        conversation_message_id=event.conversation_message_id,
+        keyboard=days(keyboard_type, day, week, value),
+        message=await text_formatter(
+            keyboard_type=keyboard_type,
+            day=day,
+            week=week,
+            value=value,
+        ),
+    )
+
