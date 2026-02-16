@@ -27,7 +27,7 @@ from aiogram.types import Message
 from app.common import BroadcastStates, create_progress_bar, set_logging
 from app.common.schedule_parser import college_schedule_parser
 from app.config import COLLEGE_CRON, TG_BOT_TOKEN, TZ
-from app.tg import handlers, markups, middlewares
+from app.tg import markups, middlewares
 from app.tg.handlers.admin import callback as admin_callback
 from app.tg.handlers.admin import message as admin_message
 from app.tg.handlers.user import callback as user_callback

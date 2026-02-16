@@ -19,7 +19,8 @@ from vkbottle.bot import BotLabeler, MessageEvent
 from app.common import get_today, text_maker
 from app.common.text_maker import text_formatter
 from app.database.schedule import Schedule
-from app.vk.markups import days, teachers
+from app.database.vkuser import VK_USER
+from app.vk.markups import days, groups, teachers
 
 router = BotLabeler()
 
@@ -29,7 +30,7 @@ router = BotLabeler()
     dataclass=MessageEvent,
     payload_contains={"action": "teachers_page"},
 )
-async def teachers_page(event: MessageEvent):
+async def teachers_page(event: MessageEvent) -> None:
     page = event.payload["page"]
 
     await event.ctx_api.messages.edit(
@@ -43,11 +44,29 @@ async def teachers_page(event: MessageEvent):
 @router.raw_event(
     "message_event",
     dataclass=MessageEvent,
+    payload_contains={"action": "select_direction"},
+)
+async def select_direction_handler(event: MessageEvent) -> None:
+    direction = event.payload["direction"]
+
+    await event.ctx_api.messages.edit(
+        peer_id=event.peer_id,
+        conversation_message_id=event.conversation_message_id,
+        keyboard=groups(direction),
+        message=f"Выберите группу {direction}",
+    )
+
+
+@router.raw_event(
+    "message_event",
+    dataclass=MessageEvent,
     payload_contains={"action": "teacher"},
 )
-async def teacher_open(event: MessageEvent):
+async def teacher_handler(event: MessageEvent) -> None:
     day, week = get_today()
     value = event.payload.get("value")
+    user = VK_USER(event.peer_id)
+    user.teacher = value
 
     await event.ctx_api.messages.edit(
         peer_id=event.peer_id,
@@ -66,9 +85,11 @@ async def teacher_open(event: MessageEvent):
     dataclass=MessageEvent,
     payload_contains={"action": "group"},
 )
-async def teacher_open(event: MessageEvent):
+async def group_handler(event: MessageEvent) -> None:
     day, week = get_today()
     value = event.payload.get("value")
+    user = VK_USER(event.peer_id)
+    user.group = value
 
     await event.ctx_api.messages.edit(
         peer_id=event.peer_id,
@@ -77,7 +98,7 @@ async def teacher_open(event: MessageEvent):
         message=text_maker.get_group_schedule(
             day=day,
             week=week,
-            teacher_name=Schedule().get_group_name(value),
+            group_name=Schedule().get_group_name(value),
         ),
     )
 
@@ -87,7 +108,7 @@ async def teacher_open(event: MessageEvent):
     dataclass=MessageEvent,
     payload_contains={"action": "room"},
 )
-async def teacher_open(event: MessageEvent):
+async def room_handler(event: MessageEvent) -> None:
     day, week = get_today()
     value = event.payload.get("value")
 
@@ -98,7 +119,7 @@ async def teacher_open(event: MessageEvent):
         message=text_maker.get_room_schedule(
             day=day,
             week=week,
-            teacher_name=Schedule().get_room_name(value),
+            room_name=Schedule().get_room_name(value),
         ),
     )
 
@@ -108,7 +129,7 @@ async def teacher_open(event: MessageEvent):
     dataclass=MessageEvent,
     payload_contains={"action": "week"},
 )
-async def teacher_open(event: MessageEvent):
+async def week_handler(event: MessageEvent) -> None:
     week = 1 if int(event.payload.get("week")) != 2 else 2
     day = event.payload.get("day")
     value = event.payload.get("value")
@@ -132,11 +153,11 @@ async def teacher_open(event: MessageEvent):
     dataclass=MessageEvent,
     payload_contains={"action": "day"},
 )
-async def teacher_open(event: MessageEvent):
+async def day_handler(event: MessageEvent) -> None:
     keyboard_type = event.payload.get("keyboard_type")
     value = event.payload.get("value")
     day = event.payload.get("day")
-    week =  event.payload.get("week")
+    week = event.payload.get("week")
 
     await event.ctx_api.messages.edit(
         peer_id=event.peer_id,
@@ -150,3 +171,11 @@ async def teacher_open(event: MessageEvent):
         ),
     )
 
+
+@router.raw_event(
+    "message_event",
+    dataclass=MessageEvent,
+    payload_contains={"action": "ignore"},
+)
+async def ignore_handler(event: MessageEvent) -> None:
+    await event.show_snackbar("Сейчас эта неделя")

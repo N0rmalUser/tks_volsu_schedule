@@ -18,7 +18,6 @@ from aiogram import F, Router
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery
 
-from app.common import send_broadcast_message
 from app.common.states import BroadcastStates
 from app.database import (
     all_user_ids,
@@ -44,6 +43,8 @@ async def cancel_sending_handler(callback: CallbackQuery, state: FSMContext) -> 
 
 @router.callback_query(F.data == "confirm_all")
 async def confirm_all_handler(callback: CallbackQuery, state: FSMContext) -> None:
+    from app.tg import send_broadcast_message
+
     await callback.answer("Начинаем отправку сообщений всем!")
     await state.set_state(BroadcastStates.sending_messages)
     await send_broadcast_message(callback.message, state, callback.message.message_id - 1, all_user_ids())
@@ -51,6 +52,8 @@ async def confirm_all_handler(callback: CallbackQuery, state: FSMContext) -> Non
 
 @router.callback_query(F.data == "confirm_students")
 async def confirm_students_handler(callback: CallbackQuery, state: FSMContext) -> None:
+    from app.tg import send_broadcast_message
+
     await callback.answer("Начинаем отправку сообщений студентам!")
     await state.set_state(BroadcastStates.sending_messages)
     await send_broadcast_message(callback.message, state, callback.message.message_id - 1, student_ids())
@@ -58,6 +61,8 @@ async def confirm_students_handler(callback: CallbackQuery, state: FSMContext) -
 
 @router.callback_query(F.data == "confirm_teachers")
 async def confirm_teachers_handler(callback: CallbackQuery, state: FSMContext) -> None:
+    from app.tg import send_broadcast_message
+
     await callback.answer("Начинаем отправку сообщений преподавателям!")
     await state.set_state(BroadcastStates.sending_messages)
     await send_broadcast_message(callback.message, state, callback.message.message_id - 1, teachers_ids())

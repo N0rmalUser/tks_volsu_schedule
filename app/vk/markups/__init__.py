@@ -14,7 +14,7 @@ def menu() -> str:
     return keyboard.get_json()
 
 
-def days(keyboard_type: str, week: int, day: int, value: int) -> str:
+def days(keyboard_type: str, day: int, week: int, value: int) -> str:
     keyboard = Keyboard(inline=True)
 
     days_list = [
@@ -101,36 +101,63 @@ def rooms() -> str:
 
         if i % 3 == 0:
             keyboard.row()
-    print(keyboard.get_json())
 
     return keyboard.get_json()
 
 
-def groups() -> str:
-    keyboard = Keyboard(inline=True)
-    schedule = Schedule()
+def get_directions_from_groups() -> list:
+    directions = []
+    for g in GROUPS:
+        if "-" in g:
+            dir_part = g.split("-", 1)[0].strip()
+        else:
+            dir_part = g.split()[0].strip()
+        if dir_part and dir_part not in directions:
+            directions.append(dir_part)
+    return directions
 
-    for i, group in enumerate(GROUPS, start=1):
+
+def directions() -> str:
+    keyboard = Keyboard(inline=True)
+    directions = get_directions_from_groups()
+
+    for i, direction in enumerate(directions, start=1):
         keyboard.add(
             Callback(
-                label=str(group),
-                payload={
-                    "action": "group",
-                    "value": schedule.get_room_id(group),
-                },
+                label=direction,
+                payload={"action": "select_direction", "direction": direction},
             )
         )
-
-        if i % 4 == 0:
+        if i % 3 == 0:
             keyboard.row()
 
     return keyboard.get_json()
 
 
+def groups(direction: str) -> str:
+    keyboard = Keyboard(inline=True)
+    schedule = Schedule()
+
+    filtered = [
+        g for g in GROUPS if g.upper().startswith(direction.upper() + "-") or g.upper().startswith(direction.upper())
+    ]
+
+    for i, group in enumerate(filtered, start=1):
+        keyboard.add(
+            Callback(
+                label=group,
+                payload={"action": "group", "value": schedule.get_group_id(group)},
+            )
+        )
+        if i % 2 == 0:
+            keyboard.row()
+    return keyboard.get_json()
+
+
 def teachers(page: int = 0) -> str:
     keyboard = Keyboard(inline=True)
-
     schedule = Schedule()
+
     start = page * 8
     end = start + 8
     chunk = TEACHERS[start:end]
@@ -166,6 +193,5 @@ def teachers(page: int = 0) -> str:
                 {"action": "teachers_page", "page": page + 1},
             )
         )
-    print(keyboard.get_json())
 
     return keyboard.get_json()

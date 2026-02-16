@@ -13,13 +13,14 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
+
 import logging
 
 from vkbottle.bot import BotLabeler, Message
 
 from app.common import get_today, text_maker
-from app.database import User
 from app.database.schedule import Schedule
+from app.database.vkuser import VK_USER
 from app.vk import markups
 
 router = BotLabeler()
@@ -27,9 +28,16 @@ router = BotLabeler()
 
 @router.message(command="start")
 async def start_handler(msg: Message):
+    user = VK_USER(msg.from_id)
+
     await msg.answer(
         message="Привет!\n",
         keyboard=markups.menu(),
+    )
+    print(user.type)
+    await msg.answer(
+        message="Выбери себя:",
+        keyboard=markups.teachers() if user.type == "teacher" else markups.directions(),
     )
 
 
@@ -37,12 +45,11 @@ async def start_handler(msg: Message):
 async def help_handler(msg: Message):
     await msg.answer(
         """
-Привет, это бот расписания кафедры ТКС!
+Привет, это бот расписания кафедры ТКС в вк!
 
 Кнопка `Расписание на сегодня` показывает расписание на сегодняшний день для выбранного преподавателя.
 Кнопки `Группы`, `Преподаватели`, `Кабинеты` открывают соответствующие меню выбора.
-
-Если у группы номер `ИБТС-231.2` - это 2-я подгруппа, если `.2` отсутствует, идут обе подгруппы
+Из-за ограничения в 10 кнопок, у списка преподавателей добавлены страницы, а у списка групп - разделение по направлениям
 
 ✅ показывает, что выбрана эта неделя, для изменения недели нужно нажать кнопку с ➡️
 """
@@ -51,18 +58,16 @@ async def help_handler(msg: Message):
 
 @router.message(text="Расписание на сегодня")
 async def schedule_handler(msg: Message):
-    user = User(msg.chat_id)
-    day, week = get_today()
+    user = VK_USER(msg.from_id)
 
+    day, week = get_today()
     entity_id: int = user.teacher if user.type == "teacher" else user.group
 
     if not entity_id:
         await msg.answer(
             f"Сначала выберите {'ФИО преподавателя' if user.type == 'teacher' else 'группу'}, "
             f"нажав на соответствующую кнопку.",
-            keyboard=markups.days(
-                keyboard_type="group" if user.type == "student" else "teacher", week=week, day=day, value=entity_id
-            ),
+            keyboard=markups.teachers() if user.type == "teacher" else markups.directions(),
         )
         return
 
@@ -100,7 +105,7 @@ async def rooms_handler(msg: Message):
 
 @router.message(text="Группы")
 async def groups_handler(msg: Message) -> None:
-    await msg.answer("Выберите группу", keyboard=markups.groups())
+    await msg.answer("Выберите группу", keyboard=markups.directions())
 
 
 @router.message(text="Преподаватели")

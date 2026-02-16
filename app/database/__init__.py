@@ -22,7 +22,7 @@ from pathlib import Path
 
 from dateutil.relativedelta import relativedelta
 
-from ..config import ACTIVITIES_DB, SCHEDULE_DB, USERS_DB
+from ..config import ACTIVITIES_DB, SCHEDULE_DB, USERS_DB, VK_DB
 from .user import User
 
 
@@ -75,6 +75,23 @@ def user_db_init(cursor: sqlite3.Cursor) -> None:
             teacher_id INTEGER DEFAULT 0,
             group_id INTEGER DEFAULT 0,
             FOREIGN KEY (user_id) REFERENCES User_Info(user_id)
+        )
+    """
+    )
+
+
+@sql_kit(VK_DB)
+def vk_user_db_init(cursor: sqlite3.Cursor) -> None:
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS Vk_User_Info (
+            user_id INTEGER PRIMARY KEY,
+            user_type TEXT DEFAULT 'student',
+            start_date TIMESTAMP,
+            last_date TIMESTAMP,
+            
+            teacher_id INTEGER DEFAULT 0,
+            group_id INTEGER DEFAULT 0
         )
     """
     )
@@ -347,6 +364,7 @@ def get_users_by_teacher_id(group_id: int, cursor: sqlite3.Cursor) -> str | None
 
 try:
     user_db_init()
+    vk_user_db_init()
     schedule_db_init()
     activity_db_init()
     logging.info("Базы данных инициализированы")
