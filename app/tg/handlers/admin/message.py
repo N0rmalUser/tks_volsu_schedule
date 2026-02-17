@@ -241,7 +241,7 @@ async def teacher_command_handler(msg: Message) -> None:
     start = await msg.answer("Изменяю тип пользователя...")
     if start.message_thread_id:
         user = User(topic_id=msg.message_thread_id)
-        user.type = "teacher"
+        user.user_type = "teacher"
         await start.edit_text("Тип пользователя изменён на `teacher`")
 
 
@@ -250,7 +250,7 @@ async def student_command_handler(msg: Message) -> None:
     start = await msg.answer("Изменяю тип пользователя...")
     if start.message_thread_id:
         user = User(topic_id=msg.message_thread_id)
-        user.type = "student"
+        user.user_type = "student"
         await start.edit_text("Тип пользователя изменён на `student`")
 
 

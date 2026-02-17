@@ -36,7 +36,7 @@ async def start_handler(msg: Message) -> None:
     user = User(msg.from_user.id)
     user.tracking = False
     menu, keyboard = (
-        (kb.teacher_menu(), kb.get_teachers()) if user.type == "teacher" else (kb.student_menu(), kb.get_groups())
+        (kb.teacher_menu(), kb.get_teachers()) if user.user_type == "teacher" else (kb.student_menu(), kb.get_groups())
     )
 
     await msg.answer(
@@ -123,15 +123,15 @@ async def schedule_handler(msg: Message) -> None:
     day, week = get_today()
 
     if entity_id is None:
-        entity_id = user.teacher if user.type == "teacher" else user.group
+        entity_id = user.teacher if user.user_type == "teacher" else user.group
 
     if not entity_id:
         await msg.answer(
-            f"Сначала выберите {'ФИО преподавателя' if user.type == 'teacher' else 'группу'}, "
+            f"Сначала выберите {'ФИО преподавателя' if user.user_type == 'teacher' else 'группу'}, "
             f"нажав на соответствующую кнопку."
         )
         return
-    if user.type == "teacher":
+    if user.user_type == "teacher":
         week_kb = kb.get_days(keyboard_type="teacher", week=week, day=day, value=entity_id)
         await msg.answer(
             text_maker.get_teacher_schedule(
@@ -141,7 +141,7 @@ async def schedule_handler(msg: Message) -> None:
             ),
             reply_markup=week_kb,
         )
-    elif user.type == "student":
+    elif user.user_type == "student":
         week_kb = kb.get_days(keyboard_type="group", week=week, day=day, value=entity_id)
         await msg.answer(
             text_maker.get_group_schedule(

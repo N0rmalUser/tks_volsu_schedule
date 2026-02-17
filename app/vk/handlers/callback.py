@@ -19,7 +19,7 @@ from vkbottle.bot import BotLabeler, MessageEvent
 from app.common import get_today, text_maker
 from app.common.text_maker import text_formatter
 from app.database.schedule import Schedule
-from app.database.vkuser import VK_USER
+from app.database.vkuser import VkUser
 from app.vk.markups import days, groups, teachers
 
 router = BotLabeler()
@@ -65,7 +65,7 @@ async def select_direction_handler(event: MessageEvent) -> None:
 async def teacher_handler(event: MessageEvent) -> None:
     day, week = get_today()
     value = event.payload.get("value")
-    user = VK_USER(event.peer_id)
+    user = VkUser(event.peer_id)
     user.teacher = value
 
     await event.ctx_api.messages.edit(
@@ -88,7 +88,7 @@ async def teacher_handler(event: MessageEvent) -> None:
 async def group_handler(event: MessageEvent) -> None:
     day, week = get_today()
     value = event.payload.get("value")
-    user = VK_USER(event.peer_id)
+    user = VkUser(event.peer_id)
     user.group = value
 
     await event.ctx_api.messages.edit(

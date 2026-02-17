@@ -20,7 +20,7 @@ from vkbottle.bot import BotLabeler, Message
 
 from app.common import get_today, text_maker
 from app.database.schedule import Schedule
-from app.database.vkuser import VK_USER
+from app.database.vkuser import VkUser
 from app.vk import markups
 
 router = BotLabeler()
@@ -28,16 +28,15 @@ router = BotLabeler()
 
 @router.message(command="start")
 async def start_handler(msg: Message):
-    user = VK_USER(msg.from_id)
+    user = VkUser(msg.from_id)
 
     await msg.answer(
         message="Привет!\n",
         keyboard=markups.menu(),
     )
-    print(user.type)
     await msg.answer(
         message="Выбери себя:",
-        keyboard=markups.teachers() if user.type == "teacher" else markups.directions(),
+        keyboard=markups.teachers() if user.user_type == "teacher" else markups.directions(),
     )
 
 
@@ -58,22 +57,21 @@ async def help_handler(msg: Message):
 
 @router.message(text="Расписание на сегодня")
 async def schedule_handler(msg: Message):
-    user = VK_USER(msg.from_id)
+    user = VkUser(msg.from_id)
 
     day, week = get_today()
-    entity_id: int = user.teacher if user.type == "teacher" else user.group
+    entity_id: int = user.teacher if user.user_type == "teacher" else user.group
 
     if not entity_id:
         await msg.answer(
-            f"Сначала выберите {'ФИО преподавателя' if user.type == 'teacher' else 'группу'}, "
+            f"Сначала выберите {'ФИО преподавателя' if user.user_type == 'teacher' else 'группу'}, "
             f"нажав на соответствующую кнопку.",
-            keyboard=markups.teachers() if user.type == "teacher" else markups.directions(),
+            keyboard=markups.teachers() if user.user_type == "teacher" else markups.directions(),
         )
         return
 
-    if user.type == "teacher":
+    if user.user_type == "teacher":
         week_kb = markups.days(keyboard_type="teacher", week=week, day=day, value=entity_id)
-        print(week_kb)
         await msg.answer(
             text_maker.get_teacher_schedule(
                 day=day,
@@ -82,7 +80,7 @@ async def schedule_handler(msg: Message):
             ),
             keyboard=week_kb,
         )
-    elif user.type == "student":
+    elif user.user_type == "student":
         week_kb = markups.days(keyboard_type="group", week=week, day=day, value=entity_id)
         print(week_kb)
         await msg.answer(

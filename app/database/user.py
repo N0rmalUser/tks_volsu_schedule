@@ -122,7 +122,7 @@ class User:
         self.__conn.commit()
 
     @property
-    def type(self) -> str:
+    def user_type(self) -> str:
         """Возвращает тип пользователя из базы данных. Могут быть student или teacher"""
 
         self.__cursor.execute(
@@ -134,8 +134,8 @@ class User:
         )
         return row[0] if (row := self.__cursor.fetchone()) else None
 
-    @type.setter
-    def type(self, user_type: str) -> None:
+    @user_type.setter
+    def user_type(self, user_type: str) -> None:
         """Устанавливает тип пользователя в базе данных. Могут быть student или teacher"""
 
         self.__cursor.execute(

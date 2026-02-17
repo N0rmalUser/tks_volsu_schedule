@@ -171,7 +171,7 @@ async def process_default_change(callback: CallbackQuery, callback_data: ChangeC
         await callback.answer()
         return
 
-    if user.type == "teacher":
+    if user.user_type == "teacher":
         await callback.message.edit_text(
             f"Преподаватель по умолчанию изменён на {Schedule().get_teacher_name(callback_data.value)}"
         )

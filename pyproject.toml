@@ -6,7 +6,7 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "aiocron>=2.1",
-    "aiogram==3.24.0",
+    "aiogram==3.22.0",
     "asyncio>=3.4.3",
     "keyboard>=0.13.5",
     "lets-plot==4.8.2",

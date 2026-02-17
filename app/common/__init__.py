@@ -17,7 +17,7 @@
 import logging
 from datetime import date, datetime
 
-from app.common.states import BroadcastStates
+from app.common.states import BroadcastStates as BroadcastStates
 from app.config import LOG_FILE, LOG_LEVEL, NUMERATOR, TZ
 
 

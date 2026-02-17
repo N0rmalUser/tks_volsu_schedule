@@ -3,7 +3,7 @@ import sqlite3
 from app.config import VK_DB
 
 
-class VK_USER:
+class VkUser:
     def __init__(self, user_id: int) -> None:
         self.__conn = sqlite3.connect(VK_DB)
         self.__cursor = self.__conn.cursor()
@@ -16,7 +16,7 @@ class VK_USER:
         return self.__user_id
 
     @property
-    def type(self) -> str:
+    def user_type(self) -> str:
         """Возвращает тип пользователя из базы данных. Могут быть student или teacher"""
 
         self.__cursor.execute(
@@ -28,8 +28,8 @@ class VK_USER:
         )
         return self.__cursor.fetchone()[0]
 
-    @type.setter
-    def type(self, user_type: str) -> None:
+    @user_type.setter
+    def user_type(self, user_type: str) -> None:
         """Устанавливает тип пользователя в базе данных. Могут быть student или teacher"""
 
         self.__cursor.execute(
