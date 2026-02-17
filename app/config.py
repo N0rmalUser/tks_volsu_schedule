@@ -35,8 +35,6 @@ ADMIN_CHAT_ID: int = config["bot"]["admin_chat_id"]
 
 VK_BOT_TOKEN: str = config["bot"]["vk_token"]
 
-DATABASE_URL: str = config["data"]["database_url"]
-
 LOG_LEVEL = config["logging"]["level"]
 EVENT_LEVEL = config["logging"]["event_level"]
 
