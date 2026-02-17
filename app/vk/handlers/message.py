@@ -26,7 +26,7 @@ from app.vk import markups
 router = BotLabeler()
 
 
-@router.message(command="start")
+@router.message(text=["/start", "Начать"])
 async def start_handler(msg: Message):
     user = VkUser(msg.from_id)
 
