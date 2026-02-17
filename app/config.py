@@ -30,8 +30,10 @@ TIMEZONE: str = config["date"]["timezone"]
 TZ = pytz.timezone(TIMEZONE)
 COLLEGE_CRON: str = config["date"]["college_cron"]
 
-BOT_TOKEN: str = config["bot"]["token"]
+TG_BOT_TOKEN: str = config["bot"]["token"]
 ADMIN_CHAT_ID: int = config["bot"]["admin_chat_id"]
+
+VK_BOT_TOKEN: str = config["bot"]["vk_token"]
 
 LOG_LEVEL = config["logging"]["level"]
 EVENT_LEVEL = config["logging"]["event_level"]
@@ -57,6 +59,7 @@ LOG_FILE: Path = DATA_PATH / "bot.log"
 ACTIVITIES_DB: Path = DB_PATH / "activities.db"
 SCHEDULE_DB: Path = DB_PATH / "schedule.db"
 USERS_DB: Path = DB_PATH / "users.db"
+VK_DB: Path = DB_PATH / "vk.db"
 
 SCHEDULE_PATH: Path = DATA_PATH / "schedule"
 GROUPS_SCHEDULE_PATH: Path = SCHEDULE_PATH / "groups"

@@ -17,6 +17,7 @@ dependencies = [
     "pytz>=2024.1",
     "toml>=0.10.2",
     "types-pytz==2025.2.0.20251108",
+    "vkbottle>=4.6.2",
 ]
 
 [dependency-groups]
@@ -30,7 +31,7 @@ line-length = 120
 exclude = ["__pycache__", "venv", "uv.lock"]
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "N", "UP", "B", "A", "C4", "ANN", "Q"]
+select = ["E", "F", "I", "N", "UP003", "B", "A", "C4", "Q"]
 extend-select = ["E501"]
 
 [tool.ruff.format]

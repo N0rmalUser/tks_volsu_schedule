@@ -25,7 +25,7 @@ from app.database import sql_kit
 def get_group_schedule(day: int, week: int, group_name: str, cursor: sqlite3.Cursor = None) -> str:
     """Возвращает отформатированное расписание для указанной группы на указанный день и неделю"""
 
-    from app.misc import get_lesson_label, get_time_symbol, time_to_minutes
+    from app.common import get_lesson_label, get_time_symbol, time_to_minutes
 
     week_type = "Числитель" if week == 1 else "Знаменатель"
     days_of_week = ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота"]
@@ -103,7 +103,7 @@ def get_teacher_schedule(day: int, week: int, teacher_name: str, cursor: sqlite3
     преподаватель обучается в какой-либо группе (указывается в config.py), то возвращает расписание для этой группы,
     смешанное с расписанием преподавателя."""
 
-    from app.misc import get_lesson_label, get_time_symbol, time_to_minutes
+    from app.common import get_lesson_label, get_time_symbol, time_to_minutes
 
     week_type = "Числитель" if week == 1 else "Знаменатель"
     days_of_week = ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота"]
@@ -225,7 +225,7 @@ def get_room_schedule(day: int, week: int, room_name: str, cursor: sqlite3.Curso
     """Возвращает отформатированное расписание для указанной аудитории на указанный день и неделю. Если аудитория
     имеет несколько вариантов (например, 2-13М и 2-13аМ), то возвращает расписание для всех вариантов."""
 
-    from app.misc import get_lesson_label, get_time_symbol, time_to_minutes
+    from app.common import get_lesson_label, get_time_symbol, time_to_minutes
 
     week_type = "Числитель" if week == 1 else "Знаменатель"
     days_of_week = [
@@ -309,3 +309,18 @@ def get_room_schedule(day: int, week: int, room_name: str, cursor: sqlite3.Curso
         return text
     else:
         return f"{header}Сегодня пар нет!"
+
+
+async def text_formatter(keyboard_type: str, day: int, week: int, value: int) -> str:
+    from app.database.schedule import Schedule
+
+    text = "Ошибка. Напишите админу /admin"
+
+    if keyboard_type == "teacher":
+        text = get_teacher_schedule(day=day, week=week, teacher_name=Schedule().get_teacher_name(value))
+    elif keyboard_type == "group":
+        text = get_group_schedule(day=day, week=week, group_name=Schedule().get_group_name(value))
+    elif keyboard_type == "room":
+        text = get_room_schedule(day=day, week=week, room_name=Schedule().get_room_name(value))
+
+    return text

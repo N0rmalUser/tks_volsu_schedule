@@ -25,6 +25,7 @@ from aiohttp import ClientSession
 from docx import Document
 from docx.table import _Row
 
+from app.common import get_semester
 from app.config import (
     ALL_PERSONAL,
     API_URL,
@@ -36,7 +37,6 @@ from app.config import (
     ROOMS,
 )
 from app.database.schedule import Schedule
-from app.misc import get_semester
 
 # Предполагается, что следующие глобальные константы / структуры
 # определены в окружении, из которого вызывается функция:

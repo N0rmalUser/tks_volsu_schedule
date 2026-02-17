@@ -63,7 +63,7 @@ class TopicCreatorMiddleware(BaseMiddleware):
         if (msg := event.message) and not event.message.from_user.is_bot:
             from aiogram.enums import ParseMode
 
-            from app.markups import admin as kb
+            from app.tg.markups import admin as kb
 
             user = User(msg.from_user.id)
             if not user.topic_id:
@@ -79,7 +79,7 @@ class TopicCreatorMiddleware(BaseMiddleware):
                     f"Пользователь: <code>{msg.from_user.full_name}</code>\n"
                     f"ID: <code>{msg.from_user.id}</code>\n"
                     f"Username: @{msg.from_user.username}\n"
-                    f"Тип пользователя: {user.type}"
+                    f"Тип пользователя: {user.user_type}"
                 )
                 await msg.bot.send_message(
                     ADMIN_CHAT_ID,

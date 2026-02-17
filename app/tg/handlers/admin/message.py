@@ -39,8 +39,8 @@ from app.database import (
     user_info,
 )
 from app.database.user import User
-from app.filters import ChatTypeIdFilter
-from app.markups import admin as kb
+from app.tg.filters import ChatTypeIdFilter
+from app.tg.markups import admin as kb
 
 router = Router()
 
@@ -51,8 +51,8 @@ async def handle_send_daily_plot(msg: Message, command: CommandObject = None) ->
 
     from datetime import datetime
 
+    from app.common import user_activity
     from app.database import activity as db
-    from app.misc import user_activity
 
     month = (datetime.strptime(command.args, "%d.%m.%Y") if command.args else datetime.now()).strftime("%Y-%m-%d")
     user_activity.plot_activity_for_month(
@@ -67,8 +67,8 @@ async def handle_send_hourly_plot(msg: Message, command: CommandObject = None) -
 
     from datetime import datetime
 
+    from app.common import user_activity
     from app.database import activity as db
-    from app.misc import user_activity
 
     date = (datetime.strptime(command.args, "%d.%m.%Y") if command.args else datetime.now()).strftime("%Y-%m-%d")
     user_activity.plot_activity_for_day(
@@ -145,7 +145,7 @@ async def log_handler(msg: Message) -> None:
 
 @router.message(Command("update"), ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID))
 async def update_handler(msg: Message) -> None:
-    from app.misc import schedule_parser
+    from app.common import schedule_parser
 
     start = await msg.answer("Обновляю расписание университета...")
     try:
@@ -169,7 +169,7 @@ async def update_handler(msg: Message) -> None:
 
 @router.message(Command("college"), ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=ADMIN_CHAT_ID))
 async def college_handler(msg: Message) -> None:
-    from app.misc import schedule_parser
+    from app.common import schedule_parser
 
     start = await msg.answer("Обновляю расписание колледжа...")
     try:
@@ -241,7 +241,7 @@ async def teacher_command_handler(msg: Message) -> None:
     start = await msg.answer("Изменяю тип пользователя...")
     if start.message_thread_id:
         user = User(topic_id=msg.message_thread_id)
-        user.type = "teacher"
+        user.user_type = "teacher"
         await start.edit_text("Тип пользователя изменён на `teacher`")
 
 
@@ -250,7 +250,7 @@ async def student_command_handler(msg: Message) -> None:
     start = await msg.answer("Изменяю тип пользователя...")
     if start.message_thread_id:
         user = User(topic_id=msg.message_thread_id)
-        user.type = "student"
+        user.user_type = "student"
         await start.edit_text("Тип пользователя изменён на `student`")
 
 
@@ -320,7 +320,7 @@ async def send_collected_messages(msg: Message) -> None:
 async def topic_message_handler(msg: Message, state: FSMContext) -> None:
     """Отправляет сообщение в личный топик пользователя"""
 
-    from app.misc.states import BroadcastStates
+    from app.common.states import BroadcastStates
 
     if msg.from_user.is_bot:
         return

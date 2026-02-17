@@ -14,33 +14,33 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import asyncio
-import logging
-from datetime import datetime
+from multiprocessing import Process
 
-import app
-from app.config import EVENT_LEVEL, LOG_FILE, LOG_LEVEL, TZ
+from app.common import set_logging
+
+
+def run_vk_bot() -> None:
+    from app.vk import main as vk_main
+
+    set_logging("vkbottle")
+    vk_main()
+
+
+def run_tg_bot() -> None:
+    import asyncio
+
+    from app.tg import main as tg_main
+
+    set_logging("aiogram.event")
+    asyncio.run(tg_main())
+
 
 if __name__ == "__main__":
-    logging.Formatter.converter = lambda *args: datetime.now(TZ).timetuple()
-    levels = {
-        "DEBUG": logging.DEBUG,
-        "INFO": logging.INFO,
-        "WARNING": logging.WARN,
-        "ERROR": logging.ERROR,
-        "CRITICAL": logging.CRITICAL,
-        "FATAL": logging.FATAL,
-        "EXCEPTION": logging.ERROR,
-    }
-    logging.basicConfig(
-        level=levels[LOG_LEVEL],
-        format="%(asctime)s %(levelname)s [%(funcName)s] %(message)s",
-        datefmt="%H:%M:%S %d-%m-%Y",
-        handlers=[
-            logging.FileHandler(LOG_FILE, encoding="utf-8"),
-            logging.StreamHandler(),
-        ],
-        force=True,
-    )
-    logging.getLogger("aiogram.event").setLevel(levels[EVENT_LEVEL])
-    asyncio.run(app.main())
+    vk_process = Process(target=run_vk_bot)
+    tg_process = Process(target=run_tg_bot)
+
+    vk_process.start()
+    tg_process.start()
+
+    vk_process.join()
+    tg_process.join()
