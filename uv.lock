@@ -997,16 +997,15 @@ dependencies = [
     { name = "openpyxl" },
     { name = "pandas" },
     { name = "pandas-stubs" },
-    { name = "pre-commit" },
     { name = "python-docx" },
     { name = "pytz" },
-    { name = "ruff" },
     { name = "toml" },
     { name = "types-pytz" },
 ]
 
 [package.dev-dependencies]
 dev = [
+    { name = "pre-commit" },
     { name = "ruff" },
 ]
 
@@ -1020,16 +1019,17 @@ requires-dist = [
     { name = "openpyxl", specifier = ">=3.1.5" },
     { name = "pandas", specifier = "==3.0.0" },
     { name = "pandas-stubs", specifier = "==3.0.0.260204" },
-    { name = "pre-commit", specifier = "==4.5.1" },
     { name = "python-docx", specifier = ">=1.1.2" },
     { name = "pytz", specifier = ">=2024.1" },
-    { name = "ruff", specifier = "==0.15.0" },
     { name = "toml", specifier = ">=0.10.2" },
     { name = "types-pytz", specifier = "==2025.2.0.20251108" },
 ]
 
 [package.metadata.requires-dev]
-dev = [{ name = "ruff", specifier = ">=0.13.2" }]
+dev = [
+    { name = "pre-commit", specifier = "==4.5.1" },
+    { name = "ruff", specifier = "==0.15.0" },
+]
 
 [[package]]
 name = "toml"
