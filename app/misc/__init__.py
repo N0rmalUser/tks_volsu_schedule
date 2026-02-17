@@ -15,7 +15,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import logging
-from datetime import datetime, date
+from datetime import date, datetime
 
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
