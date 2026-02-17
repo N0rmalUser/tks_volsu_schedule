@@ -1,15 +1,15 @@
-FROM astral/uv:python3.14-bookworm-slim
+FROM astral/uv:python3.12-bookworm-slim
 LABEL authors="N0rmalUser"
 
 WORKDIR /schedule
 
 ENV PYTHONUNBUFFERED=1
 
-RUN apt-get update
-RUN apt-get install -y ca-certificates iputils-ping
-RUN update-ca-certificates
-RUN apt-get install -y locales
+RUN apt-get update && apt-get install -y \
+    ca-certificates iputils-ping locales \
+    && rm -rf /var/lib/apt/lists/*
 
+RUN update-ca-certificates
 RUN localedef -i ru_RU -f UTF-8 ru_RU.UTF-8 || true
 
 COPY pyproject.toml uv.lock* ./

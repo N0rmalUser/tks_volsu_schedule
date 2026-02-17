@@ -3,7 +3,7 @@ name = "tks-volsu-schedule"
 version = "0.1.0"
 description = "Бот, показывающий расписание для студентов, преподавателей и кабинетов кафедры ТКС ВолГУ"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.12"
 dependencies = [
     "aiocron>=2.1",
     "aiogram==3.24.0",
