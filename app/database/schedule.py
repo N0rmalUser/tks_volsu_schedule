@@ -74,6 +74,41 @@ class Schedule:
                 tuple(params),
             )
         else:
+            self.__cursor.execute(
+                """
+                SELECT ScheduleID, Subgroup
+                FROM Schedule
+                WHERE Time = ?
+                    AND DayOfWeek = ?
+                    AND WeekType = ?
+                    AND GroupID = ?
+                    AND TeacherID = ?
+                    AND RoomID = ?
+                    AND SubjectID = ?
+                    AND Subgroup IN (1, 2)
+                """,
+                (time, day_name, week_type, group_id, teacher_id, room_id, subject_id),
+            )
+
+            rows = self.__cursor.fetchall()
+            if rows:
+                print(rows, subgroup)
+                self.__cursor.execute(
+                    """
+                    UPDATE Schedule
+                    SET Subgroup = 0
+                    WHERE Time = ?
+                      AND DayOfWeek = ?
+                      AND WeekType = ?
+                      AND GroupID = ?
+                      AND TeacherID = ?
+                      AND RoomID = ?
+                      AND SubjectID = ?
+                    """,
+                    (time, day_name, week_type, group_id, teacher_id, room_id, subject_id),
+                )
+                return
+
             params = [
                 time,
                 day_name,
