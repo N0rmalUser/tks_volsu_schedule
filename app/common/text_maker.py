@@ -239,9 +239,9 @@ def get_room_schedule(day: int, week: int, room_name: str, cursor: sqlite3.Curso
     ]
 
     if room_name[:-1] == "2-13":
-        room_variants = [room_name[:-1] + variant for variant in ["М", "аМ", "бМ"]]
+        room_variants = [room_name[:-1] + variant for variant in ["М", "аМ", "бМ", "АМ", "БМ"]]
     elif room_name[:-1] == "3-15":
-        room_variants = [room_name[:-1] + variant for variant in ["К", "аК", "бК"]]
+        room_variants = [room_name[:-1] + variant for variant in ["К", "аК", "бК", "АК", "БК"]]
     else:
         room_variants = [room_name]
 
