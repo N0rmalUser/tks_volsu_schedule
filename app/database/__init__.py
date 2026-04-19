@@ -207,7 +207,21 @@ def user_info(user_id: int) -> str:
 
     from app.config import GROUPS, TEACHERS
 
-    user_obj = User(user_id)
+    def safe_get(lst: list, idx: int) -> str:
+        return lst[idx] if 0 <= idx < len(lst) else "Unknown"
+
+    user = User(user_id)
+
+    teacher = "None"
+    if user.teacher:
+        idx = int(user.teacher) - 1
+        teacher = safe_get(TEACHERS, idx)
+
+    group = "None"
+    if user.group:
+        idx = int(user.group) - 1
+        group = safe_get(GROUPS, idx).replace("-", "")
+
     return f"""
 Информация о {"СТУДЕНТ" if user_obj.user_type == "student" else "ПРЕПОДАВАТЕЛ"}Е:
 Дата регистрации:
@@ -220,9 +234,9 @@ def user_info(user_id: int) -> str:
 <code>Заблокировал: </code> <code>{user_obj.blocked}</code>
 <code>Забанен:      </code> <code>{user_obj.banned}</code>
 <code>Отслеживается:</code> <code>{user_obj.tracking}</code>
-<code>Преподаватель:</code> <code>{TEACHERS[int(user_obj.teacher) - 1] if user_obj.teacher else "None"}</code>
+<code>Преподаватель:</code> <code>{TEACHERS[int(user_obj.teacher)] if user_obj.teacher else "None"}</code>
 <code>Группа:       </code> <code>{
-        GROUPS[int(user_obj.group) - 1].replace("-", "") if user_obj.group else "None"
+        GROUPS[int(user_obj.group)].replace("-", "") if user_obj.group else "None"
     }</code>
 """
 
