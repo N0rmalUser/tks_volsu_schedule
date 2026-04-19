@@ -223,21 +223,19 @@ def user_info(user_id: int) -> str:
         group = safe_get(GROUPS, idx).replace("-", "")
 
     return f"""
-Информация о {"СТУДЕНТ" if user_obj.user_type == "student" else "ПРЕПОДАВАТЕЛ"}Е:
+Информация о {"СТУДЕНТ" if user.user_type == "student" else "ПРЕПОДАВАТЕЛ"}Е:
 Дата регистрации:
-    <code>{datetime.fromisoformat(user_obj.start_date).strftime("%Y-%m-%d %H:%M:%S")}</code>
-    <code>{format_date(user_obj.start_date)}</code>
+    <code>{datetime.fromisoformat(user.start_date).strftime("%Y-%m-%d %H:%M:%S")}</code>
+    <code>{format_date(user.start_date)}</code>
 Последняя активность:
-    <code>{datetime.fromisoformat(user_obj.last_date).strftime("%Y-%m-%d %H:%M:%S")}</code>
-    <code>{format_date(user_obj.last_date)}</code>
+    <code>{datetime.fromisoformat(user.last_date).strftime("%Y-%m-%d %H:%M:%S")}</code>
+    <code>{format_date(user.last_date)}</code>
 
-<code>Заблокировал: </code> <code>{user_obj.blocked}</code>
-<code>Забанен:      </code> <code>{user_obj.banned}</code>
-<code>Отслеживается:</code> <code>{user_obj.tracking}</code>
-<code>Преподаватель:</code> <code>{TEACHERS[int(user_obj.teacher)] if user_obj.teacher else "None"}</code>
-<code>Группа:       </code> <code>{
-        GROUPS[int(user_obj.group)].replace("-", "") if user_obj.group else "None"
-    }</code>
+<code>Заблокировал: </code> <code>{user.blocked}</code>
+<code>Забанен:      </code> <code>{user.banned}</code>
+<code>Отслеживается:</code> <code>{user.tracking}</code>
+<code>Преподаватель:</code> <code>{teacher}</code>
+<code>Группа:       </code> <code>{group}</code>
 """
 
 
