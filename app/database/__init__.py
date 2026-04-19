@@ -220,9 +220,9 @@ def user_info(user_id: int) -> str:
 <code>Заблокировал: </code> <code>{user_obj.blocked}</code>
 <code>Забанен:      </code> <code>{user_obj.banned}</code>
 <code>Отслеживается:</code> <code>{user_obj.tracking}</code>
-<code>Преподаватель:</code> <code>{TEACHERS[int(user_obj.teacher) - 1] if user_obj.teacher else "None"}</code>
+<code>Преподаватель:</code> <code>{TEACHERS[int(user_obj.teacher)] if user_obj.teacher else "None"}</code>
 <code>Группа:       </code> <code>{
-        GROUPS[int(user_obj.group) - 1].replace("-", "") if user_obj.group else "None"
+        GROUPS[int(user_obj.group)].replace("-", "") if user_obj.group else "None"
     }</code>
 """
 
