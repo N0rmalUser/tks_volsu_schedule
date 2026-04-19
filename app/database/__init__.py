@@ -209,7 +209,7 @@ def user_info(user_id: int) -> str:
 
     user_obj = User(user_id)
     return f"""
-Информация о {"СТУДЕНТ" if user_obj.type == "student" else "ПРЕПОДАВАТЕЛ"}Е:
+Информация о {"СТУДЕНТ" if user_obj.user_type == "student" else "ПРЕПОДАВАТЕЛ"}Е:
 Дата регистрации:
     <code>{datetime.fromisoformat(user_obj.start_date).strftime("%Y-%m-%d %H:%M:%S")}</code>
     <code>{format_date(user_obj.start_date)}</code>
