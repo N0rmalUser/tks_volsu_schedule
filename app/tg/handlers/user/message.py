@@ -26,6 +26,7 @@ from app.database.user import User
 from app.tg.filters import ChatTypeIdFilter
 from app.tg.markups import user as kb
 
+
 router = Router()
 
 
@@ -62,7 +63,7 @@ async def help_handler(msg: Message) -> None:
 ✅ показывает, что выбрана эта неделя, для изменения недели нужно нажать кнопку с ➡️
 
 Для связи с администратором при возникших ошибках/изменениях в расписании используйте команду /admin и опишите проблему.
-"""
+""",
         )
     else:
         await msg.answer(
@@ -76,7 +77,7 @@ async def help_handler(msg: Message) -> None:
 
 Для связи с администратором при возникших ошибках/изменениях в расписании используйте команду /admin и опишите проблему.
 Донаты принимаются вкусняшками в 1-19М
-"""
+""",
         )
 
 
@@ -128,7 +129,7 @@ async def schedule_handler(msg: Message) -> None:
     if not entity_id:
         await msg.answer(
             f"Сначала выберите {'ФИО преподавателя' if user.user_type == 'teacher' else 'группу'}, "
-            f"нажав на соответствующую кнопку."
+            f"нажав на соответствующую кнопку.",
         )
         return
     if user.user_type == "teacher":

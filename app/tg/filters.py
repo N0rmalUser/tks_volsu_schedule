@@ -23,7 +23,7 @@ from app.config import config
 class ChatTypeIdFilter(BaseFilter):
     """Фильтр, проверяющий тип чата и id, если указан, и возвращающий True или False"""
 
-    def __init__(self, chat_type: list, chat_id: int = None) -> None:
+    def __init__(self, chat_type: list, chat_id: int | None = None) -> None:
         self.chat_id = chat_id
         self.chat_type = chat_type
 
@@ -36,5 +36,5 @@ class ChatTypeIdFilter(BaseFilter):
 
 
 class IgnoreFilter(MagicFilter):
-    def resolve(self, factory):  # noqa: ANN001, ANN201
+    def resolve(self, factory):
         return "ignore" in factory.action

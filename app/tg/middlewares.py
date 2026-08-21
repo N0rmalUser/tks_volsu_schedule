@@ -28,7 +28,7 @@ from aiogram.exceptions import (
 )
 from aiogram.types import Message, Update
 
-from app.config import config, TZ
+from app.config import TZ, config
 from app.database.activity import log_user_activity
 from app.database.user import User
 
@@ -47,8 +47,7 @@ class BanUsersMiddleware(BaseMiddleware):
             if not user.banned:
                 return await handler(event, data)
             return None
-        else:
-            return await handler(event, data)
+        return await handler(event, data)
 
 
 class TopicCreatorMiddleware(BaseMiddleware):

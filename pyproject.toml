@@ -7,6 +7,7 @@ requires-python = ">=3.12"
 dependencies = [
     "aiocron>=2.1",
     "aiogram==3.24.0",
+    "aiohttp>=3.12.15",
     "asyncio>=3.4.3",
     "lets-plot==4.8.2",
     "matplotlib==3.10.8",
@@ -28,15 +29,64 @@ dev = [
     "ruff==0.15.0",
 ]
 
+[tool.uv]
+package = false
+
 [tool.ruff]
+target-version = 'py312'
 line-length = 120
-exclude = ["__pycache__", "venv", "uv.lock"]
+extend-exclude = ["__pycache__", "uv.lock", "alembic", "services"]
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "N", "UP003", "B", "A", "C4", "Q"]
-extend-select = ["E501"]
+select = [
+    # Pycodestyle / Pyflakes
+
+    "E", "W", "F",
+    # Imports / naming
+
+    "I", "N",
+
+    # Bugbear / security / correctness
+    "B", "A", "SLOT", "RET", "RSE", "SIM", "ISC", "S",
+
+    # Modern Python / typing
+    "UP", "FA", "TCH", "YTT", "INT",
+
+    # Comprehensions / performance
+    "C4", "PERF", "FURB", "FLY",
+
+    # Code quality
+    "PIE", "RUF", "PTH", "SLF",
+
+    # Logging / comments / formatting
+    "ICN", "TID", "COM", "Q", "T10", "T20",
+]
+
+ignore = [
+    "COM812",
+    "RUF001",
+    "RUF002",
+    "RUF003",
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ['app']
+force-single-line = false
+lines-after-imports = 2
+combine-as-imports = true
+
+[tool.ruff.lint.mccabe]
+max-complexity = 12
+
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports = 'all'
+
+[tool.ruff.lint.pydocstyle]
+convention = 'google'
 
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"
 line-ending = "auto"
+docstring-code-format = true
+docstring-code-line-length = 'dynamic'

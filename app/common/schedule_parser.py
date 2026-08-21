@@ -16,7 +16,6 @@
 
 import asyncio
 import logging
-import os
 import re
 from collections.abc import Coroutine
 from datetime import date, datetime, timedelta
@@ -26,8 +25,9 @@ from docx import Document
 from docx.table import _Row
 
 from app.common import get_semester
-from app.config import config, GROUPS_SCHEDULE_PATH
+from app.config import GROUPS_SCHEDULE_PATH, config
 from app.database.schedule import Schedule
+
 
 # Предполагается, что следующие глобальные константы / структуры
 # определены в окружении, из которого вызывается функция:
@@ -210,10 +210,10 @@ async def university_schedule_parser() -> None:
     schedule_db.clear_university()
     _set_default()
 
-    files = [f for f in os.listdir(GROUPS_SCHEDULE_PATH) if f.endswith(".docx")]
+    files = [path for path in GROUPS_SCHEDULE_PATH.iterdir() if path.is_file() and path.suffix == ".docx"]
 
     for file in files:
-        doc = Document(os.path.join(GROUPS_SCHEDULE_PATH, file))
+        doc = Document(file)
         table = doc.tables[0]
         rows = table.rows
 
@@ -225,10 +225,7 @@ async def university_schedule_parser() -> None:
         for group_name in header[2:]:
             seen[group_name] = seen.get(group_name, 0) + 1
 
-            if header.count(group_name) == 1:
-                subgroup = 0
-            else:
-                subgroup = seen[group_name]
+            subgroup = 0 if header.count(group_name) == 1 else seen[group_name]
 
             groups.append((group_name, col, subgroup))
             col += 1

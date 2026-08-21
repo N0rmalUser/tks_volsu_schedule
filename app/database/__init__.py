@@ -22,11 +22,11 @@ from pathlib import Path
 
 from dateutil.relativedelta import relativedelta
 
-from ..config import ACTIVITIES_DB, SCHEDULE_DB, USERS_DB, VK_DB
-from .user import User
+from app.config import ACTIVITIES_DB, SCHEDULE_DB, USERS_DB, VK_DB
+from app.database.user import User
 
 
-def sql_kit(db: Path = ":memory:"):  # noqa: ANN201
+def sql_kit(db: Path = ":memory:"):
     """
     Декоратор для работы с базой данных. Он открывает соединение с базой данных, выполняет функцию и закрывает
     соединение.
@@ -34,9 +34,9 @@ def sql_kit(db: Path = ":memory:"):  # noqa: ANN201
     :return:  Результат выполнения функции
     """
 
-    def decorator(func):  # noqa: ANN001, ANN202
+    def decorator(func):
         @wraps(func)
-        def wrapper(*args, **kwargs):  # noqa: ANN002, ANN003, ANN202
+        def wrapper(*args, **kwargs):
             conn = sqlite3.connect(db)
             try:
                 result = func(*args, **kwargs, cursor=conn.cursor())
@@ -64,7 +64,7 @@ def user_db_init(cursor: sqlite3.Cursor) -> None:
             banned BOOLEAN DEFAULT false,
             default_choose TEXT
         )
-    """
+    """,
     )
 
     cursor.execute(
@@ -76,7 +76,7 @@ def user_db_init(cursor: sqlite3.Cursor) -> None:
             group_id INTEGER DEFAULT 0,
             FOREIGN KEY (user_id) REFERENCES User_Info(user_id)
         )
-    """
+    """,
     )
 
 
@@ -89,11 +89,10 @@ def vk_user_db_init(cursor: sqlite3.Cursor) -> None:
             user_type TEXT DEFAULT 'student',
             start_date TIMESTAMP,
             last_date TIMESTAMP,
-            
             teacher_id INTEGER DEFAULT 0,
             group_id INTEGER DEFAULT 0
         )
-    """
+    """,
     )
 
 
@@ -102,25 +101,25 @@ def schedule_db_init(cursor: sqlite3.Cursor) -> None:
     cursor.execute(
         """CREATE TABLE IF NOT EXISTS Rooms (
             RoomID INTEGER PRIMARY KEY AUTOINCREMENT,
-            RoomName TEXT UNIQUE NOT NULL)"""
+            RoomName TEXT UNIQUE NOT NULL)""",
     )
 
     cursor.execute(
         """CREATE TABLE IF NOT EXISTS Groups (
             GroupID INTEGER PRIMARY KEY AUTOINCREMENT,
-            GroupName TEXT UNIQUE NOT NULL)"""
+            GroupName TEXT UNIQUE NOT NULL)""",
     )
 
     cursor.execute(
         """CREATE TABLE IF NOT EXISTS Teachers (
             TeacherID INTEGER PRIMARY KEY AUTOINCREMENT,
-            TeacherName TEXT UNIQUE NOT NULL)"""
+            TeacherName TEXT UNIQUE NOT NULL)""",
     )
 
     cursor.execute(
         """CREATE TABLE IF NOT EXISTS Subjects (
             SubjectID INTEGER PRIMARY KEY AUTOINCREMENT,
-            SubjectName TEXT UNIQUE NOT NULL)"""
+            SubjectName TEXT UNIQUE NOT NULL)""",
     )
 
     cursor.execute(
@@ -137,7 +136,7 @@ def schedule_db_init(cursor: sqlite3.Cursor) -> None:
             FOREIGN KEY (GroupID) REFERENCES Groups(GroupID),
             FOREIGN KEY (TeacherID) REFERENCES Teachers(TeacherID),
             FOREIGN KEY (RoomID) REFERENCES Rooms(RoomID),
-            FOREIGN KEY (SubjectID) REFERENCES Subjects(SubjectID))"""
+            FOREIGN KEY (SubjectID) REFERENCES Subjects(SubjectID))""",
     )
 
     cursor.execute(
@@ -153,7 +152,7 @@ def schedule_db_init(cursor: sqlite3.Cursor) -> None:
             FOREIGN KEY (GroupID) REFERENCES Groups(GroupID),
             FOREIGN KEY (TeacherID) REFERENCES Teachers(TeacherID),
             FOREIGN KEY (RoomID) REFERENCES Rooms(RoomID),
-            FOREIGN KEY (SubjectID) REFERENCES Subjects(SubjectID))"""
+            FOREIGN KEY (SubjectID) REFERENCES Subjects(SubjectID))""",
     )
 
 
@@ -166,7 +165,7 @@ def activity_db_init(cursor: sqlite3.Cursor) -> None:
             date TEXT,
             PRIMARY KEY (user_ids, date)
         );
-    """
+    """,
     )
 
     cursor.execute(
@@ -176,7 +175,7 @@ def activity_db_init(cursor: sqlite3.Cursor) -> None:
             datetime TEXT,
             PRIMARY KEY (user_ids, datetime)
         );
-    """
+    """,
     )
 
 
@@ -339,11 +338,7 @@ async def get_tracked_users() -> list:
     """
 
     user_ids = all_user_ids()
-    tracked_users = []
-    for user_id in user_ids:
-        if User(user_id).tracking:
-            tracked_users.append(f"`{user_id}`")
-    return tracked_users
+    return [f"`{user_id}`" for user_id in user_ids if User(user_id).tracking]
 
 
 @sql_kit(USERS_DB)

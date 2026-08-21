@@ -53,7 +53,7 @@ def days(keyboard_type: str, day: int, week: int, value: int) -> str:
                     "week": week,
                     "value": value,
                 },
-            )
+            ),
         )
 
         if index % 3 == 0:
@@ -74,7 +74,7 @@ def days(keyboard_type: str, day: int, week: int, value: int) -> str:
                     "day": day,
                     "value": value,
                 },
-            )
+            ),
         )
 
     elif week == 2:
@@ -92,11 +92,10 @@ def days(keyboard_type: str, day: int, week: int, value: int) -> str:
                     "day": day,
                     "value": value,
                 },
-            )
+            ),
         )
     else:
         keyboard.add(Callback("Неизвестная неделя", {"action": "ignore"}))
-    print(keyboard.get_json())
     return keyboard.get_json()
 
 
@@ -112,7 +111,7 @@ def rooms() -> str:
                     "action": "room",
                     "value": schedule.get_room_id(room),
                 },
-            )
+            ),
         )
 
         if i % 3 == 0:
@@ -124,10 +123,7 @@ def rooms() -> str:
 def get_directions_from_groups() -> list:
     directions = []
     for g in config.groups:
-        if "-" in g:
-            dir_part = g.split("-", 1)[0].strip()
-        else:
-            dir_part = g.split()[0].strip()
+        dir_part = g.split("-", 1)[0].strip() if "-" in g else g.split()[0].strip()
         if dir_part and dir_part not in directions:
             directions.append(dir_part)
     return directions
@@ -142,7 +138,7 @@ def directions() -> str:
             Callback(
                 label=direction,
                 payload={"action": "select_direction", "direction": direction},
-            )
+            ),
         )
         if i % 3 == 0:
             keyboard.row()
@@ -165,7 +161,7 @@ def groups(direction: str) -> str:
             Callback(
                 label=group,
                 payload={"action": "group", "value": schedule.get_group_id(group)},
-            )
+            ),
         )
         if i % 2 == 0:
             keyboard.row()
@@ -188,7 +184,7 @@ def teachers(page: int = 0) -> str:
                     "action": "teacher",
                     "value": schedule.get_teacher_id(teacher),
                 },
-            )
+            ),
         )
 
         if i % 2 == 0:
@@ -201,7 +197,7 @@ def teachers(page: int = 0) -> str:
             Callback(
                 "⬅️ Назад",
                 {"action": "teachers_page", "page": page - 1},
-            )
+            ),
         )
 
     if end < len(config.teachers):
@@ -209,7 +205,7 @@ def teachers(page: int = 0) -> str:
             Callback(
                 "Вперёд ➡️",
                 {"action": "teachers_page", "page": page + 1},
-            )
+            ),
         )
 
     return keyboard.get_json()

@@ -22,7 +22,7 @@ from openpyxl import load_workbook
 from openpyxl.styles import Border, Side
 from pandas import concat, read_sql_query
 
-from app.config import config, ROOMS_SHEETS_PATH, SCHEDULE_DB, TEACHERS_SHEETS_PATH
+from app.config import ROOMS_SHEETS_PATH, SCHEDULE_DB, TEACHERS_SHEETS_PATH, config
 
 
 def teacher(teacher_name: str) -> str:
@@ -57,7 +57,7 @@ def teacher(teacher_name: str) -> str:
 
     teacher_df = read_sql_query(sql=query, con=conn, params=[teacher_name])
     student_df = pd.DataFrame()
-    if teacher_name in config.students.keys():
+    if teacher_name in config.students:
         query = """
                 SELECT
                     s.Time,
@@ -101,7 +101,8 @@ def teacher(teacher_name: str) -> str:
             not_empty_rows.append(row - 1)
 
         ws.cell(
-            row=row, column=start_col
+            row=row,
+            column=start_col,
         ).value = f"{data['GroupNames']}{f'.{data["Subgroup"]}' if data['Subgroup'] else ''}"
         ws.cell(row=row, column=start_col + 1).value = data["RoomName"]
         ws.cell(row=row, column=start_col + 2).value = data["SubjectName"]
@@ -218,10 +219,7 @@ def room(room_name: str) -> str:
             not_empty_rows.append(row - 1)
 
         room_index = data["RoomName"][-2]
-        if room_index.isdigit():
-            room_index = ""
-        else:
-            room_index = f" ({room_index})"
+        room_index = "" if room_index.isdigit() else f" ({room_index})"
 
         teacher_cell = ws.cell(row=row, column=start_col)
         teacher_name_with_room = f"{data['TeacherName']}{room_index}"

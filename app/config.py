@@ -19,7 +19,7 @@ import platform
 from pathlib import Path
 
 import pytz
-from pydantic import Field, model_validator
+from pydantic import Field, SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -40,7 +40,7 @@ class Config(BaseSettings):
             "бот создаёт отдельный топик.\n"
             "Сообщения из топика пересылаются пользователю.\n"
             "Сообщения из топика #General рассылаются всем пользователям."
-        )
+        ),
     )
 
     # ===== VK =====

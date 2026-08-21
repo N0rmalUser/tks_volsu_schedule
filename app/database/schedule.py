@@ -15,19 +15,20 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import sqlite3
+from typing import ClassVar
 
-from app.config import config, SCHEDULE_DB
+from app.config import SCHEDULE_DB, config
 
 
 class Schedule:
-    days_of_week = [
+    days_of_week: ClassVar[tuple[str, ...]] = (
         "Понедельник",
         "Вторник",
         "Среда",
         "Четверг",
         "Пятница",
         "Суббота",
-    ]
+    )
 
     def __init__(self) -> None:
         self.__conn = sqlite3.connect(SCHEDULE_DB)
@@ -42,7 +43,7 @@ class Schedule:
         teacher_id: int,
         room_id: int,
         subject_id: int,
-        subgroup: int = None,
+        subgroup: int | None = None,
         college: bool = False,
     ) -> None:
         if college:
@@ -92,7 +93,6 @@ class Schedule:
 
             rows = self.__cursor.fetchall()
             if rows:
-                print(rows, subgroup)
                 self.__cursor.execute(
                     """
                     UPDATE Schedule
@@ -155,7 +155,7 @@ class Schedule:
         self.__conn.commit()
         return subject_id
 
-    def add_group(self, group_name: str) -> int:
+    def add_group(self, group_name: str) -> int | None:
         self.__cursor.execute("SELECT GroupID FROM Groups WHERE GroupName = ?", (group_name,))
         group_id = self.__cursor.fetchone()
         if group_id:
@@ -166,7 +166,7 @@ class Schedule:
         self.__conn.commit()
         return group_id
 
-    def add_teacher(self, teacher_name: str) -> int:
+    def add_teacher(self, teacher_name: str) -> int | None:
         self.__cursor.execute("SELECT TeacherID FROM Teachers WHERE TeacherName = ?", (teacher_name,))
         teacher_id = self.__cursor.fetchone()
         if teacher_id:
@@ -188,32 +188,32 @@ class Schedule:
         self.__conn.commit()
         return room_id
 
-    def get_group_name(self, group_id: int) -> str:
+    def get_group_name(self, group_id: int) -> str | None:
         self.__cursor.execute("SELECT GroupName FROM Groups WHERE GroupID = ?", (group_id,))
         result = self.__cursor.fetchone()
         return result[0] if result else None
 
-    def get_group_id(self, group_name: str) -> int:
+    def get_group_id(self, group_name: str) -> int | None:
         self.__cursor.execute("SELECT GroupID FROM Groups WHERE GroupName = ?", (group_name,))
         result = self.__cursor.fetchone()
         return result[0] if result else None
 
-    def get_teacher_name(self, teacher_id: int) -> str:
+    def get_teacher_name(self, teacher_id: int) -> str | None:
         self.__cursor.execute("SELECT TeacherName FROM Teachers WHERE TeacherID = ?", (teacher_id,))
         result = self.__cursor.fetchone()
         return result[0] if result else None
 
-    def get_teacher_id(self, teacher_name: str) -> int:
+    def get_teacher_id(self, teacher_name: str) -> int | None:
         self.__cursor.execute("SELECT TeacherID FROM Teachers WHERE TeacherName = ?", (teacher_name,))
         result = self.__cursor.fetchone()
         return result[0] if result else None
 
-    def get_room_name(self, room_id: int) -> str:
+    def get_room_name(self, room_id: int) -> str | None:
         self.__cursor.execute("SELECT RoomName FROM Rooms WHERE RoomID = ?", (room_id,))
         result = self.__cursor.fetchone()
         return result[0] if result else None
 
-    def get_room_id(self, room_name: str) -> int:
+    def get_room_id(self, room_name: str) -> int | None:
         self.__cursor.execute("SELECT RoomID FROM Rooms WHERE RoomName = ?", (room_name,))
         result = self.__cursor.fetchone()
         return result[0] if result else None

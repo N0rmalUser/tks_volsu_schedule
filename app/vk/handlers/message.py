@@ -23,6 +23,7 @@ from app.database.schedule import Schedule
 from app.database.vkuser import VkUser
 from app.vk import markups
 
+
 router = BotLabeler()
 
 
@@ -51,7 +52,7 @@ async def help_handler(msg: Message):
 Из-за ограничения в 10 кнопок, у списка преподавателей добавлены страницы, а у списка групп - разделение по направлениям
 
 ✅ показывает, что выбрана эта неделя, для изменения недели нужно нажать кнопку с ➡️
-"""
+""",
     )
 
 
@@ -82,7 +83,6 @@ async def schedule_handler(msg: Message):
         )
     elif user.user_type == "student":
         week_kb = markups.days(keyboard_type="group", week=week, day=day, value=entity_id)
-        print(week_kb)
         await msg.answer(
             text_maker.get_group_schedule(
                 day=day,

@@ -57,7 +57,8 @@ def get_teachers() -> InlineKeyboardMarkup:
         builder.button(
             text=str(teacher),
             callback_data=keyboard_factory.ChangeCallbackFactory(
-                action="teacher", value=Schedule().get_teacher_id(teacher)
+                action="teacher",
+                value=Schedule().get_teacher_id(teacher),
             ),
         )
     builder.adjust(2)
@@ -82,7 +83,8 @@ def get_groups() -> InlineKeyboardMarkup:
             builder.button(
                 text=group,
                 callback_data=keyboard_factory.ChangeCallbackFactory(
-                    action="group", value=Schedule().get_group_id(group)
+                    action="group",
+                    value=Schedule().get_group_id(group),
                 ),
             )
     builder.adjust(3)
@@ -112,7 +114,8 @@ def get_default_teachers() -> InlineKeyboardMarkup:
         builder.button(
             text=str(teacher),
             callback_data=keyboard_factory.DefaultChangeCallbackFactory(
-                action="default_teacher", value=Schedule().get_teacher_id(teacher)
+                action="default_teacher",
+                value=Schedule().get_teacher_id(teacher),
             ),
         )
     builder.button(
@@ -131,7 +134,8 @@ def get_default_groups() -> InlineKeyboardMarkup:
         builder.button(
             text=group,
             callback_data=keyboard_factory.DefaultChangeCallbackFactory(
-                action="default_group", value=Schedule().get_group_id(group)
+                action="default_group",
+                value=Schedule().get_group_id(group),
             ),
         )
     builder.button(
@@ -228,7 +232,8 @@ def get_sheet_teachers(user_id: int) -> InlineKeyboardMarkup:
         builder.button(
             text=str(teacher),
             callback_data=keyboard_factory.ChangeCallbackFactory(
-                action="teacher_sheet", value=Schedule().get_teacher_id(teacher)
+                action="teacher_sheet",
+                value=Schedule().get_teacher_id(teacher),
             ),
         )
     builder.adjust(2)
@@ -261,7 +266,8 @@ def get_sheet_groups(user_id: int) -> InlineKeyboardMarkup:
             builder.button(
                 text=group,
                 callback_data=keyboard_factory.ChangeCallbackFactory(
-                    action="group_sheet", value=Schedule().get_group_id(group)
+                    action="group_sheet",
+                    value=Schedule().get_group_id(group),
                 ),
             )
     builder.adjust(3)
@@ -286,7 +292,8 @@ def get_sheet_rooms() -> InlineKeyboardMarkup:
         builder.button(
             text=str(room),
             callback_data=keyboard_factory.ChangeCallbackFactory(
-                action="room_sheet", value=Schedule().get_room_id(room)
+                action="room_sheet",
+                value=Schedule().get_room_id(room),
             ),
         )
     builder.adjust(3)

@@ -21,6 +21,7 @@ from aiogram.types import ChatMemberUpdated
 from app.config import config
 from app.database.user import User
 
+
 router = Router()
 
 
