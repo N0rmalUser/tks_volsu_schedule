@@ -26,7 +26,7 @@ from aiogram.types import Message
 
 from app.common import BroadcastStates, create_progress_bar, set_logging
 from app.common.schedule_parser import college_schedule_parser
-from app.config import COLLEGE_CRON, TG_BOT_TOKEN, TZ
+from app.config import TZ, config
 from app.tg import markups, middlewares
 from app.tg.handlers.admin import callback as admin_callback
 from app.tg.handlers.admin import message as admin_message
@@ -73,9 +73,9 @@ async def send_broadcast_message(msg: Message, state: FSMContext, message_id: in
 async def main() -> None:
     """Функция запуска бота. Удаляет веб хуки и стартует polling."""
 
-    aiocron.crontab(COLLEGE_CRON, func=college_schedule_parser, tz=TZ)
+    aiocron.crontab(config.college_cron, func=college_schedule_parser, tz=TZ)
     session = AiohttpSession()
-    bot = Bot(token=TG_BOT_TOKEN, session=session)
+    bot = Bot(token=config.tg_bot_token, session=session)
     dp = Dispatcher(storage=MemoryStorage())
 
     dp.include_routers(

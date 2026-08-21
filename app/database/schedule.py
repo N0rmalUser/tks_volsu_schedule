@@ -16,7 +16,7 @@
 
 import sqlite3
 
-from app.config import COLLEGE_CONST, SCHEDULE_DB
+from app.config import config, SCHEDULE_DB
 
 
 class Schedule:
@@ -57,7 +57,7 @@ class Schedule:
             ]
             self.__cursor.execute("SELECT MAX(ScheduleID) FROM CollegeSchedule")
             max_id = self.__cursor.fetchone()[0]
-            params.insert(0, max_id + 1 if max_id is not None else COLLEGE_CONST + 1)
+            params.insert(0, max_id + 1 if max_id is not None else config.college_id_const + 1)
             self.__cursor.execute(
                 """
                 INSERT INTO CollegeSchedule (

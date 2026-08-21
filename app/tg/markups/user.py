@@ -17,7 +17,7 @@
 from aiogram.types import InlineKeyboardMarkup, KeyboardButton, ReplyKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-from app import config
+from app.config import config
 from app.database.schedule import Schedule
 from app.database.user import User
 from app.tg.markups import keyboard_factory
@@ -48,12 +48,12 @@ def teacher_menu() -> ReplyKeyboardMarkup:
 
 
 def get_teachers() -> InlineKeyboardMarkup:
-    """Возвращает клавиатуру с преподавателями, указанными в config.toml."""
+    """Возвращает клавиатуру с преподавателями, указанными в конфиге."""
 
     from app.database.schedule import Schedule
 
     builder = InlineKeyboardBuilder()
-    for teacher in config.TEACHERS:
+    for teacher in config.teachers:
         builder.button(
             text=str(teacher),
             callback_data=keyboard_factory.ChangeCallbackFactory(
@@ -65,13 +65,13 @@ def get_teachers() -> InlineKeyboardMarkup:
 
 
 def get_groups() -> InlineKeyboardMarkup:
-    """Возвращает клавиатуру с группами, указанными в config.toml."""
+    """Возвращает клавиатуру с группами, указанными в конфиге."""
 
     from app.database.schedule import Schedule
 
     builder = InlineKeyboardBuilder()
     counter = 0
-    for group in config.GROUPS:
+    for group in config.groups:
         if group == "-":
             counter += 1
             builder.button(
@@ -90,12 +90,12 @@ def get_groups() -> InlineKeyboardMarkup:
 
 
 def get_rooms() -> InlineKeyboardMarkup:
-    """Возвращает клавиатуру с аудиториями, указанными в config.toml."""
+    """Возвращает клавиатуру с аудиториями, указанными в конфиге."""
 
     from app.database.schedule import Schedule
 
     builder = InlineKeyboardBuilder()
-    for room in config.ROOMS:
+    for room in config.rooms:
         builder.button(
             text=str(room),
             callback_data=keyboard_factory.ChangeCallbackFactory(action="room", value=Schedule().get_room_id(room)),
@@ -105,10 +105,10 @@ def get_rooms() -> InlineKeyboardMarkup:
 
 
 def get_default_teachers() -> InlineKeyboardMarkup:
-    """Возвращает клавиатуру с преподавателями, указанными в config.toml."""
+    """Возвращает клавиатуру с преподавателями, указанными в конфиге."""
 
     builder = InlineKeyboardBuilder()
-    for teacher in config.ALL_PERSONAL:
+    for teacher in config.all_personal:
         builder.button(
             text=str(teacher),
             callback_data=keyboard_factory.DefaultChangeCallbackFactory(
@@ -124,10 +124,10 @@ def get_default_teachers() -> InlineKeyboardMarkup:
 
 
 def get_default_groups() -> InlineKeyboardMarkup:
-    """Возвращает клавиатуру с группами, указанными в config.toml."""
+    """Возвращает клавиатуру с группами, указанными в конфиге."""
 
     builder = InlineKeyboardBuilder()
-    for group in config.GROUPS:
+    for group in config.groups:
         builder.button(
             text=group,
             callback_data=keyboard_factory.DefaultChangeCallbackFactory(
@@ -219,12 +219,12 @@ def get_sheets(user_id: int) -> InlineKeyboardMarkup:
 
 
 def get_sheet_teachers(user_id: int) -> InlineKeyboardMarkup:
-    """Возвращает клавиатуру с преподавателями, указанными в config.toml."""
+    """Возвращает клавиатуру с преподавателями, указанными в конфиге."""
 
     from app.database.schedule import Schedule
 
     builder = InlineKeyboardBuilder()
-    for teacher in config.TEACHERS:
+    for teacher in config.teachers:
         builder.button(
             text=str(teacher),
             callback_data=keyboard_factory.ChangeCallbackFactory(
@@ -244,13 +244,13 @@ def get_sheet_teachers(user_id: int) -> InlineKeyboardMarkup:
 
 
 def get_sheet_groups(user_id: int) -> InlineKeyboardMarkup:
-    """Возвращает клавиатуру с группами, указанными в config.toml."""
+    """Возвращает клавиатуру с группами, указанными в конфиге."""
 
     from app.database.schedule import Schedule
 
     builder = InlineKeyboardBuilder()
     counter = 0
-    for group in config.GROUPS:
+    for group in config.groups:
         if group == "-":
             counter += 1
             builder.button(
@@ -277,12 +277,12 @@ def get_sheet_groups(user_id: int) -> InlineKeyboardMarkup:
 
 
 def get_sheet_rooms() -> InlineKeyboardMarkup:
-    """Возвращает клавиатуру с аудиториями, указанными в config.toml."""
+    """Возвращает клавиатуру с аудиториями, указанными в конфиге."""
 
     from app.database.schedule import Schedule
 
     builder = InlineKeyboardBuilder()
-    for room in config.ROOMS:
+    for room in config.rooms:
         builder.button(
             text=str(room),
             callback_data=keyboard_factory.ChangeCallbackFactory(

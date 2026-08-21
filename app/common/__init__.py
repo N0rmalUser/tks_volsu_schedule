@@ -18,14 +18,14 @@ import logging
 from datetime import date, datetime
 
 from app.common.states import BroadcastStates as BroadcastStates
-from app.config import LOG_FILE, LOG_LEVEL, NUMERATOR, TZ
+from app.config import LOG_FILE, TZ, config
 
 
 def get_today() -> tuple[int, int]:
     """Метод для получения сегодняшнего дня и недели"""
 
     day = int(f"{datetime.now(TZ).weekday() + 1}")
-    week_int = 2 if NUMERATOR == 0 else 1
+    week_int = 2 if config.numerator == 0 else 1
     week = week_int if datetime.now(TZ).isocalendar()[1] % 2 == 0 else 3 - week_int
     if day == 7:
         return 1, week + 1 if week == 1 else week - 1
@@ -117,10 +117,10 @@ def set_logging(logger: str):
         "EXCEPTION": logging.ERROR,
     }
     logging.basicConfig(
-        level=levels[LOG_LEVEL],
+        level=levels[config.logging_level],
         format="%(asctime)s %(levelname)s [%(funcName)s] %(message)s",
         datefmt="%H:%M:%S %d-%m-%Y",
         handlers=[logging.FileHandler(LOG_FILE, encoding="utf-8"), logging.StreamHandler()],
         force=True,
     )
-    logging.getLogger(logger).setLevel(levels[LOG_LEVEL])
+    logging.getLogger(logger).setLevel(levels[config.logging_level])

@@ -21,7 +21,7 @@ from aiogram.filters import Command, CommandStart
 from aiogram.types import Message
 
 from app.common import get_today
-from app.config import ADMIN_CHAT_ID
+from app.config import config
 from app.database.user import User
 from app.tg.filters import ChatTypeIdFilter
 from app.tg.markups import user as kb
@@ -87,7 +87,7 @@ async def admin_handler(msg: Message) -> None:
     user = User(msg.from_user.id)
     user.tracking = True
     logging.warning(f"Юзверь {msg.from_user.id} @{msg.from_user.username} просит помощи админа")
-    await msg.forward(chat_id=ADMIN_CHAT_ID, message_thread_id=user.topic_id)
+    await msg.forward(chat_id=config.admin_chat_id, message_thread_id=user.topic_id)
     await msg.answer("Модератор скоро напишет вам, ожидайте. Пока можете описать проблему.")
     logging.info(f"{msg.from_user.id} написал админу")
 

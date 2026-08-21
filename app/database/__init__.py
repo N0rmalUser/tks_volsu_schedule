@@ -205,7 +205,7 @@ def format_date(date: str) -> str:
 def user_info(user_id: int) -> str:
     """Возвращает информацию о пользователе, подготовленную к отправке админу"""
 
-    from app.config import GROUPS, TEACHERS
+    from app.config import config
 
     def safe_get(lst: list, idx: int) -> str:
         return lst[idx] if 0 <= idx < len(lst) else "Unknown"
@@ -215,12 +215,12 @@ def user_info(user_id: int) -> str:
     teacher = "None"
     if user.teacher:
         idx = int(user.teacher) - 1
-        teacher = safe_get(TEACHERS, idx)
+        teacher = safe_get(config.teachers, idx)
 
     group = "None"
     if user.group:
         idx = int(user.group) - 1
-        group = safe_get(GROUPS, idx).replace("-", "")
+        group = safe_get(config.groups, idx).replace("-", "")
 
     return f"""
 Информация о {"СТУДЕНТ" if user.user_type == "student" else "ПРЕПОДАВАТЕЛ"}Е:

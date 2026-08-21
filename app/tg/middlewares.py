@@ -28,7 +28,7 @@ from aiogram.exceptions import (
 )
 from aiogram.types import Message, Update
 
-from app.config import ADMIN_CHAT_ID, TZ
+from app.config import config, TZ
 from app.database.activity import log_user_activity
 from app.database.user import User
 
@@ -71,7 +71,7 @@ class TopicCreatorMiddleware(BaseMiddleware):
                     topic_name = f"{msg.from_user.username} {msg.from_user.id}"
                 else:
                     topic_name = f"{msg.from_user.full_name} {msg.from_user.id}"
-                result = await msg.bot.create_forum_topic(ADMIN_CHAT_ID, topic_name)
+                result = await msg.bot.create_forum_topic(config.admin_chat_id, topic_name)
                 topic_id = result.message_thread_id
                 user.topic_id = topic_id
                 user.start_date = datetime.now(TZ).isoformat()
@@ -82,7 +82,7 @@ class TopicCreatorMiddleware(BaseMiddleware):
                     f"Тип пользователя: {user.user_type}"
                 )
                 await msg.bot.send_message(
-                    ADMIN_CHAT_ID,
+                    config.admin_chat_id,
                     message_thread_id=topic_id,
                     text=user_info,
                     reply_markup=kb.admin_menu(),
@@ -138,22 +138,22 @@ class TrackingMiddleware(BaseMiddleware):
         data: dict[str, Any],
     ) -> Coroutine[Any, Any, Any]:
         user = User(data["event_from_user"].id)
-        if (event.message and event.message.chat.id == ADMIN_CHAT_ID) or (
-            event.callback_query and event.callback_query.message.chat.id == ADMIN_CHAT_ID
+        if (event.message and event.message.chat.id == config.admin_chat_id) or (
+            event.callback_query and event.callback_query.message.chat.id == config.admin_chat_id
         ):
             return await handler(event, data)
 
         if user.tracking:
             if event.callback_query and not event.callback_query.from_user.is_bot:
                 await event.bot.send_message(
-                    ADMIN_CHAT_ID,
+                    config.admin_chat_id,
                     message_thread_id=user.topic_id,
                     text=event.callback_query.data,
                     parse_mode="HTML",
                 )
             else:
                 await event.bot.forward_message(
-                    ADMIN_CHAT_ID,
+                    config.admin_chat_id,
                     message_thread_id=user.topic_id,
                     from_chat_id=user.id,
                     message_id=event.message.message_id,

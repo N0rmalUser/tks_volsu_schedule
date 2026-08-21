@@ -17,7 +17,7 @@
 from aiogram import MagicFilter, types
 from aiogram.filters import BaseFilter
 
-from app.config import ADMIN_CHAT_ID
+from app.config import config
 
 
 class ChatTypeIdFilter(BaseFilter):
@@ -30,7 +30,7 @@ class ChatTypeIdFilter(BaseFilter):
     async def __call__(self, message: types.Message) -> bool | None:
         if not bool(message.from_user.is_bot):
             if message.chat.type in self.chat_type and self.chat_id is not None:
-                return str(message.chat.id) == str(ADMIN_CHAT_ID)
+                return str(message.chat.id) == str(config.admin_chat_id)
             return message.chat.type in self.chat_type
         return None
 

@@ -16,7 +16,7 @@
 
 from vkbottle import Callback, Keyboard, KeyboardButtonColor, Text
 
-from app.config import GROUPS, ROOMS, TEACHERS
+from app.config import config
 from app.database.schedule import Schedule
 
 
@@ -104,7 +104,7 @@ def rooms() -> str:
     keyboard = Keyboard(inline=True)
     schedule = Schedule()
 
-    for i, room in enumerate(ROOMS, start=1):
+    for i, room in enumerate(config.rooms, start=1):
         keyboard.add(
             Callback(
                 label=str(room),
@@ -123,7 +123,7 @@ def rooms() -> str:
 
 def get_directions_from_groups() -> list:
     directions = []
-    for g in GROUPS:
+    for g in config.groups:
         if "-" in g:
             dir_part = g.split("-", 1)[0].strip()
         else:
@@ -155,7 +155,9 @@ def groups(direction: str) -> str:
     schedule = Schedule()
 
     filtered = [
-        g for g in GROUPS if g.upper().startswith(direction.upper() + "-") or g.upper().startswith(direction.upper())
+        g
+        for g in config.groups
+        if g.upper().startswith(direction.upper() + "-") or g.upper().startswith(direction.upper())
     ]
 
     for i, group in enumerate(filtered, start=1):
@@ -176,7 +178,7 @@ def teachers(page: int = 0) -> str:
 
     start = page * 8
     end = start + 8
-    chunk = TEACHERS[start:end]
+    chunk = config.teachers[start:end]
 
     for i, teacher in enumerate(chunk, start=1):
         keyboard.add(
@@ -202,7 +204,7 @@ def teachers(page: int = 0) -> str:
             )
         )
 
-    if end < len(TEACHERS):
+    if end < len(config.teachers):
         keyboard.add(
             Callback(
                 "Вперёд ➡️",

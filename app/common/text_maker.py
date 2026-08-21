@@ -17,7 +17,7 @@
 import re
 import sqlite3
 
-from app.config import ALIASES, SCHEDULE_DB, STUDENTS
+from app.config import config, SCHEDULE_DB
 from app.database import sql_kit
 
 
@@ -109,7 +109,7 @@ def get_teacher_schedule(day: int, week: int, teacher_name: str, cursor: sqlite3
     days_of_week = ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота"]
 
     schedule = []
-    if teacher_name in STUDENTS.keys():
+    if teacher_name in config.students.keys():
         query = """
                 SELECT
                     s.ScheduleID,
@@ -132,12 +132,12 @@ def get_teacher_schedule(day: int, week: int, teacher_name: str, cursor: sqlite3
                 ORDER BY s.Time;
                 """
 
-        if "." in STUDENTS[teacher_name]:
-            group, subgroup = STUDENTS[teacher_name].split(".")
+        if "." in config.students[teacher_name]:
+            group, subgroup = config.students[teacher_name].split(".")
             subgroup_list = [0] + [int(s) for s in subgroup.split(",") if s.isdigit()]
 
         else:
-            group = STUDENTS[teacher_name]
+            group = config.students[teacher_name]
             subgroup_list = [0]
         placeholders = ", ".join("?" for _ in subgroup_list)
         query = query.format(placeholders)
@@ -157,8 +157,8 @@ def get_teacher_schedule(day: int, week: int, teacher_name: str, cursor: sqlite3
             )
 
     teacher_variants = [teacher_name]
-    if teacher_name in ALIASES:
-        teacher_variants.extend(ALIASES[teacher_name])
+    if teacher_name in config.aliases:
+        teacher_variants.extend(config.aliases[teacher_name])
 
     query = f"""
             SELECT

@@ -22,7 +22,7 @@ from openpyxl import load_workbook
 from openpyxl.styles import Border, Side
 from pandas import concat, read_sql_query
 
-from app.config import ROOMS_SHEETS_PATH, SCHEDULE_DB, STUDENTS, TEACHERS_SHEETS_PATH
+from app.config import config, ROOMS_SHEETS_PATH, SCHEDULE_DB, TEACHERS_SHEETS_PATH
 
 
 def teacher(teacher_name: str) -> str:
@@ -57,7 +57,7 @@ def teacher(teacher_name: str) -> str:
 
     teacher_df = read_sql_query(sql=query, con=conn, params=[teacher_name])
     student_df = pd.DataFrame()
-    if teacher_name in STUDENTS.keys():
+    if teacher_name in config.students.keys():
         query = """
                 SELECT
                     s.Time,
@@ -79,7 +79,7 @@ def teacher(teacher_name: str) -> str:
                 WHERE g.GroupName = ?
                 ORDER BY s.Time, s.DayOfWeek, s.WeekType, r.RoomName, sub.SubjectName;
                 """
-        student_df = read_sql_query(sql=query, con=conn, params=[STUDENTS[teacher_name]])
+        student_df = read_sql_query(sql=query, con=conn, params=[config.students[teacher_name]])
 
     conn.close()
     df = pd.concat([teacher_df, student_df], axis=0)
