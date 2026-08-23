@@ -15,56 +15,18 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import asyncio
-import logging
 
 import aiocron
 from aiogram import Bot, Dispatcher
 from aiogram.client.session.aiohttp import AiohttpSession
-from aiogram.fsm.context import FSMContext
 from aiogram.fsm.storage.memory import MemoryStorage
-from aiogram.types import Message
 
-from app.common import BroadcastStates, create_progress_bar, set_logging
+from app.common import set_logging
 from app.common.schedule_parser import college_schedule_parser
 from app.config import TZ, config
-from app.tg import markups, middlewares
+from app.tg import middlewares
 from app.tg.handlers.admin import callback as admin_callback, message as admin_message
 from app.tg.handlers.user import callback as user_callback, message as user_message, status as user_status
-
-
-async def send_broadcast_message(msg: Message, state: FSMContext, message_id: int, user_ids: list[int]) -> None:
-    from asyncio import sleep
-
-    from app.database.user import User
-
-    sent_count = 0
-    total_users = len(user_ids)
-    try:
-        for user_id in user_ids:
-            if await state.get_state() == BroadcastStates.cancel_sending.state:
-                await msg.edit_text(text="Отправка отменена")
-                break
-            if not User(user_id).blocked:
-                try:
-                    await msg.bot.copy_message(
-                        chat_id=user_id,
-                        from_chat_id=msg.chat.id,
-                        message_id=message_id,
-                    )
-                    sent_count += 1
-                except Exception as e:
-                    logging.error(f"Не удалось отправить сообщение пользователю {user_id}: {e}")
-                finally:
-                    await msg.edit_text(
-                        text=f"Отправлено {sent_count} из {total_users} сообщений\n"
-                        f"{create_progress_bar(sent_count, total_users)}",
-                        reply_markup=markups.admin.cancel_sending(),
-                    )
-                    await sleep(1)
-        logging.info("Отправлено сообщение всем пользователям")
-        await msg.edit_text("Рассылка завершена!")
-    except TypeError:
-        await msg.edit_text("Ошибка при отправке сообщения")
 
 
 async def main() -> None:
