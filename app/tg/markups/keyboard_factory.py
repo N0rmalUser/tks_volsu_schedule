@@ -18,14 +18,14 @@
 from aiogram.filters.callback_data import CallbackData
 
 
-class ChangeCallbackFactory(CallbackData, prefix="start_change"):
+class ChangeCallbackFactory(CallbackData, prefix="start"):
     """Фабрика для создания CallbackData для клавиатур выбора преподавателя, группы или аудитории."""
 
     action: str | None = None
     value: int | None = None
 
 
-class DayCallbackFactory(CallbackData, prefix="day_change"):
+class DayCallbackFactory(CallbackData, prefix="common"):
     """Фабрика для создания CallbackData для клавиатур изменения дня или недели."""
 
     action: str | None = None
@@ -35,7 +35,7 @@ class DayCallbackFactory(CallbackData, prefix="day_change"):
     keyboard_type: str | None = None
 
 
-class DefaultChangeCallbackFactory(CallbackData, prefix="default_change"):
+class DefaultChangeCallbackFactory(CallbackData, prefix="default"):
     """Фабрика для создания CallbackData для клавиатур выбора преподавателя, группы или аудитории."""
 
     action: str | None = None
