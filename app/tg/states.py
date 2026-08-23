@@ -17,13 +17,6 @@
 from aiogram.fsm.state import State, StatesGroup
 
 
-class NewSchedule(StatesGroup):
-    lesson = State()
-    teacher = State()
-    group = State()
-    room = State()
-
-
 class BroadcastStates(StatesGroup):
     waiting_for_confirmation = State()
     sending_messages = State()
