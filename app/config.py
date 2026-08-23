@@ -21,6 +21,7 @@ from pathlib import Path
 import pytz
 from pydantic import Field, SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from sqlalchemy import URL
 
 
 class Config(BaseSettings):
@@ -74,6 +75,28 @@ class Config(BaseSettings):
 
     college_teachers: list[str]
     college_groups: list[str]
+
+    # ===== POSTGRESQL =====
+    postgres_host: str = "localhost"
+    postgres_port: int = 5432
+    postgres_user: str = "postgres"
+    postgres_password: SecretStr
+    postgres_db: str = "schedule_bot"
+
+    @property
+    def database_url(self) -> URL:
+        return URL.create(
+            drivername="postgresql+asyncpg",
+            username=self.postgres_user,
+            password=self.postgres_password.get_secret_value(),
+            host=self.postgres_host,
+            port=self.postgres_port,
+            database=self.postgres_db,
+        )
+
+    @property
+    def alembic_database_url(self) -> str:
+        return self.database_url.render_as_string(hide_password=False)
 
     @model_validator(mode="after")
     def build_all_personal(self) -> "Config":
