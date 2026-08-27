@@ -159,7 +159,7 @@ class VkUser:
             """,
             (self.__user_id,),
         )
-        return True if self.__cursor.fetchone() else False
+        return bool(self.__cursor.fetchone())
 
     def __del__(self) -> None:
         self.__conn.close()

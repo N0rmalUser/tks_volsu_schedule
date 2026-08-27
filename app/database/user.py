@@ -20,7 +20,7 @@ from app.config import USERS_DB
 
 
 class User:
-    def __init__(self, user_id: int = None, topic_id: int = None) -> None:
+    def __init__(self, user_id: int | None = None, topic_id: int | None = None) -> None:
         """Класс для работы с базой данных пользователей. Позволяет получать и устанавливать данные пользователя в
         базе данных."""
 
@@ -333,7 +333,7 @@ class User:
             """,
             (self.__user_id,),
         )
-        return True if self.__cursor.fetchone() else False
+        return bool(self.__cursor.fetchone())
 
     def __user_id_from_topic(self, topic_id: int) -> int:
         """Возвращает значение поля user_id по значению поля topic_id"""

@@ -16,7 +16,6 @@
 
 import asyncio
 import logging
-import os
 import re
 from collections.abc import Coroutine
 from datetime import date, datetime, timedelta
@@ -26,17 +25,9 @@ from docx import Document
 from docx.table import _Row
 
 from app.common import get_semester
-from app.config import (
-    ALL_PERSONAL,
-    API_URL,
-    APP_URL,
-    COLLEGE_GROUPS,
-    COLLEGE_TEACHERS,
-    GROUPS,
-    GROUPS_SCHEDULE_PATH,
-    ROOMS,
-)
+from app.config import GROUPS_SCHEDULE_PATH, config
 from app.database.schedule import Schedule
+
 
 # Предполагается, что следующие глобальные константы / структуры
 # определены в окружении, из которого вызывается функция:
@@ -69,19 +60,19 @@ async def college_schedule_parser() -> None:
 
     async with ClientSession(headers={"provider": "volsu-system-bot"}) as session:
         try:
-            teachers = await (await session.get(API_URL.format(type="teacher"))).json()
-            groups = await (await session.get(API_URL.format(type="group"))).json()
+            teachers = await (await session.get(config.api_url.format(type="teacher"))).json()
+            groups = await (await session.get(config.api_url.format(type="group"))).json()
 
             tks_teacher_map = {
                 f"{t['firstName']} {t['surname'][0]}.{t['patronymic'][0]}.": t["id"]
                 for t in teachers
-                if f"{t['firstName']} {t['surname'][0]}.{t['patronymic'][0]}." in COLLEGE_TEACHERS
+                if f"{t['firstName']} {t['surname'][0]}.{t['patronymic'][0]}." in config.college_teachers
             }
             all_groups_map = {g["id"]: g["name"] for g in groups}
             tks_groups_map = {
                 g["name"]: (g["id"], g["admissionYear"])
                 for g in groups
-                if any(g["name"].startswith(college) for college in COLLEGE_GROUPS)
+                if any(g["name"].startswith(college) for college in config.college_groups)
             }
 
             schedule = Schedule()
@@ -95,12 +86,14 @@ async def college_schedule_parser() -> None:
             tasks = []
 
             for teacher_name, teacher_id in tks_teacher_map.items():
-                url = f"{APP_URL}/teacher/{teacher_id}?minTimestamp={min_ts}&maxTimestamp={max_ts}"
+                url = f"{config.app_url}/teacher/{teacher_id}?minTimestamp={min_ts}&maxTimestamp={max_ts}"
                 tasks.append(("teacher", teacher_name, fetch(url)))
 
             for group_name, (group_id, year) in tks_groups_map.items():
                 semester = get_semester(year, now_date)
-                url = f"{APP_URL}/group/{group_id}?minTimestamp={min_ts}&maxTimestamp={max_ts}&semester={semester}"
+                url = (
+                    f"{config.app_url}/group/{group_id}?minTimestamp={min_ts}&maxTimestamp={max_ts}&semester={semester}"
+                )
                 tasks.append(("group", group_name, fetch(url)))
 
             results = await asyncio.gather(*(t[2] for t in tasks))
@@ -127,7 +120,7 @@ async def college_schedule_parser() -> None:
 
                     group_name = name if kind == "group" else all_groups_map.get(lesson["groupId"])
 
-                    if kind == "teacher" and group_name in GROUPS:
+                    if kind == "teacher" and group_name in config.groups:
                         continue
 
                     schedule.add_schedule(
@@ -202,11 +195,11 @@ async def university_schedule_parser() -> None:
         return day, time
 
     def _set_default() -> None:
-        for i in sorted(GROUPS):
+        for i in sorted(config.groups):
             schedule_db.add_group(i)
-        for i in sorted(ALL_PERSONAL):
+        for i in sorted(config.all_personal):
             schedule_db.add_teacher(i)
-        for i in sorted(ROOMS):
+        for i in sorted(config.rooms):
             schedule_db.add_room(i)
 
     def _parse(text: str) -> list[dict[str, str | list[str]]]:
@@ -217,10 +210,10 @@ async def university_schedule_parser() -> None:
     schedule_db.clear_university()
     _set_default()
 
-    files = [f for f in os.listdir(GROUPS_SCHEDULE_PATH) if f.endswith(".docx")]
+    files = [path for path in GROUPS_SCHEDULE_PATH.iterdir() if path.is_file() and path.suffix == ".docx"]
 
     for file in files:
-        doc = Document(os.path.join(GROUPS_SCHEDULE_PATH, file))
+        doc = Document(file)
         table = doc.tables[0]
         rows = table.rows
 
@@ -232,10 +225,7 @@ async def university_schedule_parser() -> None:
         for group_name in header[2:]:
             seen[group_name] = seen.get(group_name, 0) + 1
 
-            if header.count(group_name) == 1:
-                subgroup = 0
-            else:
-                subgroup = seen[group_name]
+            subgroup = 0 if header.count(group_name) == 1 else seen[group_name]
 
             groups.append((group_name, col, subgroup))
             col += 1

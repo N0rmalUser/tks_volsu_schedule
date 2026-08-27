@@ -16,7 +16,7 @@
 
 from vkbottle import Callback, Keyboard, KeyboardButtonColor, Text
 
-from app.config import GROUPS, ROOMS, TEACHERS
+from app.config import config
 from app.database.schedule import Schedule
 
 
@@ -53,7 +53,7 @@ def days(keyboard_type: str, day: int, week: int, value: int) -> str:
                     "week": week,
                     "value": value,
                 },
-            )
+            ),
         )
 
         if index % 3 == 0:
@@ -74,7 +74,7 @@ def days(keyboard_type: str, day: int, week: int, value: int) -> str:
                     "day": day,
                     "value": value,
                 },
-            )
+            ),
         )
 
     elif week == 2:
@@ -92,11 +92,10 @@ def days(keyboard_type: str, day: int, week: int, value: int) -> str:
                     "day": day,
                     "value": value,
                 },
-            )
+            ),
         )
     else:
         keyboard.add(Callback("Неизвестная неделя", {"action": "ignore"}))
-    print(keyboard.get_json())
     return keyboard.get_json()
 
 
@@ -104,7 +103,7 @@ def rooms() -> str:
     keyboard = Keyboard(inline=True)
     schedule = Schedule()
 
-    for i, room in enumerate(ROOMS, start=1):
+    for i, room in enumerate(config.rooms, start=1):
         keyboard.add(
             Callback(
                 label=str(room),
@@ -112,7 +111,7 @@ def rooms() -> str:
                     "action": "room",
                     "value": schedule.get_room_id(room),
                 },
-            )
+            ),
         )
 
         if i % 3 == 0:
@@ -123,11 +122,8 @@ def rooms() -> str:
 
 def get_directions_from_groups() -> list:
     directions = []
-    for g in GROUPS:
-        if "-" in g:
-            dir_part = g.split("-", 1)[0].strip()
-        else:
-            dir_part = g.split()[0].strip()
+    for g in config.groups:
+        dir_part = g.split("-", 1)[0].strip() if "-" in g else g.split()[0].strip()
         if dir_part and dir_part not in directions:
             directions.append(dir_part)
     return directions
@@ -142,7 +138,7 @@ def directions() -> str:
             Callback(
                 label=direction,
                 payload={"action": "select_direction", "direction": direction},
-            )
+            ),
         )
         if i % 3 == 0:
             keyboard.row()
@@ -155,7 +151,9 @@ def groups(direction: str) -> str:
     schedule = Schedule()
 
     filtered = [
-        g for g in GROUPS if g.upper().startswith(direction.upper() + "-") or g.upper().startswith(direction.upper())
+        g
+        for g in config.groups
+        if g.upper().startswith(direction.upper() + "-") or g.upper().startswith(direction.upper())
     ]
 
     for i, group in enumerate(filtered, start=1):
@@ -163,7 +161,7 @@ def groups(direction: str) -> str:
             Callback(
                 label=group,
                 payload={"action": "group", "value": schedule.get_group_id(group)},
-            )
+            ),
         )
         if i % 2 == 0:
             keyboard.row()
@@ -176,7 +174,7 @@ def teachers(page: int = 0) -> str:
 
     start = page * 8
     end = start + 8
-    chunk = TEACHERS[start:end]
+    chunk = config.teachers[start:end]
 
     for i, teacher in enumerate(chunk, start=1):
         keyboard.add(
@@ -186,7 +184,7 @@ def teachers(page: int = 0) -> str:
                     "action": "teacher",
                     "value": schedule.get_teacher_id(teacher),
                 },
-            )
+            ),
         )
 
         if i % 2 == 0:
@@ -199,15 +197,15 @@ def teachers(page: int = 0) -> str:
             Callback(
                 "⬅️ Назад",
                 {"action": "teachers_page", "page": page - 1},
-            )
+            ),
         )
 
-    if end < len(TEACHERS):
+    if end < len(config.teachers):
         keyboard.add(
             Callback(
                 "Вперёд ➡️",
                 {"action": "teachers_page", "page": page + 1},
-            )
+            ),
         )
 
     return keyboard.get_json()

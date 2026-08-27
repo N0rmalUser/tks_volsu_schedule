@@ -17,13 +17,13 @@
 from vkbottle import Bot
 
 from app.common import set_logging
-from app.config import VK_BOT_TOKEN
+from app.config import config
 from app.vk.handlers import callback, message
 from app.vk.middleware import RegistrationMiddleware
 
 
 def main() -> None:
-    bot = Bot(token=VK_BOT_TOKEN)
+    bot = Bot(token=config.vk_bot_token)
     bot.labeler.load(message.router)
     bot.labeler.load(callback.router)
     bot.labeler.message_view.register_middleware(RegistrationMiddleware)

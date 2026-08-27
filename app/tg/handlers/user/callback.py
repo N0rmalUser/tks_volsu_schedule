@@ -20,7 +20,7 @@ from aiogram.types import CallbackQuery, FSInputFile
 from app.common import get_today, text_maker
 from app.common.sheets_maker import room, teacher
 from app.common.text_maker import text_formatter
-from app.config import GROUPS, GROUPS_SCHEDULE_PATH, ROOMS, TEACHERS
+from app.config import GROUPS_SCHEDULE_PATH, config
 from app.database.schedule import Schedule
 from app.database.user import User
 from app.tg.filters import IgnoreFilter
@@ -30,6 +30,7 @@ from app.tg.markups.keyboard_factory import (
     DayCallbackFactory,
     DefaultChangeCallbackFactory,
 )
+
 
 router = Router()
 
@@ -149,13 +150,10 @@ async def group_handler(callback: CallbackQuery, callback_data: ChangeCallbackFa
     await callback.answer()
 
 
+# TODO: Куда делся код для таблиц?
 @router.callback_query(ChangeCallbackFactory.filter(F.action == "spreadsheet" or None))
 async def spreadsheet_handler(callback: CallbackQuery, callback_data: ChangeCallbackFactory) -> None:
-    if callback_data.value == 1:
-        ...
-    elif callback_data.value == 2:
-        ...
-    elif callback_data.value == 3:
+    if callback_data.value == 1 or callback_data.value == 2 or callback_data.value == 3:
         ...
     else:
         await callback.answer("Произошла ошибка, напишите админу /admin")
@@ -173,11 +171,11 @@ async def process_default_change(callback: CallbackQuery, callback_data: ChangeC
 
     if user.user_type == "teacher":
         await callback.message.edit_text(
-            f"Преподаватель по умолчанию изменён на {Schedule().get_teacher_name(callback_data.value)}"
+            f"Преподаватель по умолчанию изменён на {Schedule().get_teacher_name(callback_data.value)}",
         )
     else:
         await callback.message.edit_text(
-            f"Группа по умолчанию изменена на {Schedule().get_group_name(callback_data.value)}"
+            f"Группа по умолчанию изменена на {Schedule().get_group_name(callback_data.value)}",
         )
     await callback.answer()
 
@@ -201,7 +199,7 @@ async def teacher_sheet_handler(callback: CallbackQuery, callback_data: ChangeCa
         )
         return
     if callback_data.value == 9999:
-        for teacher_name in TEACHERS:
+        for teacher_name in config.teachers:
             await callback.message.answer_document(FSInputFile(teacher(teacher_name)))
     else:
         await callback.message.answer_document(FSInputFile(teacher(Schedule().get_teacher_name(callback_data.value))))
@@ -214,7 +212,7 @@ async def group_sheet_handler(callback: CallbackQuery, callback_data: ChangeCall
         await callback.message.edit_text("Выберите группу", reply_markup=kb.get_sheet_groups(callback.from_user.id))
         return
     if callback_data.value == 9999:
-        for group in GROUPS:
+        for group in config.groups:
             await callback.message.answer_document(FSInputFile(GROUPS_SCHEDULE_PATH / f"{group}.docx"))
     else:
         group_name = Schedule().get_group_name(callback_data.value)
@@ -249,7 +247,7 @@ async def room_sheet_handler(callback: CallbackQuery, callback_data: ChangeCallb
         await callback.message.edit_text("Выберите аудиторию", reply_markup=kb.get_sheet_rooms())
         return
     if callback_data.value == 9999:
-        for room_name in ROOMS:
+        for room_name in config.rooms:
             await callback.message.answer_document(FSInputFile(room(room_name)))
     else:
         await callback.message.answer_document(FSInputFile(room(Schedule().get_room_name(callback_data.value))))

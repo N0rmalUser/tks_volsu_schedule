@@ -22,6 +22,7 @@ from app.database.schedule import Schedule
 from app.database.vkuser import VkUser
 from app.vk.markups import days, groups, teachers
 
+
 router = BotLabeler()
 
 

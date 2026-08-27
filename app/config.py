@@ -19,55 +19,96 @@ import platform
 from pathlib import Path
 
 import pytz
-import toml
+from pydantic import Field, SecretStr, model_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
-root_path = Path(__file__).parent.parent.resolve()
 
-config = toml.load(root_path / "config.toml")
+class Config(BaseSettings):
+    """Конфигурация приложения."""
 
-NUMERATOR: int = config["date"]["numerator"]
-TIMEZONE: str = config["date"]["timezone"]
-TZ = pytz.timezone(TIMEZONE)
-COLLEGE_CRON: str = config["date"]["college_cron"]
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        extra="ignore",
+    )
 
-TG_BOT_TOKEN: str = config["bot"]["token"]
-ADMIN_CHAT_ID: int = config["bot"]["admin_chat_id"]
+    # ===== TELEGRAM =====
+    tg_bot_token: str
+    admin_chat_id: int = Field(
+        description=(
+            "ID административного чата.\n"
+            "Для каждого пользователя, нажавшего «Начать», "
+            "бот создаёт отдельный топик.\n"
+            "Сообщения из топика пересылаются пользователю.\n"
+            "Сообщения из топика #General рассылаются всем пользователям."
+        ),
+    )
 
-VK_BOT_TOKEN: str = config["bot"]["vk_token"]
+    # ===== VK =====
+    vk_bot_token: str
 
-LOG_LEVEL = config["logging"]["level"]
-EVENT_LEVEL = config["logging"]["event_level"]
+    # ===== DATE & TIME =====
+    logging_level: str
+    event_level: str
 
-GROUPS: list[str] = config["university"]["groups"]
-TEACHERS: list[str] = sorted(config["university"]["teachers"])
-ROOMS: list = config["university"]["rooms"]
+    # ===== LOGGING =====
+    timezone: str
+    numerator: int
+    college_cron: str
 
-STUDENTS = config["university"]["students"]
-ALL_PERSONAL = sorted(set(TEACHERS) | set(STUDENTS.keys()))
+    # ===== UNIVERSITY =====
+    teachers: list[str]
+    groups: list[str]
+    rooms: list[str]
 
-COLLEGE_CONST: int = config["college"]["id_const"]
-COLLEGE_TEACHERS: list = config["college"]["teachers"]
-COLLEGE_GROUPS: list = config["college"]["groups"]
-API_URL: str = config["college"]["api_url"]
-APP_URL: str = config["college"]["app_url"]
+    students: dict[str, str]
+    aliases: dict[str, str]
 
-ALIASES = config["aliases"]
+    # Вычисляется автоматически
+    all_personal: list[str] = []
 
-DATA_PATH: Path = root_path / "data"
-DB_PATH: Path = DATA_PATH / "db"
-LOG_FILE: Path = DATA_PATH / "bot.log"
-ACTIVITIES_DB: Path = DB_PATH / "activities.db"
-SCHEDULE_DB: Path = DB_PATH / "schedule.db"
-USERS_DB: Path = DB_PATH / "users.db"
-VK_DB: Path = DB_PATH / "vk.db"
+    # ===== COLLEGE =====
+    college_id_const: int
 
-SCHEDULE_PATH: Path = DATA_PATH / "schedule"
-GROUPS_SCHEDULE_PATH: Path = SCHEDULE_PATH / "groups"
-TEACHERS_SHEETS_PATH: Path = SCHEDULE_PATH / "teachers"
-ROOMS_SHEETS_PATH: Path = SCHEDULE_PATH / "rooms"
+    api_url: str
+    app_url: str
 
-PLOT_PATH: Path = DATA_PATH / "plot"
+    college_teachers: list[str]
+    college_groups: list[str]
 
+    @model_validator(mode="after")
+    def build_all_personal(self) -> "Config":
+        """Объединённый список преподавателей и сотрудников-студентов."""
+        self.all_personal = sorted(set(self.teachers) | set(self.students))
+        return self
+
+
+config = Config()
+
+# ===== TIMEZONE =====
+TZ = pytz.timezone(config.timezone)
+
+# ===== PATHS =====
+ROOT_PATH = Path(__file__).resolve().parent.parent
+
+DATA_PATH = ROOT_PATH / "data"
+DB_PATH = DATA_PATH / "db"
+
+LOG_FILE = DATA_PATH / "bot.log"
+
+ACTIVITIES_DB = DB_PATH / "activities.db"
+SCHEDULE_DB = DB_PATH / "schedule.db"
+USERS_DB = DB_PATH / "users.db"
+VK_DB = DB_PATH / "vk.db"
+
+SCHEDULE_PATH = DATA_PATH / "schedule"
+
+GROUPS_SCHEDULE_PATH = SCHEDULE_PATH / "groups"
+TEACHERS_SHEETS_PATH = SCHEDULE_PATH / "teachers"
+ROOMS_SHEETS_PATH = SCHEDULE_PATH / "rooms"
+
+PLOT_PATH = DATA_PATH / "plot"
+
+# ===== LOCALE =====
 locale.setlocale(
     locale.LC_TIME,
     "Russian_Russia.1251" if platform.system() == "Windows" else "ru_RU.UTF-8",

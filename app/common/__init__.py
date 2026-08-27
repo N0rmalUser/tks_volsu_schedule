@@ -18,20 +18,19 @@ import logging
 from datetime import date, datetime
 
 from app.common.states import BroadcastStates as BroadcastStates
-from app.config import LOG_FILE, LOG_LEVEL, NUMERATOR, TZ
+from app.config import LOG_FILE, TZ, config
 
 
 def get_today() -> tuple[int, int]:
     """Метод для получения сегодняшнего дня и недели"""
 
     day = int(f"{datetime.now(TZ).weekday() + 1}")
-    week_int = 2 if NUMERATOR == 0 else 1
+    week_int = 2 if config.numerator == 0 else 1
     week = week_int if datetime.now(TZ).isocalendar()[1] % 2 == 0 else 3 - week_int
     if day == 7:
         return 1, week + 1 if week == 1 else week - 1
 
-    else:
-        return day, week
+    return day, week
 
 
 def time_to_minutes(time_str: str) -> int:
@@ -47,20 +46,19 @@ def get_time_symbol(start_time: str) -> str:
     hour = int(start_time.split(":")[0])
     if 8 <= hour < 10:
         return "🕣 "
-    elif 10 <= hour < 12:
+    if 10 <= hour < 12:
         return "🕙 "
-    elif 12 <= hour < 13:
+    if 12 <= hour < 13:
         return "🕛 "
-    elif 13 <= hour < 14:
+    if 13 <= hour < 14:
         return "🕜 "
-    elif 14 <= hour < 16:
+    if 14 <= hour < 16:
         return "🕞 "
-    elif 16 <= hour < 18:
+    if 16 <= hour < 18:
         return "🕔 "
-    elif 18 <= hour < 20:
+    if 18 <= hour < 20:
         return "🕡 "
-    else:
-        return "🕙 "
+    return "🕙 "
 
 
 def get_lesson_label(subject: str) -> str:
@@ -68,20 +66,19 @@ def get_lesson_label(subject: str) -> str:
 
     if "пр" in subject.lower():
         return "Практика"
-    elif "пр." in subject.lower():
+    if "пр." in subject.lower():
         return "Практика"
-    elif "лаб" in subject.lower():
+    if "лаб" in subject.lower():
         return "Лабораторные"
-    elif "лаб." in subject.lower():
+    if "лаб." in subject.lower():
         return "Лабораторные"
-    elif "л" in subject.lower():
+    if "л" in subject.lower():
         return "Лекция"
-    elif "л." in subject.lower():
+    if "л." in subject.lower():
         return "Лекция"
-    elif ("курс" or "кур/проект" or "кур/проек.") in subject.lower():
+    if any(phrase in subject for phrase in ("курс", "кур/проект", "кур/проек.")):
         return "Курсовой проект"
-    else:
-        return ""
+    return ""
 
 
 def create_progress_bar(completed: int, total: int) -> str:
@@ -110,17 +107,17 @@ def set_logging(logger: str):
     levels = {
         "DEBUG": logging.DEBUG,
         "INFO": logging.INFO,
-        "WARNING": logging.WARN,
+        "WARNING": logging.WARNING,
         "ERROR": logging.ERROR,
         "CRITICAL": logging.CRITICAL,
         "FATAL": logging.FATAL,
         "EXCEPTION": logging.ERROR,
     }
     logging.basicConfig(
-        level=levels[LOG_LEVEL],
+        level=levels[config.logging_level],
         format="%(asctime)s %(levelname)s [%(funcName)s] %(message)s",
         datefmt="%H:%M:%S %d-%m-%Y",
         handlers=[logging.FileHandler(LOG_FILE, encoding="utf-8"), logging.StreamHandler()],
         force=True,
     )
-    logging.getLogger(logger).setLevel(levels[LOG_LEVEL])
+    logging.getLogger(logger).setLevel(levels[config.logging_level])

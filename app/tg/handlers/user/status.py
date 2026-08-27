@@ -18,8 +18,9 @@ from aiogram import Router
 from aiogram.filters.chat_member_updated import KICKED, MEMBER, ChatMemberUpdatedFilter
 from aiogram.types import ChatMemberUpdated
 
-from app.config import ADMIN_CHAT_ID
+from app.config import config
 from app.database.user import User
+
 
 router = Router()
 
@@ -31,7 +32,7 @@ async def user_blocked_bot(event: ChatMemberUpdated) -> None:
     user = User(event.from_user.id)
     user.blocked = True
     await event.bot.send_message(
-        ADMIN_CHAT_ID,
+        config.admin_chat_id,
         message_thread_id=user.topic_id,
         text=f"Пользователь @{event.from_user.username} заблокировал бота",
     )
@@ -44,7 +45,7 @@ async def user_unblocked_bot(event: ChatMemberUpdated) -> None:
     user = User(event.from_user.id)
     user.blocked = False
     await event.bot.send_message(
-        ADMIN_CHAT_ID,
+        config.admin_chat_id,
         message_thread_id=user.topic_id,
         text=f"Пользователь @{event.from_user.username} разблокировал бота",
     )

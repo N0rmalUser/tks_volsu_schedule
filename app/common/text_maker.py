@@ -17,12 +17,12 @@
 import re
 import sqlite3
 
-from app.config import ALIASES, SCHEDULE_DB, STUDENTS
+from app.config import SCHEDULE_DB, config
 from app.database import sql_kit
 
 
 @sql_kit(SCHEDULE_DB)
-def get_group_schedule(day: int, week: int, group_name: str, cursor: sqlite3.Cursor = None) -> str:
+def get_group_schedule(day: int, week: int, group_name: str, cursor: sqlite3.Cursor | None = None) -> str:
     """Возвращает отформатированное расписание для указанной группы на указанный день и неделю"""
 
     from app.common import get_lesson_label, get_time_symbol, time_to_minutes
@@ -70,7 +70,7 @@ def get_group_schedule(day: int, week: int, group_name: str, cursor: sqlite3.Cur
                 "room": room_name,
                 "teacher": teacher,
                 "subgroup": subgroup,
-            }
+            },
         )
     text = header = f"{days_of_week[day - 1]}       {week_type}\n{group_name}\n\n"
     if schedule:
@@ -93,12 +93,11 @@ def get_group_schedule(day: int, week: int, group_name: str, cursor: sqlite3.Cur
                 f"🏠 Ауд. {lesson['room']}\n\n"
             )
         return text
-    else:
-        return f"{header}Сегодня пар нет!"
+    return f"{header}Сегодня пар нет!"
 
 
 @sql_kit(SCHEDULE_DB)
-def get_teacher_schedule(day: int, week: int, teacher_name: str, cursor: sqlite3.Cursor = None) -> str:
+def get_teacher_schedule(day: int, week: int, teacher_name: str, cursor: sqlite3.Cursor | None = None) -> str:
     """Возвращает отформатированное расписание для указанного преподавателя на указанный день и неделю. Если
     преподаватель обучается в какой-либо группе (указывается в config.py), то возвращает расписание для этой группы,
     смешанное с расписанием преподавателя."""
@@ -109,7 +108,7 @@ def get_teacher_schedule(day: int, week: int, teacher_name: str, cursor: sqlite3
     days_of_week = ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота"]
 
     schedule = []
-    if teacher_name in STUDENTS.keys():
+    if teacher_name in config.students:
         query = """
                 SELECT
                     s.ScheduleID,
@@ -132,16 +131,21 @@ def get_teacher_schedule(day: int, week: int, teacher_name: str, cursor: sqlite3
                 ORDER BY s.Time;
                 """
 
-        if "." in STUDENTS[teacher_name]:
-            group, subgroup = STUDENTS[teacher_name].split(".")
+        if "." in config.students[teacher_name]:
+            group, subgroup = config.students[teacher_name].split(".")
             subgroup_list = [0] + [int(s) for s in subgroup.split(",") if s.isdigit()]
 
         else:
-            group = STUDENTS[teacher_name]
+            group = config.students[teacher_name]
             subgroup_list = [0]
         placeholders = ", ".join("?" for _ in subgroup_list)
         query = query.format(placeholders)
-        params = [group] + subgroup_list + [days_of_week[day - 1], week_type]
+        params = [
+            group,
+            *subgroup_list,
+            days_of_week[day - 1],
+            week_type,
+        ]
         cursor.execute(query, params)
         rows = cursor.fetchall()
         for row in rows:
@@ -153,12 +157,12 @@ def get_teacher_schedule(day: int, week: int, teacher_name: str, cursor: sqlite3
                     "subject": subject,
                     "room": room_name,
                     "teacher": teacher,
-                }
+                },
             )
 
     teacher_variants = [teacher_name]
-    if teacher_name in ALIASES:
-        teacher_variants.extend(ALIASES[teacher_name])
+    if teacher_name in config.aliases:
+        teacher_variants.extend(config.aliases[teacher_name])
 
     query = f"""
             SELECT
@@ -182,7 +186,14 @@ def get_teacher_schedule(day: int, week: int, teacher_name: str, cursor: sqlite3
             GROUP BY s.Time, sub.SubjectName, r.RoomName
             ORDER BY s.Time
             """
-    cursor.execute(query, teacher_variants + [days_of_week[day - 1], week_type])
+    cursor.execute(
+        query,
+        [
+            *teacher_variants,
+            days_of_week[day - 1],
+            week_type,
+        ],
+    )
     rows = cursor.fetchall()
     for row in rows:
         schedule_id, time, subject, group, room_name, subgroup = row
@@ -194,7 +205,7 @@ def get_teacher_schedule(day: int, week: int, teacher_name: str, cursor: sqlite3
                 "group": group,
                 "room": room_name,
                 "subgroup": subgroup,
-            }
+            },
         )
     text = header = f"{days_of_week[day - 1]}       {week_type}\n{teacher_name}\n\n"
     if schedule:
@@ -216,12 +227,11 @@ def get_teacher_schedule(day: int, week: int, teacher_name: str, cursor: sqlite3
                 text += f"👨‍🏫 {lesson['teacher']}\n"
             text += f"🏠 Ауд. {lesson['room']}\n\n"
         return text
-    else:
-        return f"{header}Сегодня пар нет!"
+    return f"{header}Сегодня пар нет!"
 
 
 @sql_kit(SCHEDULE_DB)
-def get_room_schedule(day: int, week: int, room_name: str, cursor: sqlite3.Cursor = None) -> str:
+def get_room_schedule(day: int, week: int, room_name: str, cursor: sqlite3.Cursor | None = None) -> str:
     """Возвращает отформатированное расписание для указанной аудитории на указанный день и неделю. Если аудитория
     имеет несколько вариантов (например, 2-13М и 2-13аМ), то возвращает расписание для всех вариантов."""
 
@@ -284,7 +294,7 @@ def get_room_schedule(day: int, week: int, room_name: str, cursor: sqlite3.Curso
                     "teacher": teacher,
                     "room": room,
                     "subgroup": subgroup,
-                }
+                },
             )
     text = header = f"{days_of_week[day - 1]}       {week_type}\n{room_name}\n\n"
     if schedule:
@@ -307,8 +317,7 @@ def get_room_schedule(day: int, week: int, room_name: str, cursor: sqlite3.Curso
                 f"‍👨‍🏫 {lesson['teacher']}\n\n"
             )
         return text
-    else:
-        return f"{header}Сегодня пар нет!"
+    return f"{header}Сегодня пар нет!"
 
 
 async def text_formatter(keyboard_type: str, day: int, week: int, value: int) -> str:

@@ -25,6 +25,7 @@ from app.database import (
     teachers_ids,
 )
 
+
 router = Router()
 
 
