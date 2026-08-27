@@ -47,7 +47,7 @@ select = [
     "I", "N",
 
     # Bugbear / security / correctness
-    "B", "A", "SLOT", "RET", "RSE", "SIM", "ISC", "S",
+    "B", "A", "SLOT", "RET", "RSE", "SIM", "ISC",
 
     # Modern Python / typing
     "UP", "FA", "TCH", "YTT", "INT",
