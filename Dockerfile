@@ -1,7 +1,7 @@
 FROM astral/uv:python3.12-bookworm-slim
 LABEL authors="N0rmalUser"
 
-WORKDIR /schedule
+WORKDIR /app
 
 ENV PYTHONUNBUFFERED=1
 
@@ -16,7 +16,6 @@ COPY pyproject.toml uv.lock* ./
 
 RUN uv sync --frozen --no-cache --no-dev
 
-COPY app app
-COPY main.py main.py
+COPY . .
 
-CMD ["uv", "run", "python", "main.py"]
+ENV PATH="/app/.venv/bin:$PATH"

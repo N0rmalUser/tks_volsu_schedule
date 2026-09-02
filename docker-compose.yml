@@ -1,0 +1,65 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: schedule_postgres
+    env_file: .env
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-schedule_db}
+      POSTGRES_USER: ${POSTGRES_USER:-user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-user}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  migrations:
+    build: .
+    container_name: schedule_migrations
+    command: alembic upgrade head
+    env_file: .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+#  seed:
+#    build: .
+#    container_name: schedule_seed
+#    command: python -m app.core.seed
+#    env_file: .env
+#    depends_on:
+#      migrations:
+#        condition: service_completed_successfully
+#    restart: "no"
+
+  tg_bot:
+    build: .
+    container_name: schedule_tg_bot
+    command: python -m app.tg.bot
+    env_file: .env
+    volumes:
+      - ./data:/app/data
+    depends_on:
+      migrations:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  vk_bot:
+    build: .
+    container_name: schedule_vk_bot
+    command: python -m app.vk.bot
+    env_file: .env
+    volumes:
+      - ./data:/app/data
+    depends_on:
+      migrations:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
