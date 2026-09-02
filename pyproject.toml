@@ -59,7 +59,7 @@ select = [
     "C4", "PERF", "FURB", "FLY",
 
     # Code quality
-    "PIE", "RUF", "PTH", "SLF",
+    "PIE", "RUF", "PTH", "SLF", "ASYNC",
 
     # Logging / comments / formatting
     "ICN", "TID", "COM", "Q", "T10", "T20",

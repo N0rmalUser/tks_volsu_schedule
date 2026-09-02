@@ -16,10 +16,10 @@
 
 from vkbottle.bot import BotLabeler, MessageEvent
 
-from app.common import get_today, text_maker
-from app.common.text_maker import text_formatter
-from app.database.schedule import Schedule
-from app.database.vkuser import VkUser
+from app.common.utils import get_schedule, get_today
+from app.database.session import session_scope
+from app.schemas.enums import Keyboard, Platform, WeekType
+from app.services.user import UserService
 from app.vk.markups import days, groups, teachers
 
 
@@ -66,18 +66,24 @@ async def select_direction_handler(event: MessageEvent) -> None:
 async def teacher_handler(event: MessageEvent) -> None:
     day, week = get_today()
     value = event.payload.get("value")
-    user = VkUser(event.peer_id)
-    user.teacher = value
 
+    async with session_scope() as session:
+        service = await UserService.create(session, Platform.VK, event.peer_id)
+
+        await service.set_teacher(value)
+        keyboard = Keyboard.TEACHER
+
+    text = await get_schedule(
+        target=keyboard,
+        day=day,
+        week=week,
+        value=value,
+    )
     await event.ctx_api.messages.edit(
         peer_id=event.peer_id,
         conversation_message_id=event.conversation_message_id,
-        keyboard=days("teacher", day, week, value),
-        message=text_maker.get_teacher_schedule(
-            day=day,
-            week=week,
-            teacher_name=Schedule().get_teacher_name(value),
-        ),
+        keyboard=days(keyboard, day, week, value),
+        message=text,
     )
 
 
@@ -89,18 +95,24 @@ async def teacher_handler(event: MessageEvent) -> None:
 async def group_handler(event: MessageEvent) -> None:
     day, week = get_today()
     value = event.payload.get("value")
-    user = VkUser(event.peer_id)
-    user.group = value
 
+    async with session_scope() as session:
+        service = await UserService.create(session, Platform.VK, event.peer_id)
+
+        await service.set_group(value)
+        keyboard = Keyboard.STUDENT
+
+    text = await get_schedule(
+        target=keyboard,
+        day=day,
+        week=week,
+        value=value,
+    )
     await event.ctx_api.messages.edit(
         peer_id=event.peer_id,
         conversation_message_id=event.conversation_message_id,
-        keyboard=days("group", day, week, value),
-        message=text_maker.get_group_schedule(
-            day=day,
-            week=week,
-            group_name=Schedule().get_group_name(value),
-        ),
+        keyboard=days(keyboard, day, week, value),
+        message=text,
     )
 
 
@@ -112,16 +124,19 @@ async def group_handler(event: MessageEvent) -> None:
 async def room_handler(event: MessageEvent) -> None:
     day, week = get_today()
     value = event.payload.get("value")
+    keyboard = Keyboard.ROOM
 
+    text = await get_schedule(
+        target=keyboard,
+        day=day,
+        week=week,
+        value=value,
+    )
     await event.ctx_api.messages.edit(
         peer_id=event.peer_id,
         conversation_message_id=event.conversation_message_id,
-        keyboard=days("room", day, week, value),
-        message=text_maker.get_room_schedule(
-            day=day,
-            week=week,
-            room_name=Schedule().get_room_name(value),
-        ),
+        keyboard=days(keyboard, day, week, value),
+        message=text,
     )
 
 
@@ -131,21 +146,22 @@ async def room_handler(event: MessageEvent) -> None:
     payload_contains={"action": "week"},
 )
 async def week_handler(event: MessageEvent) -> None:
-    week = 1 if int(event.payload.get("week")) != 2 else 2
+    week = WeekType.ODD if event.payload.get("week") != WeekType.EVEN else WeekType.EVEN
     day = event.payload.get("day")
     value = event.payload.get("value")
-    keyboard_type = event.payload.get("keyboard_type")
+    keyboard: Keyboard = event.payload.get("keyboard_type")
 
+    text = await get_schedule(
+        target=keyboard,
+        day=day,
+        week=week,
+        value=value,
+    )
     await event.ctx_api.messages.edit(
         peer_id=event.peer_id,
         conversation_message_id=event.conversation_message_id,
-        keyboard=days(keyboard_type, day, week, value),
-        message=await text_formatter(
-            keyboard_type=keyboard_type,
-            day=day,
-            week=week,
-            value=value,
-        ),
+        keyboard=days(keyboard, day, week, value),
+        message=text,
     )
 
 
@@ -155,21 +171,22 @@ async def week_handler(event: MessageEvent) -> None:
     payload_contains={"action": "day"},
 )
 async def day_handler(event: MessageEvent) -> None:
-    keyboard_type = event.payload.get("keyboard_type")
     value = event.payload.get("value")
     day = event.payload.get("day")
     week = event.payload.get("week")
+    keyboard: Keyboard = event.payload.get("keyboard_type")
 
+    text = await get_schedule(
+        target=keyboard,
+        day=day,
+        week=week,
+        value=value,
+    )
     await event.ctx_api.messages.edit(
         peer_id=event.peer_id,
         conversation_message_id=event.conversation_message_id,
-        keyboard=days(keyboard_type, day, week, value),
-        message=await text_formatter(
-            keyboard_type=keyboard_type,
-            day=day,
-            week=week,
-            value=value,
-        ),
+        keyboard=days(keyboard, day, week, value),
+        message=text,
     )
 
 

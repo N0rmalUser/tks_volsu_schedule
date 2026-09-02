@@ -14,11 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-
 import logging
 from collections.abc import Awaitable, Callable, Coroutine
-from datetime import datetime
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from aiogram import BaseMiddleware
 from aiogram.exceptions import (
@@ -26,69 +24,39 @@ from aiogram.exceptions import (
     TelegramNetworkError,
     TelegramRetryAfter,
 )
-from aiogram.types import Message, Update
+from aiogram.types import Message, TelegramObject, Update
 
-from app.config import TZ, config
-from app.database.activity import log_user_activity
-from app.database.user import User
+from app.core.config import config
+from app.database.session import session_scope
+from app.schemas.enums import Platform
+from app.services.user import UserService
 
 
-class BanUsersMiddleware(BaseMiddleware):
-    """Мидлварь, игнорящий все updates для забаненных пользователей"""
+if TYPE_CHECKING:
+    from sqlalchemy.ext.asyncio.session import AsyncSession
 
+
+class SessionMiddleware(BaseMiddleware):
     async def __call__(
         self,
-        handler: Callable[[Update, dict[str, Any]], Awaitable[Any]],
-        event: Update,
+        handler: Callable[[TelegramObject, dict[str, Any]], Awaitable[Any]],
+        event: TelegramObject,
         data: dict[str, Any],
-    ) -> Coroutine[Any, Any, Any] | None:
-        user = User(data["event_from_user"].id)
-        if user.is_exists:
-            if not user.banned:
+    ) -> Any:
+
+        user = data.get("event_from_user")
+        chat = data.get("event_chat")
+
+        if user is None:
+            return await handler(event, data)
+        if user.is_bot:
+            return await handler(event, data)
+
+        if chat is not None:
+            async with session_scope() as session:
+                data["session"]: AsyncSession = session
                 return await handler(event, data)
-            return None
-        return await handler(event, data)
 
-
-class TopicCreatorMiddleware(BaseMiddleware):
-    """Мидлварь, создающий топик пользователя, если он не создан"""
-
-    async def __call__(
-        self,
-        handler: Callable[[Update, dict[str, Any]], Awaitable[Any]],
-        event: Update,
-        data: dict[str, Any],
-    ) -> Coroutine[Any, Any, Any]:
-        if (msg := event.message) and not event.message.from_user.is_bot:
-            from aiogram.enums import ParseMode
-
-            from app.tg.markups import admin as kb
-
-            user = User(msg.from_user.id)
-            if not user.topic_id:
-                if msg.from_user.username:
-                    topic_name = f"{msg.from_user.username} {msg.from_user.id}"
-                else:
-                    topic_name = f"{msg.from_user.full_name} {msg.from_user.id}"
-                result = await msg.bot.create_forum_topic(config.admin_chat_id, topic_name)
-                topic_id = result.message_thread_id
-                user.topic_id = topic_id
-                user.start_date = datetime.now(TZ).isoformat()
-                user_info = (
-                    f"Пользователь: <code>{msg.from_user.full_name}</code>\n"
-                    f"ID: <code>{msg.from_user.id}</code>\n"
-                    f"Username: @{msg.from_user.username}\n"
-                    f"Тип пользователя: {user.user_type}"
-                )
-                await msg.bot.send_message(
-                    config.admin_chat_id,
-                    message_thread_id=topic_id,
-                    text=user_info,
-                    reply_markup=kb.admin_menu(),
-                    parse_mode=ParseMode.HTML,
-                )
-                user.tracking = False
-                logging.info(f"Создан топик имени {msg.from_user.id} @{msg.from_user.username}")
         return await handler(event, data)
 
 
@@ -112,21 +80,6 @@ class CallbackTelegramErrorsMiddleware(BaseMiddleware):
             logging.error("TelegramRetryAfter 25 секунд")
 
 
-class UserActivityMiddleware(BaseMiddleware):
-    """Мидлварь, логирующая ивенты от пользователей в бд"""
-
-    async def __call__(
-        self,
-        handler: Callable[[Update, dict[str, Any]], Awaitable[Any]],
-        event: Update,
-        data: dict[str, Any],
-    ) -> Coroutine[Any, Any, Any]:
-        user_id = data["event_from_user"].id
-        User(user_id).last_date = datetime.now(TZ).isoformat()
-        log_user_activity(user_id)
-        return await handler(event, data)
-
-
 class TrackingMiddleware(BaseMiddleware):
     """Мидлварь, логирующая ивенты от пользователей в чат админа"""
 
@@ -136,25 +89,31 @@ class TrackingMiddleware(BaseMiddleware):
         event: Update,
         data: dict[str, Any],
     ) -> Coroutine[Any, Any, Any]:
-        user = User(data["event_from_user"].id)
+
+        user_id = int(data["event_from_user"].id)
+        session: AsyncSession = data.get("session")
+        service = await UserService.create(session, Platform.TELEGRAM, user_id)
+
         if (event.message and event.message.chat.id == config.admin_chat_id) or (
             event.callback_query and event.callback_query.message.chat.id == config.admin_chat_id
         ):
             return await handler(event, data)
 
-        if user.tracking:
+        tracked = await service.get_tg_tracking()
+        if tracked:
+            topic_id = await service.get_tg_topic_id()
             if event.callback_query and not event.callback_query.from_user.is_bot:
                 await event.bot.send_message(
                     config.admin_chat_id,
-                    message_thread_id=user.topic_id,
+                    message_thread_id=topic_id,
                     text=event.callback_query.data,
                     parse_mode="HTML",
                 )
             else:
                 await event.bot.forward_message(
                     config.admin_chat_id,
-                    message_thread_id=user.topic_id,
-                    from_chat_id=user.id,
+                    message_thread_id=topic_id,
+                    from_chat_id=user_id,
                     message_id=event.message.message_id,
                 )
         return await handler(event, data)

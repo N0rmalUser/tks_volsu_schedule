@@ -17,7 +17,7 @@
 from aiogram import MagicFilter, types
 from aiogram.filters import BaseFilter
 
-from app.config import config
+from app.core.config import config
 
 
 class ChatTypeIdFilter(BaseFilter):

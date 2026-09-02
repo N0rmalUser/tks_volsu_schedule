@@ -1,275 +1,431 @@
-# TKS VOLSU SCHEDULE BOT
-# Copyright (C) 2024 N0rmalUser
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program. If not, see <http://www.gnu.org/licenses/>.
-
-import asyncio
 import logging
 import re
-from collections.abc import Coroutine
-from datetime import date, datetime, timedelta
+from datetime import time
+from pathlib import Path
 
-from aiohttp import ClientSession
 from docx import Document
 from docx.table import _Row
 
-from app.common import get_semester
-from app.config import GROUPS_SCHEDULE_PATH, config
-from app.database.schedule import Schedule
+from app.core.constants import GROUPS_SCHEDULE_PATH
+from app.schemas.enums import WeekType
+from app.schemas.schedule import LessonTime, ScheduleRow
 
 
-# Предполагается, что следующие глобальные константы / структуры
-# определены в окружении, из которого вызывается функция:
-# APP_URL, API_URL, COLLEGE_TEACHERS (set/list of teacher short names),
-# COLLEGE_GROUPS (list of group prefixes), GROUPS (iterable of group names)
-# Класс Schedule с методами: clear_college, add_group, add_teacher, add_room, add_subject, add_schedule
+DAYS_OF_WEEK = {
+    "понедельник": 1,
+    "вторник": 2,
+    "среда": 3,
+    "четверг": 4,
+    "пятница": 5,
+    "суббота": 6,
+}
 
 
-async def college_schedule_parser() -> None:
-    days_map = {
-        "monday": "Понедельник",
-        "tuesday": "Вторник",
-        "wednesday": "Среда",
-        "thursday": "Четверг",
-        "friday": "Пятница",
-        "saturday": "Суббота",
-        "sunday": "Воскресенье",
-    }
-    week_map = {"numerator": "Числитель", "denominator": "Знаменатель"}
+LESSONS: tuple[LessonTime, ...] = (
+    LessonTime(1, time(8, 30), time(10, 0)),
+    LessonTime(2, time(10, 10), time(11, 40)),
+    LessonTime(3, time(12, 0), time(13, 30)),
+    LessonTime(4, time(13, 40), time(15, 10)),
+    LessonTime(5, time(15, 20), time(16, 50)),
+    LessonTime(6, time(17, 0), time(18, 30)),
+    LessonTime(7, time(18, 40), time(20, 10)),
+)
 
-    def get_week_timestamps() -> tuple[int, int]:
-        now = datetime.now()
-        start = now - timedelta(days=now.weekday())
-        start = start.replace(hour=0, minute=0, second=0, microsecond=0)
-        end = start + timedelta(days=13, hours=23, minutes=59, seconds=59)
-        return int(start.timestamp() * 1000), int(end.timestamp() * 1000)
-
-    min_ts, max_ts = get_week_timestamps()
-    now_date = date.today()
-
-    async with ClientSession(headers={"provider": "volsu-system-bot"}) as session:
-        try:
-            teachers = await (await session.get(config.api_url.format(type="teacher"))).json()
-            groups = await (await session.get(config.api_url.format(type="group"))).json()
-
-            tks_teacher_map = {
-                f"{t['firstName']} {t['surname'][0]}.{t['patronymic'][0]}.": t["id"]
-                for t in teachers
-                if f"{t['firstName']} {t['surname'][0]}.{t['patronymic'][0]}." in config.college_teachers
-            }
-            all_groups_map = {g["id"]: g["name"] for g in groups}
-            tks_groups_map = {
-                g["name"]: (g["id"], g["admissionYear"])
-                for g in groups
-                if any(g["name"].startswith(college) for college in config.college_groups)
-            }
-
-            schedule = Schedule()
-            schedule.clear_college()
-            logging.info("Очистил расписание колледжа, начинаю парсинг")
-
-            async def fetch(url: str) -> Coroutine:
-                async with session.get(url) as r:
-                    return await r.json()
-
-            tasks = []
-
-            for teacher_name, teacher_id in tks_teacher_map.items():
-                url = f"{config.app_url}/teacher/{teacher_id}?minTimestamp={min_ts}&maxTimestamp={max_ts}"
-                tasks.append(("teacher", teacher_name, fetch(url)))
-
-            for group_name, (group_id, year) in tks_groups_map.items():
-                semester = get_semester(year, now_date)
-                url = (
-                    f"{config.app_url}/group/{group_id}?minTimestamp={min_ts}&maxTimestamp={max_ts}&semester={semester}"
-                )
-                tasks.append(("group", group_name, fetch(url)))
-
-            results = await asyncio.gather(*(t[2] for t in tasks))
-
-            for (kind, name, _), lessons in zip(tasks, results, strict=False):
-                for lesson in lessons:
-                    if kind == "group" and lesson["subject"] == "":
-                        continue
-
-                    start_time = str(lesson["startTime"]).zfill(4)
-                    time_str = re.sub(r"\b8:30\b", "08:30", f"{start_time[:2]}:{start_time[2:]}")
-                    day_name = days_map.get(lesson["day"].lower(), lesson["day"])
-                    week_type = week_map.get(lesson["week"], lesson["week"])
-                    room_name = lesson["classrooms"][0] if lesson["classrooms"] else "Не указано"
-
-                    subject = lesson["subject"].strip()
-                    teacher_name = name if kind == "teacher" else "N/A"
-
-                    match = re.search(r"преп\.?\s+([А-яЁё]+\s+[А-ЯЁ]\.[А-ЯЁ]\.)", subject, re.IGNORECASE)
-                    if match:
-                        teacher_name = match.group(1)
-
-                    subject = re.sub(r",?\s*?преп.*", "", subject, flags=re.IGNORECASE)
-
-                    group_name = name if kind == "group" else all_groups_map.get(lesson["groupId"])
-
-                    if kind == "teacher" and group_name in config.groups:
-                        continue
-
-                    schedule.add_schedule(
-                        college=True,
-                        time=time_str,
-                        day_name=str(day_name),
-                        week_type=str(week_type),
-                        group_id=schedule.add_group(str(group_name)),
-                        teacher_id=schedule.add_teacher(teacher_name),
-                        room_id=schedule.add_room(room_name),
-                        subject_id=schedule.add_subject(subject),
-                    )
-
-        except Exception as e:
-            logging.error(e)
-
-    logging.info("Обновлено расписание колледжа для всех преподавателей")
+LESSON_BY_START_TIME: dict[time, int] = {lesson.start: lesson.number for lesson in LESSONS}
 
 
-async def university_schedule_parser() -> None:
-    def _split_lessons(text: str) -> list[str]:
-        if not text:
-            return []
-        text = re.sub(r"^\s*\d{1,2}:\d{2}-\d{1,2}:\d{2}\s*", "", text).strip()
-        if "Дисциплина по выбору:" not in text:
-            return [text]
-        prefix = "Дисциплина по выбору:"
-        text_wo_prefix = text.split(prefix, 1)[1].strip()
-        parts = [p.strip() for p in text_wo_prefix.split(";") if p.strip()]
-        return [f"{prefix} {p}" for p in parts]
+def _parse_info(text: str) -> dict[str, str | list[str] | list[None] | None] | None:
+    """Парсит содержимое ячейки расписания."""
 
-    def _parse_info(text: str) -> dict[str, str | list[str]]:
-        """Парсит строку вида 'Предмет (Лаб), [должность] Фамилия И.О., Ауд. 1-23 К'
-        -> dict(subject[str], teachers[list], classroom[str])"""
+    if not text:
+        return None
 
-        if not text:
-            return {}
-        raw = text.strip()
+    raw = text.strip()
 
-        raw = re.sub(r"\s*-\s*поток\s*\d+\s*", " ", raw, flags=re.IGNORECASE)
-        raw = re.sub(r"\s+", " ", raw)
+    # Убираем "- поток N".
+    raw = re.sub(
+        r"\s*-\s*поток\s*\d+\s*",
+        " ",
+        raw,
+        flags=re.IGNORECASE,
+    )
 
-        parts = re.split(r"(?<=\))\s*,\s*", raw, maxsplit=1)
-        if len(parts) == 1:
-            parts = re.split(r",\s*", raw, maxsplit=1)
+    raw = re.sub(r"\s+", " ", raw)
 
-        subject = parts[0].strip()
-        rest = parts[1].strip() if len(parts) > 1 else ""
+    parts = re.split(
+        r"(?<=\))\s*,\s*",
+        raw,
+        maxsplit=1,
+    )
 
-        classroom = ""
-        if rest:
-            aud = re.search(r"Ауд\.?\s*([^,;]+)", rest, flags=re.IGNORECASE)
-            if aud:
-                classroom = re.sub(r"\s*", "", aud.group(1))
-                classroom = classroom.replace("Спортивныйзал", "Спортзал")
-            rest = re.sub(r"Ауд\.?\s*([^,;]+)", "", rest, flags=re.IGNORECASE)
+    if len(parts) == 1:
+        parts = re.split(
+            r",\s*",
+            raw,
+            maxsplit=1,
+        )
+
+    subject = parts[0].strip()
+    rest = parts[1].strip() if len(parts) > 1 else ""
+
+    classroom = ""
+
+    if rest:
+        auditorium = re.search(
+            r"Ауд\.?\s*([^,;]+)",
+            rest,
+            flags=re.IGNORECASE,
+        )
+
+        if auditorium:
+            classroom = re.sub(
+                r"\s*",
+                "",
+                auditorium.group(1),
+            )
+
+            classroom = classroom.replace(
+                "Спортивныйзал",
+                "Спортзал ",
+            )
 
         rest = re.sub(
-            r"\b(доцент|преподаватель|старший преподаватель|ассистент|профессор)\b\.?",
+            r"Ауд\.?\s*([^,;]+)",
             "",
             rest,
             flags=re.IGNORECASE,
         )
-        teachers = [t for t in (s.strip() for s in re.split(r"\s*,\s*", rest)) if t]
 
-        return {"subject": subject, "teachers": teachers, "classroom": classroom}
+    # Убираем должности преподавателей.
+    rest = re.sub(
+        r"\b("
+        r"доцент|"
+        r"старший преподаватель|"
+        r"старщий преподаватель|"
+        r"ассистент|"
+        r"профессор|"
+        r"преподаватель"
+        r")\b\.?",
+        "",
+        rest,
+        flags=re.IGNORECASE,
+    )
 
-    def _row_day_time(row: _Row) -> tuple[str, str]:
-        day = re.sub(r"\s+", "", row.cells[0].text.strip())
-        start = row.cells[1].text.strip().split("-")[0]
-        time = re.sub(r"\b8:30\b", "08:30", re.sub(r"\s*", "", start))
-        return day, time
+    teachers = [teacher for teacher in (value.strip() for value in re.split(r"\s*,\s*", rest)) if teacher]
 
-    def _set_default() -> None:
-        for i in sorted(config.groups):
-            schedule_db.add_group(i)
-        for i in sorted(config.all_personal):
-            schedule_db.add_teacher(i)
-        for i in sorted(config.rooms):
-            schedule_db.add_room(i)
+    return {
+        "subject": subject,
+        "teachers": teachers or [None],
+        "classroom": classroom or None,
+    }
 
-    def _parse(text: str) -> list[dict[str, str | list[str]]]:
-        lessons = _split_lessons(text)
-        return [_parse_info(lesson) for lesson in lessons]
 
-    schedule_db = Schedule()
-    schedule_db.clear_university()
-    _set_default()
+def _parse_day_and_lesson(row: _Row) -> tuple[int, int]:
+    day_name = re.sub(
+        r"\s+",
+        "",
+        row.cells[0].text.strip(),
+    ).lower()
 
-    files = [path for path in GROUPS_SCHEDULE_PATH.iterdir() if path.is_file() and path.suffix == ".docx"]
+    try:
+        day_of_week = DAYS_OF_WEEK[day_name]
+    except KeyError as exc:
+        raise ValueError(
+            f"Неизвестный день недели: {day_name!r}",
+        ) from exc
 
-    for file in files:
-        doc = Document(file)
-        table = doc.tables[0]
-        rows = table.rows
+    start = row.cells[1].text.strip().split("-", maxsplit=1)[0]
+    start = re.sub(r"\s*", "", start)
 
-        header = [c.text.strip() for c in rows[0].cells]
-        groups: list[tuple[str, int, int]] = []
-        col = 2
-        seen = {}
+    try:
+        hour, minute = map(int, start.split(":"))
+        start_time = time(hour, minute)
+    except ValueError as exc:
+        raise ValueError(
+            f"Не удалось распознать время пары: {start!r}",
+        ) from exc
 
-        for group_name in header[2:]:
-            seen[group_name] = seen.get(group_name, 0) + 1
+    try:
+        lesson_number = LESSON_BY_START_TIME[start_time]
+    except KeyError as exc:
+        raise ValueError(
+            f"Неизвестное время начала пары: {start!r}",
+        ) from exc
 
-            subgroup = 0 if header.count(group_name) == 1 else seen[group_name]
+    return day_of_week, lesson_number
 
-            groups.append((group_name, col, subgroup))
-            col += 1
+
+def _process_group_cells(
+    left: str,
+    right: str | None = None,
+    *,
+    single_column: bool,
+) -> (
+    list[tuple[None, dict[str, str | list[str] | list[None] | None]]]
+    | list[tuple[int | None, dict[str, str | list[str]]]]
+):
+    """Разбирает ячейки группы на подгруппы."""
+
+    left = left.strip() if left else ""
+    right = right.strip() if right else ""
+
+    if not left and not right:
+        return []
+
+    if single_column:
+        info = _parse_info(left)
+
+        return [(None, info)] if info else []
+
+    # Одинаковая запись в обеих колонках = общая пара.
+    if left and right and left == right:
+        info = _parse_info(left)
+
+        return [(None, info)] if info else []
+
+    result: list[tuple[int | None, dict[str, str | list[str]]]] = []
+
+    for subgroup, text in (
+        (1, left),
+        (2, right),
+    ):
+        if not text:
+            continue
+
+        info = _parse_info(text)
+
+        if not info:
+            continue
+
+        subject = str(info["subject"])
+
+        # Лекция считается общей для обеих подгрупп.
+        is_lecture = bool(
+            re.search(
+                r"\((?:Л|Лекция)\)",
+                subject,
+                flags=re.IGNORECASE,
+            )
+            or "Лекция" in subject,
+        )
+
+        result.append(
+            (None if is_lecture else subgroup, info),
+        )
+
+    return result
+
+
+def _extract_groups(
+    rows: list[_Row],
+    filename: str,
+) -> list[tuple[str, int, int | None, bool]]:
+    """Определяет группы и соответствующие им колонки."""
+
+    header = [cell.text.strip() for cell in rows[0].cells]
+
+    groups: list[tuple[str, int, int | None, bool]] = []
+
+    column = 2
+
+    while column < len(header):
+        group_name = header[column]
+
+        if not group_name:
+            column += 1
+            continue
+
+        # Две соседние колонки принадлежат одной группе.
+        if column + 1 < len(header) and header[column + 1] == group_name:
+            groups.append(
+                (
+                    group_name,
+                    column,
+                    column + 1,
+                    False,
+                ),
+            )
+            column += 2
+            continue
+
+        # Одна колонка = одна группа.
+        groups.append(
+            (
+                group_name,
+                column,
+                None,
+                True,
+            ),
+        )
+        column += 1
+
+    if not groups:
+        group_name = Path(filename).stem
+
+        if len(rows[0].cells) == 3:
+            groups = [
+                (group_name, 2, None, True),
+            ]
+        elif len(rows[0].cells) >= 4:
+            groups = [
+                (group_name, 2, 3, False),
+            ]
+
+    return groups
+
+
+def _build_rows_for_cell(
+    *,
+    group_name: str,
+    left: str,
+    right: str,
+    single_column: bool,
+    day_of_week: int,
+    lesson_number: int,
+    week_type: WeekType,
+) -> list[ScheduleRow]:
+    entries = _process_group_cells(
+        left,
+        right,
+        single_column=single_column,
+    )
+
+    result: list[ScheduleRow] = []
+
+    for subgroup, info in entries:
+        if not info:
+            continue
+
+        subject = info["subject"]
+
+        if not subject:
+            continue
+
+        teachers = info["teachers"]
+        classroom = info["classroom"]
+
+        # Один преподаватель - одна запись.
+        # Если в ячейке несколько преподавателей,
+        # создаём несколько ScheduleRow.
+
+        if not teachers:
+            teachers = [None]
+
+        result.extend(
+            ScheduleRow(
+                group=group_name,
+                teacher=teacher,
+                subject=subject,
+                room=classroom,
+                day_of_week=day_of_week,
+                lesson_number=lesson_number,
+                week_type=week_type,
+                subgroup=subgroup,
+            )
+            for teacher in teachers
+        )
+
+    return result
+
+
+def parse_university_schedule() -> list[ScheduleRow]:
+    """Парсит все DOCX-файлы расписания."""
+
+    result: list[ScheduleRow] = []
+    files = sorted(GROUPS_SCHEDULE_PATH.glob("*.docx"))
+
+    for file_path in files:
+        document = Document(str(file_path))
+
+        if not document.tables:
+            continue
+
+        rows = document.tables[0].rows
+
+        if not rows:
+            continue
+
+        groups = _extract_groups(
+            rows,
+            file_path.name,
+        )
 
         i = 1
-        n = len(rows)
-        while i < n:
-            row = rows[i]
-            day, time = _row_day_time(row)
 
-            # числитель/знаменатель
+        while i < len(rows):
+            row = rows[i]
+            day_of_week, lesson_number = _parse_day_and_lesson(row)
+
+            # Если следующая строка имеет тот же день
+            # и номер пары — это числитель/знаменатель.
             pair = None
-            if i + 1 < n:
-                day2, time2 = _row_day_time(rows[i + 1])
-                if day2 == day and time2 == time:
+
+            if i + 1 < len(rows):
+                next_day, next_lesson = _parse_day_and_lesson(
+                    rows[i + 1],
+                )
+
+                if next_day == day_of_week and next_lesson == lesson_number:
                     pair = rows[i + 1]
 
-            for group_name, column, subgroup in groups:
-                if pair:
-                    week_sources = [
-                        ("Числитель", rows[i].cells[column].text),
-                        ("Знаменатель", rows[i + 1].cells[column].text),
-                    ]
+            for (
+                group_name,
+                col1,
+                col2,
+                single_column,
+            ) in groups:
+                if col1 >= len(row.cells):
+                    continue
+
+                left = row.cells[col1].text
+
+                right = row.cells[col2].text if col2 is not None and col2 < len(row.cells) else ""
+
+                if pair is not None:
+                    # Числитель.
+                    result.extend(
+                        _build_rows_for_cell(
+                            group_name=group_name,
+                            left=left,
+                            right=right,
+                            single_column=single_column,
+                            day_of_week=day_of_week,
+                            lesson_number=lesson_number,
+                            week_type=WeekType.ODD,
+                        ),
+                    )
+
+                    # Знаменатель.
+                    pair_left = pair.cells[col1].text
+
+                    pair_right = pair.cells[col2].text if col2 is not None and col2 < len(pair.cells) else ""
+
+                    result.extend(
+                        _build_rows_for_cell(
+                            group_name=group_name,
+                            left=pair_left,
+                            right=pair_right,
+                            single_column=single_column,
+                            day_of_week=day_of_week,
+                            lesson_number=lesson_number,
+                            week_type=WeekType.EVEN,
+                        ),
+                    )
+
                 else:
-                    text = row.cells[column].text
-                    week_sources = [("Числитель", text), ("Знаменатель", text)]
-
-                for week_type, text in week_sources:
-                    if not text:
-                        continue
-
-                    for info in _parse(text):
-                        for teacher in info["teachers"]:
-                            schedule_db.add_schedule(
-                                time=time,
-                                day_name=day,
-                                week_type=week_type,
-                                group_id=schedule_db.add_group(group_name),
-                                teacher_id=schedule_db.add_teacher(teacher),
-                                room_id=schedule_db.add_room(str(info["classroom"])),
-                                subject_id=schedule_db.add_subject(str(info["subject"])),
-                                subgroup=subgroup,
-                            )
+                    # Одна запись действует каждую неделю.
+                    result.extend(
+                        _build_rows_for_cell(
+                            group_name=group_name,
+                            left=left,
+                            right=right,
+                            single_column=single_column,
+                            day_of_week=day_of_week,
+                            lesson_number=lesson_number,
+                            week_type=WeekType.EVERY,
+                        ),
+                    )
 
             i += 2 if pair is not None else 1
-
     logging.info("Расписания университета успешно сохранены в базу данных.")
+    return result
