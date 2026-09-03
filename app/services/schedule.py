@@ -178,7 +178,7 @@ class ScheduleService:
             room = await directory_repository.get_room_by_id(room_id)
 
             if room is None or room.name is None:
-                return "Нет такого преподавателя", []
+                return "Нет такой аудитории", []
 
             room_name = cast("str", cast("object", room.name))
 
