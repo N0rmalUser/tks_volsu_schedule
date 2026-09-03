@@ -1,14 +1,12 @@
 from typing import cast
 
-from schemas.schedule import ScheduleEntry
-
 from app.core.config import config
 from app.database.models import Group, Room, Schedule, Subject, Teacher
 from app.database.repository.directory import DirectoryRepository
 from app.database.repository.schedule import ScheduleRepository
 from app.database.session import session_scope
 from app.schemas.enums import GroupType, WeekType
-from app.schemas.schedule import ScheduleRow
+from app.schemas.schedule import ScheduleEntry, ScheduleRow
 
 
 class ScheduleService:
