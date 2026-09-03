@@ -47,17 +47,12 @@ class SessionMiddleware(BaseMiddleware):
         user = data.get("event_from_user")
         chat = data.get("event_chat")
 
-        if user is None:
-            return await handler(event, data)
-        if user.is_bot:
-            return await handler(event, data)
+        if user is None and user.is_bot and chat is None:
+            return None
 
-        if chat is not None:
-            async with session_scope() as session:
-                data["session"]: AsyncSession = session
-                return await handler(event, data)
-
-        return await handler(event, data)
+        async with session_scope() as session:
+            data["session"]: AsyncSession = session
+            return await handler(event, data)
 
 
 class CallbackTelegramErrorsMiddleware(BaseMiddleware):
