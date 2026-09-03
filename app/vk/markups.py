@@ -164,14 +164,14 @@ def groups(direction: str) -> str:
     ]
 
     sorted_groups = sorted([group for group in config.groups if group != "-"])
-    for i, group in enumerate(filtered, start=1):
+    for i, group in enumerate(filtered):
         keyboard.add(
             Callback(
                 label=group,
-                payload={"action": "group", "value": sorted_groups.index(group)},
+                payload={"action": "group", "value": sorted_groups.index(group) + 1},
             ),
         )
-        if i % 2 == 0:
+        if (i + 1) % 2 == 0:
             keyboard.row()
     return keyboard.get_json()
 
@@ -184,6 +184,7 @@ def teachers(page: int = 0) -> str:
     chunk = config.teachers[start:end]
 
     for i, teacher in enumerate(chunk, start=1):
+        i += page * 8
         keyboard.add(
             Callback(
                 label=teacher,
