@@ -27,15 +27,15 @@ services:
         condition: service_healthy
     restart: "no"
 
-#  seed:
-#    build: .
-#    container_name: schedule_seed
-#    command: python -m app.core.seed
-#    env_file: .env
-#    depends_on:
-#      migrations:
-#        condition: service_completed_successfully
-#    restart: "no"
+  seed:
+    build: .
+    container_name: schedule_seed
+    command: python -m app.core.seed
+    env_file: .env
+    depends_on:
+      migrations:
+        condition: service_completed_successfully
+    restart: "no"
 
   tg_bot:
     build: .
