@@ -129,8 +129,14 @@ class ScheduleFormatter:
             subject = re.sub(r"\([^)]*\)", "", e.subject).strip()
             label = get_lesson_label(str(re.search(r"\(([^)]*)\)", e.subject)))
             time = LESSON_TIME[e.lesson_number]
+
+            subroom = " "
+            if e.room != room_name:
+                prefix = e.room[-2]
+                subroom = f"|{prefix}|"
+
             text += (
-                f"{get_time_symbol(time)} {time}   {label}\n"
+                f"{get_time_symbol(time)} {time}   {subroom}   {label}\n"
                 f"📖 {subject}\n"
                 f"👫 {e.group}\n"
                 f"{f'🧍🏼 Подгруппа: {e.subgroup}\n' if e.subgroup else ''}"

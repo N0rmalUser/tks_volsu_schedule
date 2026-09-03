@@ -1,7 +1,8 @@
 from sqlalchemy import Sequence, delete, or_, select
 from sqlalchemy.orm import joinedload
 
-from app.database.models.schedule import Schedule
+from app.core.config import config
+from app.database.models.schedule import Room, Schedule
 from app.database.repository.base import BaseRepository
 from app.schemas.enums import GroupType, WeekType
 
@@ -55,8 +56,12 @@ class ScheduleRepository(BaseRepository):
     async def get_teacher_schedule(self, *, teacher_id: int, day_of_week: int, week_type: WeekType):
         return await self._get_schedule(Schedule.teacher_id == teacher_id, day_of_week, week_type)
 
-    async def get_room_schedule(self, *, room_id: int, day_of_week: int, week_type: WeekType):
-        return await self._get_schedule(Schedule.room_id == room_id, day_of_week, week_type)
+    async def get_room_schedule(self, *, room_id: int, room_name: str, day_of_week: int, week_type: WeekType):
+        if room_name in config.parent_rooms:
+            filter_clause = Schedule.room.has(Room.name.in_(config.parent_rooms[room_name]))
+        else:
+            filter_clause = Schedule.room_id == room_id
+        return await self._get_schedule(filter_clause, day_of_week, week_type)
 
     async def add_schedule(
         self,

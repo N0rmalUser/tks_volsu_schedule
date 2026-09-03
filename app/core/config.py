@@ -55,6 +55,7 @@ class Config(BaseSettings):
     teachers: list[str]
     groups: list[str]
     rooms: list[str]
+    parent_rooms: dict[str, list[str]]
 
     students: dict[str, str]
     aliases: dict[str, str]

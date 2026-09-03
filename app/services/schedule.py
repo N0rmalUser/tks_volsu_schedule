@@ -184,6 +184,7 @@ class ScheduleService:
 
             schedules = await schedule_repository.get_room_schedule(
                 room_id=room_id,
+                room_name=room_name,
                 day_of_week=day_of_week,
                 week_type=week,
             )
@@ -195,7 +196,7 @@ class ScheduleService:
                     week_type=s.week_type,
                     subject=s.subject.name if s.subject else None,
                     teacher=s.teacher.name if s.teacher else None,
-                    room=room_name,
+                    room=s.room.name if s.room else room_name,
                     group=s.group.name if s.group else None,
                     subgroup=s.subgroup,
                 )
