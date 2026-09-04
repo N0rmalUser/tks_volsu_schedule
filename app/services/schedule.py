@@ -18,7 +18,7 @@ class ScheduleService:
             personal = sorted([students for students in config.students if students not in config.teachers])
 
             await repository.add_groups([Group(name=name) for name in groups])
-            await repository.add_teachers([Teacher(name=name) for name in config.teachers])
+            await repository.add_teachers([Teacher(name=name) for name in sorted(config.teachers)])
             await repository.add_teachers([Teacher(name=name) for name in personal])
             await repository.add_rooms([Room(name=name) for name in config.rooms])
             await session.flush()

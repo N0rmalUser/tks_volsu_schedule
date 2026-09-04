@@ -181,7 +181,7 @@ def teachers(page: int = 0) -> str:
 
     start = page * 8
     end = start + 8
-    chunk = config.teachers[start:end]
+    chunk = sorted(config.teachers)[start:end]
 
     for i, teacher in enumerate(chunk, start=1):
         i += page * 8
