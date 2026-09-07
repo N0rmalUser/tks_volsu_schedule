@@ -2,36 +2,20 @@ import logging
 import re
 from datetime import time
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from docx import Document
-from docx.table import _Row
 
-from app.core.constants import GROUPS_SCHEDULE_PATH
+from app.core.constants import DAYS_OF_WEEK, GROUPS_SCHEDULE_PATH, LESSON_BY_START_TIME
 from app.schemas.enums import WeekType
-from app.schemas.schedule import LessonTime, ScheduleRow
+from app.schemas.schedule import ScheduleRow
 
 
-DAYS_OF_WEEK = {
-    "понедельник": 1,
-    "вторник": 2,
-    "среда": 3,
-    "четверг": 4,
-    "пятница": 5,
-    "суббота": 6,
-}
+if TYPE_CHECKING:
+    from docx.table import _Row
 
 
-LESSONS: tuple[LessonTime, ...] = (
-    LessonTime(1, time(8, 30), time(10, 0)),
-    LessonTime(2, time(10, 10), time(11, 40)),
-    LessonTime(3, time(12, 0), time(13, 30)),
-    LessonTime(4, time(13, 40), time(15, 10)),
-    LessonTime(5, time(15, 20), time(16, 50)),
-    LessonTime(6, time(17, 0), time(18, 30)),
-    LessonTime(7, time(18, 40), time(20, 10)),
-)
-
-LESSON_BY_START_TIME: dict[time, int] = {lesson.start: lesson.number for lesson in LESSONS}
+logger = logging.getLogger(__name__)
 
 
 def _parse_info(text: str) -> dict[str, str | list[str] | list[None] | None] | None:
@@ -277,18 +261,11 @@ def _extract_groups(
 def _build_rows_for_cell(
     *,
     group_name: str,
-    left: str,
-    right: str,
-    single_column: bool,
+    entries,
     day_of_week: int,
     lesson_number: int,
     week_type: WeekType,
 ) -> list[ScheduleRow]:
-    entries = _process_group_cells(
-        left,
-        right,
-        single_column=single_column,
-    )
 
     result: list[ScheduleRow] = []
 
@@ -378,17 +355,18 @@ def parse_university_schedule() -> list[ScheduleRow]:
                     continue
 
                 left = row.cells[col1].text
-
                 right = row.cells[col2].text if col2 is not None and col2 < len(row.cells) else ""
-
+                entries = _process_group_cells(
+                    left=left,
+                    right=right,
+                    single_column=single_column,
+                )
                 if pair is not None:
                     # Числитель.
                     result.extend(
                         _build_rows_for_cell(
                             group_name=group_name,
-                            left=left,
-                            right=right,
-                            single_column=single_column,
+                            entries=entries,
                             day_of_week=day_of_week,
                             lesson_number=lesson_number,
                             week_type=WeekType.ODD,
@@ -397,15 +375,16 @@ def parse_university_schedule() -> list[ScheduleRow]:
 
                     # Знаменатель.
                     pair_left = pair.cells[col1].text
-
                     pair_right = pair.cells[col2].text if col2 is not None and col2 < len(pair.cells) else ""
-
+                    entries = _process_group_cells(
+                        left=pair_left,
+                        right=pair_right,
+                        single_column=single_column,
+                    )
                     result.extend(
                         _build_rows_for_cell(
                             group_name=group_name,
-                            left=pair_left,
-                            right=pair_right,
-                            single_column=single_column,
+                            entries=entries,
                             day_of_week=day_of_week,
                             lesson_number=lesson_number,
                             week_type=WeekType.EVEN,
@@ -417,9 +396,7 @@ def parse_university_schedule() -> list[ScheduleRow]:
                     result.extend(
                         _build_rows_for_cell(
                             group_name=group_name,
-                            left=left,
-                            right=right,
-                            single_column=single_column,
+                            entries=entries,
                             day_of_week=day_of_week,
                             lesson_number=lesson_number,
                             week_type=WeekType.EVERY,
@@ -427,5 +404,5 @@ def parse_university_schedule() -> list[ScheduleRow]:
                     )
 
             i += 2 if pair is not None else 1
-    logging.info("Расписания университета успешно сохранены в базу данных.")
+    logger.info("Расписания университета успешно сохранены в базу данных.")
     return result

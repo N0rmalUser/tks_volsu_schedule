@@ -1,5 +1,5 @@
-from datetime import date
 from math import ceil
+from typing import TYPE_CHECKING
 
 from lets_plot import (
     LetsPlot,
@@ -16,10 +16,16 @@ from lets_plot import (
     xlab,
     ylab,
 )
-from sqlalchemy.sql.schema import Sequence
 
 from app.core.constants import PLOT_PATH
-from app.schemas.activity import ActivityDayStat, ActivityHourStat
+
+
+if TYPE_CHECKING:
+    from datetime import date
+
+    from sqlalchemy.sql.schema import Sequence
+
+    from app.schemas.activity import ActivityDayStat, ActivityHourStat
 
 
 class ActivityPlotter:

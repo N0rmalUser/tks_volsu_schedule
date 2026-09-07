@@ -1,10 +1,15 @@
 from datetime import date, datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import func, select
 
+from app.core.constants import TZ
 from app.database.models import Activity
 from app.database.repository.base import BaseRepository
-from app.schemas.enums import ActivityType
+
+
+if TYPE_CHECKING:
+    from app.schemas.enums import ActivityType
 
 
 class ActivityRepository(BaseRepository):
@@ -81,4 +86,4 @@ class ActivityRepository(BaseRepository):
 
         result = await self.session.execute(stmt)
 
-        return {datetime.strptime(row.hour, "%Y-%m-%d %H:00:00"): row.user_count for row in result}
+        return {datetime.strptime(row.hour, "%Y-%m-%d %H:00:00").replace(tzinfo=TZ): row.user_count for row in result}

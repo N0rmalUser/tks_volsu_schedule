@@ -1,9 +1,13 @@
 from dataclasses import dataclass
-from datetime import time
+from typing import TYPE_CHECKING
 
 from pydantic import BaseModel
 
-from app.schemas.enums import WeekType
+
+if TYPE_CHECKING:
+    from datetime import time
+
+    from app.schemas.enums import WeekType
 
 
 @dataclass(frozen=True, slots=True)

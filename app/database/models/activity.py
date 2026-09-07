@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime  # noqa: TC003
 
 from sqlalchemy import Enum, ForeignKey, func
 from sqlalchemy.orm import Mapped, mapped_column

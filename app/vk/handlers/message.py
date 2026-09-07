@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import logging
 
 from vkbottle.bot import BotLabeler, Message
 
@@ -66,8 +65,6 @@ async def help_handler(msg: Message):
 
 @router.message(text="Расписание на сегодня")
 async def schedule_handler(msg: Message):
-    logging.debug(msg.text)
-
     async with session_scope() as session:
         service = await UserService.create(session, Platform.VK, msg.from_id)
         role: UserRole = await service.get_user_role()

@@ -1,67 +1,34 @@
 import re
+from typing import TYPE_CHECKING
 
+from app.core.constants import DAY_NAMES, LESSON_LABELS, LESSON_TIME, TIME_SYMBOLS
 from app.schemas.enums import WeekType
-from app.schemas.schedule import ScheduleEntry
 
 
-LESSON_TIME = {
-    1: "08:30-10:00",
-    2: "10:10-11:40",
-    3: "12:00-13:30",
-    4: "13:40-15:10",
-    5: "15:20-16:50",
-    6: "17:00-18:30",
-    7: "18:40-20:10",
-}
-
-DAY_NAMES = {
-    1: "Понедельник",
-    2: "Вторник",
-    3: "Среда",
-    4: "Четверг",
-    5: "Пятница",
-    6: "Суббота",
-}
+if TYPE_CHECKING:
+    from app.schemas.schedule import ScheduleEntry
 
 
 def get_time_symbol(start_time: str) -> str:
     """Метод для получения эмодзи часов с указанным временем времени"""
 
-    hour = int(start_time.split(":")[0])
-    if 8 <= hour < 10:
-        return "🕣"
-    if 10 <= hour < 12:
-        return "🕙"
-    if 12 <= hour < 13:
-        return "🕛"
-    if 13 <= hour < 14:
-        return "🕜"
-    if 14 <= hour < 16:
-        return "🕞"
-    if 16 <= hour < 18:
-        return "🕔"
-    if 18 <= hour < 20:
-        return "🕡"
+    hour = int(start_time.split(":", maxsplit=1)[0])
+    for limit, symbol in TIME_SYMBOLS:
+        if hour < limit:
+            return symbol
+
     return "🕙"
 
 
 def get_lesson_label(subject: str) -> str:
-    """Метод для получения типа пары по его сокращению"""
+    """Получить тип пары по сокращению."""
+
     subject = subject.lower()
-    if "пр" in subject:
-        return "Практика"
-    if "пр." in subject:
-        return "Практика"
-    if "лаб" in subject:
-        return "Лабораторные"
-    if "лаб." in subject:
-        return "Лабораторные"
-    if "л" in subject:
-        return "Лекция"
-    if "л." in subject:
-        return "Лекция"
-    if any(phrase in subject for phrase in ("курс", "кур/проект", "кур/проек.")):
-        return "Курсовой проект"
+
+    for patterns, label in LESSON_LABELS:
+        if any(pattern in subject for pattern in patterns):
+            return label
+
     return ""
 
 

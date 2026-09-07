@@ -94,7 +94,7 @@ class Config(BaseSettings):
         return self.database_url.render_as_string(hide_password=False)
 
     @model_validator(mode="after")
-    def build_all_personal(self) -> "Config":
+    def build_all_personal(self) -> Config:
         """Объединённый список преподавателей и сотрудников-студентов."""
         self.all_personal = sorted(set(self.teachers) | set(self.students))
         return self

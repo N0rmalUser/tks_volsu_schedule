@@ -1,10 +1,14 @@
 from datetime import date, datetime, time, timedelta
+from typing import TYPE_CHECKING
 
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.database.models import Activity
 from app.database.repository.activity import ActivityRepository
-from app.schemas.enums import ActivityType
+
+
+if TYPE_CHECKING:
+    from sqlalchemy.ext.asyncio import AsyncSession
+
+    from app.database.models import Activity
+    from app.schemas.enums import ActivityType
 
 
 class ActivityService:

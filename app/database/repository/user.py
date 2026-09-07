@@ -1,9 +1,14 @@
+from typing import TYPE_CHECKING
+
 from sqlalchemy import select
 from sqlalchemy.orm import joinedload
 
 from app.database.models import User
 from app.database.repository.base import BaseRepository
-from app.schemas.enums import Platform
+
+
+if TYPE_CHECKING:
+    from app.schemas.enums import Platform
 
 
 class UserRepository(BaseRepository):
@@ -76,4 +81,4 @@ class UserRepository(BaseRepository):
             if hasattr(user, key):
                 setattr(user, key, value)
             else:
-                raise ValueError(f"У модели User нет поля {key}")
+                raise ValueError("У модели User нет поля %s", key)

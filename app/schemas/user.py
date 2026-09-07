@@ -1,7 +1,11 @@
 from dataclasses import dataclass
-from datetime import datetime
+from typing import TYPE_CHECKING
 
-from app.schemas.enums import UserRole
+
+if TYPE_CHECKING:
+    from datetime import datetime
+
+    from app.schemas.enums import UserRole
 
 
 @dataclass(frozen=True, slots=True)

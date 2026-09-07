@@ -15,12 +15,11 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import logging
+from typing import TYPE_CHECKING
 
 from aiogram import F, Router
 from aiogram.enums import ParseMode
 from aiogram.filters import Command, CommandStart
-from aiogram.types import Message
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.common.utils import get_schedule, get_today
 from app.core.config import config
@@ -32,7 +31,13 @@ from app.tg.markups import user as kb
 from app.tg.markups.admin import admin_menu
 
 
+if TYPE_CHECKING:
+    from aiogram.types import Message
+    from sqlalchemy.ext.asyncio import AsyncSession
+
+
 router = Router()
+logger = logging.getLogger(__name__)
 
 
 @router.message(CommandStart(), ChatTypeIdFilter(chat_type=["private"]))
@@ -64,7 +69,7 @@ async def start_handler(msg: Message, session: AsyncSession) -> None:
             reply_markup=admin_menu(),
             parse_mode=ParseMode.HTML,
         )
-        logging.info(f"Создан топик имени {msg.from_user.id} @{msg.from_user.username}")
+        logger.info("Создан топик имени %s @%s", msg.from_user.id, msg.from_user.username)
 
     role: UserRole = await service.get_user_role()
 
@@ -122,10 +127,10 @@ async def admin_handler(msg: Message, session: AsyncSession) -> None:
 
     await service.set_tg_tracking(tracking=True)
     topic_id = await service.get_tg_topic_id()
-    logging.warning(f"Юзверь {msg.from_user.id} @{msg.from_user.username} просит помощи админа")
+    logger.warning("Юзверь %s @%s просит помощи админа", msg.from_user.id, msg.from_user.username)
     await msg.forward(chat_id=config.admin_chat_id, message_thread_id=topic_id)
     await msg.answer("Модератор скоро напишет вам, ожидайте. Пока можете описать проблему.")
-    logging.info(f"{msg.from_user.id} написал админу")
+    logger.info("%s написал админу", msg.from_user.id)
 
 
 @router.message(Command("spreadsheets"), ChatTypeIdFilter(chat_type=["private"]))
@@ -213,7 +218,7 @@ async def text_handler(msg: Message, session: AsyncSession) -> None:
     service = await UserService.create(session, Platform.TELEGRAM, msg.from_user.id)
     tracked = await service.get_tg_tracking()
     if not tracked:
-        logging.info(f"{msg.from_user.id} написал неправильную команду")
+        logger.info("%s написал неправильную команду", msg.from_user.id)
         await msg.answer("Я не знаю такой команды")
 
 

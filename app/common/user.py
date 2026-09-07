@@ -4,11 +4,11 @@ from typing import TYPE_CHECKING
 from dateutil.relativedelta import relativedelta
 
 from app.core.constants import TZ
-from app.services.user import UserService
 
 
 if TYPE_CHECKING:
     from app.schemas.user import UserInfo
+    from app.services.user import UserService
 
 
 def format_date(date_and_time: datetime) -> str:

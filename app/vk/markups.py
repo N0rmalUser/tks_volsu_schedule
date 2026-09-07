@@ -184,18 +184,18 @@ def teachers(page: int = 0) -> str:
     chunk = sorted(config.teachers)[start:end]
 
     for i, teacher in enumerate(chunk, start=1):
-        i += page * 8
+        index = i + page * 8
         keyboard.add(
             Callback(
                 label=teacher,
                 payload={
                     "action": "teacher",
-                    "value": i,
+                    "value": index,
                 },
             ),
         )
 
-        if i % 2 == 0:
+        if index % 2 == 0:
             keyboard.row()
 
     keyboard.row()

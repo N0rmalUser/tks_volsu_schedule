@@ -1,9 +1,14 @@
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import TYPE_CHECKING
 
-from app.database.models import User
 from app.database.repository.user import UserRepository
 from app.schemas.enums import Platform, UserRole
 from app.schemas.user import UserInfo
+
+
+if TYPE_CHECKING:
+    from sqlalchemy.ext.asyncio import AsyncSession
+
+    from app.database.models import User
 
 
 class UserService:
@@ -13,7 +18,7 @@ class UserService:
         self.user = user
 
     @classmethod
-    async def create(cls, session: AsyncSession, platform: Platform, user_id: int) -> "UserService":
+    async def create(cls, session: AsyncSession, platform: Platform, user_id: int) -> UserService:
         repo = UserRepository(session)
         user = await repo.get_or_create(platform=platform, platform_user_id=user_id)
         return cls(session, user)
@@ -23,7 +28,7 @@ class UserService:
         cls,
         session: AsyncSession,
         tg_topic_id: int,
-    ) -> "UserService | None":
+    ) -> UserService | None:
         repo = UserRepository(session)
 
         user = await repo.get_by_tg_topic_id(

@@ -17,17 +17,17 @@
 import asyncio
 import logging
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from aiogram import F, Router
 from aiogram.filters import Command, CommandObject
 from aiogram.types import FSInputFile, Message
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.common.activity_plotter import ActivityPlotter
 from app.common.schedule_parser import parse_university_schedule
 from app.common.user import user_info
 from app.core.config import config
-from app.core.constants import DATA_PATH, GROUPS_SCHEDULE_PATH, PLOT_PATH
+from app.core.constants import DATA_PATH, GROUPS_SCHEDULE_PATH, PLOT_PATH, TZ
 from app.schemas.enums import GroupType, UserRole
 from app.services.activity import ActivityService
 from app.services.schedule import ScheduleService
@@ -36,7 +36,12 @@ from app.tg.filters import ChatTypeIdFilter
 from app.tg.markups import admin as kb
 
 
+if TYPE_CHECKING:
+    from sqlalchemy.ext.asyncio import AsyncSession
+
+
 router = Router()
+logger = logging.getLogger(__name__)
 
 
 @router.message(Command("month"), ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=config.admin_chat_id))
@@ -44,11 +49,11 @@ async def handle_send_daily_plot(msg: Message, session: AsyncSession) -> None:
     """Отправляет график количества пользователей по дням."""
 
     service = ActivityService(session)
-    stats = await service.get_activity_for_month(datetime.today())
+    stats = await service.get_activity_for_month(datetime.now(TZ))
 
     ActivityPlotter().save_moth(
         stats,
-        datetime.today().strftime("%d %B %Y"),
+        datetime.now(TZ).strftime("%d %B %Y"),
     )
     await msg.answer_document(FSInputFile(PLOT_PATH / "activity_for_month.html"))
 
@@ -58,11 +63,11 @@ async def handle_send_hourly_plot(msg: Message, session: AsyncSession) -> None:
     """Отправляет график количества пользователей по часам для определённого дня."""
 
     service = ActivityService(session)
-    stats = await service.get_activity_for_day(datetime.today())
+    stats = await service.get_activity_for_day(datetime.now(TZ))
 
     ActivityPlotter().save_day(
         stats,
-        datetime.today(),
+        datetime.now(TZ),
     )
     await msg.answer_document(FSInputFile(PLOT_PATH / "activity_for_day.html"))
 
@@ -83,29 +88,13 @@ async def update_handler(msg: Message) -> None:
             rows=rows,
             group_type=GroupType.UNIVERSITY,
         )
-    except Exception as e:
+    except Exception:
         await start.edit_text("Ошибка обновления базы данных расписания университета")
-        logging.error(e)
+        logger.exception("")
         return
 
     await start.edit_text("База данных расписания обновлена")
-    logging.info("База данных расписания обновлена")
-
-
-# @router.message(Command("college"), ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=config.admin_chat_id))
-# async def college_handler(msg: Message) -> None:
-#     from app.common import schedule_parser
-#
-#     start = await msg.answer("Обновляю расписание колледжа...")
-#     try:
-#         await schedule_parser.college_schedule_parser()
-#     except Exception as e:
-#         await start.edit_text("Ошибка обновления базы данных расписания колледжа")
-#         logging.error(e)
-#         return
-#
-#     await start.edit_text("База данных расписания колледжа обновлена")
-#     logging.info("База данных расписания колледжа обновлена")
+    logger.info("База данных расписания обновлена")
 
 
 @router.message(Command("track"), ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=config.admin_chat_id))
@@ -211,20 +200,20 @@ async def file_handler(msg: Message) -> None:
                 msg.bot.collected_messages = []
 
             msg.bot.collected_messages.append(file_map[key]["message"])
-            logging.info(file_map[key]["message"])
+            logger.info(file_map[key]["message"])
 
         else:
             if not hasattr(msg.bot, "collected_messages"):
                 msg.bot.collected_messages = []
             msg.bot.collected_messages.append(f"Файл {file_name} нельзя заменить")
-            logging.info(f"{msg.from_user.id} пытался заменить файл {file_name}")
+            logger.info("%s пытался заменить файл %s", msg.from_user.id, file_name)
 
         if hasattr(msg.bot, "send_message_task"):
             msg.bot.send_message_task.cancel()
 
         msg.bot.send_message_task = asyncio.create_task(send_collected_messages(msg))
-    except Exception as e:
-        logging.error(f"Ошибка при загрузке файлов: {e}")
+    except Exception:
+        logger.exception("Ошибка при загрузке файлов: ")
 
 
 async def send_collected_messages(msg: Message) -> None:

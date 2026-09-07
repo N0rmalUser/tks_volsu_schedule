@@ -40,27 +40,66 @@ extend-exclude = ["__pycache__", "uv.lock", "alembic"]
 
 [tool.ruff.lint]
 select = [
-    # Pycodestyle / Pyflakes
-
+    # Базовые проверки
     "E", "W", "F",
-    # Imports / naming
 
-    "I", "N",
+    # Импорты и соглашения об именовании
+    "I",
+    "ICN",
+    "TID",
+    "N",
 
-    # Bugbear / security / correctness
-    "B", "A", "SLOT", "RET", "RSE", "SIM", "ISC", "S",
+    # Совместимость и современный Python
+    "UP",
+    "FA",
+    "YTT",
+    "TCH",
+    "INT",
 
-    # Modern Python / typing
-    "UP", "FA", "TCH", "YTT", "INT",
+    # Корректность и потенциальные ошибки
+    "B",
+    "A",
+    "RET",
+    "RSE",
+    "SIM",
+    "ISC",
+    "SLOT",
+    "S",
 
-    # Comprehensions / performance
-    "C4", "PERF", "FURB", "FLY",
+    # Производительность и стиль
+    "C4",
+    "PERF",
+    "FURB",
+    "FLY",
+    "PIE",
 
-    # Code quality
-    "PIE", "RUF", "PTH", "SLF", "ASYNC",
+    # Качество кода
+    "RUF",
+    "PTH",
+    "SLF",
+    "PL",
+    "C90",
 
-    # Logging / comments / formatting
-    "ICN", "TID", "COM", "Q", "T10", "T20",
+    # Асинхронность и работа со временем
+    "ASYNC",
+    "DTZ",
+
+    # Логирование и отладка
+    "LOG",
+    "G",
+    "T20",
+    "ERA",
+
+    # Комментарии и строки
+    "COM",
+    "Q",
+
+    # Исключения
+    "TRY",
+
+    # Прочее
+    "T10",   # debugger
+    "FAST",  # FastAPI
 ]
 
 ignore = [
@@ -68,6 +107,8 @@ ignore = [
     "RUF001",
     "RUF002",
     "RUF003",
+    "PLR2004",
+    "TRY003"
 ]
 
 [tool.ruff.lint.isort]

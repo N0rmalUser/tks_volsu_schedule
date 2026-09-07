@@ -15,7 +15,6 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import logging
-from collections.abc import Awaitable, Callable, Coroutine
 from typing import TYPE_CHECKING, Any
 
 from aiogram import BaseMiddleware
@@ -24,7 +23,6 @@ from aiogram.exceptions import (
     TelegramNetworkError,
     TelegramRetryAfter,
 )
-from aiogram.types import Message, TelegramObject, Update
 
 from app.core.config import config
 from app.database.session import session_scope
@@ -32,7 +30,12 @@ from app.schemas.enums import Platform
 from app.services.user import UserService
 
 
+logger = logging.getLogger(__name__)
+
 if TYPE_CHECKING:
+    from collections.abc import Awaitable, Callable, Coroutine
+
+    from aiogram.types import Message, TelegramObject, Update
     from sqlalchemy.ext.asyncio.session import AsyncSession
 
 
@@ -68,11 +71,11 @@ class CallbackTelegramErrorsMiddleware(BaseMiddleware):
             await handler(event, data)
         except TelegramBadRequest as e:
             if not any(err in str(e) for err in ["message is not modified", "query is too old"]):
-                logging.exception(e)
+                logger.exception("")
         except TelegramNetworkError:
-            logging.error("TelegramNetworkError")
+            logger.exception("TelegramNetworkError")
         except TelegramRetryAfter:
-            logging.error("TelegramRetryAfter 25 секунд")
+            logger.exception("TelegramRetryAfter 25 секунд")
 
 
 class TrackingMiddleware(BaseMiddleware):
