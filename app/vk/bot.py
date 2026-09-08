@@ -14,21 +14,28 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+import logging
+
 from vkbottle import Bot
 
 from app.core.config import config
-from app.core.logger import set_logging
+from app.core.logging_config import setup_logging
 from app.vk.handlers import callback, message
 
 
 def main() -> None:
-    set_logging("vkbottle")
+    setup_logging()
+
+    vkbottle_logger = logging.getLogger("vkbottle")
+
+    vkbottle_logger.handlers.clear()
+    vkbottle_logger.propagate = True
 
     bot = Bot(token=config.vk_bot_token)
     bot.labeler.load(message.router)
     bot.labeler.load(callback.router)
 
-    bot.run_forever()
+    bot.run()
 
 
 if __name__ == "__main__":

@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+import structlog
 from aiogram import Router
 from aiogram.filters.chat_member_updated import KICKED, MEMBER, ChatMemberUpdatedFilter
 from aiogram.types import ChatMemberUpdated
@@ -25,12 +26,14 @@ from app.services.user import UserService
 
 
 router = Router()
+log = structlog.get_logger()
 
 
 @router.my_chat_member(ChatMemberUpdatedFilter(member_status_changed=KICKED))
 async def user_blocked_bot(event: ChatMemberUpdated, session: AsyncSession) -> None:
     """Хендлер для считывания блокировки бота пользователем."""
 
+    log.info("block_bot")
     service = await UserService.create(session, Platform.TELEGRAM, event.from_user.id)
     await service.set_bot_blocked(True)
     topic_id = await service.get_tg_topic_id()

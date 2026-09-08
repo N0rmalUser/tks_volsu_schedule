@@ -5,7 +5,7 @@ from aiogram.client.session.aiohttp import AiohttpSession
 from aiogram.fsm.storage.memory import MemoryStorage
 
 from app.core.config import config
-from app.core.logger import set_logging
+from app.core.logging_config import setup_logging
 from app.tg import middlewares
 from app.tg.handlers import (
     admin as admin_message,
@@ -18,7 +18,7 @@ from app.tg.handlers import (
 async def main() -> None:
     """Функция запуска бота. Удаляет веб хуки и стартует polling."""
 
-    set_logging("aiogram.event")
+    setup_logging()
 
     session = AiohttpSession()
     bot = Bot(token=config.tg_bot_token, session=session)

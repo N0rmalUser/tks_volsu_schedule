@@ -14,8 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import logging
 
+import structlog
 from aiogram import F, Router
 from aiogram.enums import ParseMode
 from aiogram.filters import Command, CommandStart
@@ -33,13 +33,14 @@ from app.tg.markups.admin import admin_menu
 
 
 router = Router()
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger()
 
 
 @router.message(CommandStart(), ChatTypeIdFilter(chat_type=["private"]))
 async def start_handler(msg: Message, session: AsyncSession) -> None:
     """Обработчик команды /start"""
 
+    logger.info("start_command_received")
     service = await UserService.create(session, Platform.TELEGRAM, msg.from_user.id)
 
     topic_id = await service.get_tg_topic_id()

@@ -14,10 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import logging
 from collections.abc import Awaitable, Callable, Coroutine
 from typing import Any
 
+import structlog
 from aiogram import BaseMiddleware
 from aiogram.exceptions import (
     TelegramBadRequest,
@@ -26,6 +26,10 @@ from aiogram.exceptions import (
 )
 from aiogram.types import Message, TelegramObject, Update
 from sqlalchemy.ext.asyncio.session import AsyncSession
+from structlog.contextvars import (
+    bind_contextvars,
+    clear_contextvars,
+)
 
 from app.core.config import config
 from app.database.session import session_scope
@@ -33,7 +37,25 @@ from app.schemas.enums import Platform
 from app.services.user import UserService
 
 
-logger = logging.getLogger(__name__)
+log = structlog.get_logger()
+
+
+class LoggingMiddleware:
+    async def __call__(self, handler, event, data):
+        clear_contextvars()
+
+        user = data.get("event_from_user")
+        bind_contextvars(
+            platform="telegram",
+            user_id=user.id,
+            update_id=data["update_id"],
+        )
+
+        try:
+            return await handler(event, data)
+
+        finally:
+            clear_contextvars()
 
 
 class SessionMiddleware(BaseMiddleware):
@@ -68,11 +90,11 @@ class CallbackTelegramErrorsMiddleware(BaseMiddleware):
             await handler(event, data)
         except TelegramBadRequest as e:
             if not any(err in str(e) for err in ["message is not modified", "query is too old"]):
-                logger.exception("")
+                log.exception()
         except TelegramNetworkError:
-            logger.exception("TelegramNetworkError")
+            log.exception()
         except TelegramRetryAfter:
-            logger.exception("TelegramRetryAfter 25 секунд")
+            log.exception()
 
 
 class TrackingMiddleware(BaseMiddleware):
