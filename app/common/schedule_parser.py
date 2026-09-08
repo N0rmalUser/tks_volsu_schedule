@@ -6,6 +6,7 @@ from pathlib import Path
 from docx import Document
 from docx.table import _Row
 
+from app.core.config import config
 from app.core.constants import DAYS_OF_WEEK, GROUPS_SCHEDULE_PATH, LESSON_BY_START_TIME
 from app.schemas.enums import WeekType
 from app.schemas.schedule import ScheduleRow
@@ -91,8 +92,15 @@ def _parse_info(text: str) -> dict[str, str | list[str] | list[None] | None] | N
         flags=re.IGNORECASE,
     )
 
-    teachers = [teacher for teacher in (value.strip() for value in re.split(r"\s*,\s*", rest)) if teacher]
+    teachers_raw = [t.strip() for t in re.split(r"\s*,\s*", rest) if t.strip()]
 
+    teachers = []
+    for t in teachers_raw:
+        key = next(
+            (k for k, v in config.aliases.items() if v == t),
+            t,
+        )
+        teachers.append(key)
     return {
         "subject": subject,
         "teachers": teachers or [None],
