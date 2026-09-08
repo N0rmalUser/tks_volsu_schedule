@@ -48,7 +48,6 @@ class LoggingMiddleware:
         bind_contextvars(
             platform="telegram",
             user_id=user.id,
-            update_id=data["update_id"],
         )
 
         try:
