@@ -1,12 +1,8 @@
 import re
-from typing import TYPE_CHECKING
 
 from app.core.constants import DAY_NAMES, LESSON_LABELS, LESSON_TIME, TIME_SYMBOLS
 from app.schemas.enums import WeekType
-
-
-if TYPE_CHECKING:
-    from app.schemas.schedule import ScheduleEntry
+from app.schemas.schedule import ScheduleEntry
 
 
 def get_time_symbol(start_time: str) -> str:

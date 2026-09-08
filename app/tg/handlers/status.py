@@ -14,19 +14,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-from typing import TYPE_CHECKING
-
 from aiogram import Router
 from aiogram.filters.chat_member_updated import KICKED, MEMBER, ChatMemberUpdatedFilter
+from aiogram.types import ChatMemberUpdated
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import config
 from app.schemas.enums import Platform
 from app.services.user import UserService
-
-
-if TYPE_CHECKING:
-    from aiogram.types import ChatMemberUpdated
-    from sqlalchemy.ext.asyncio import AsyncSession
 
 
 router = Router()

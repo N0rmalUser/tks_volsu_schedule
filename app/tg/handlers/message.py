@@ -15,11 +15,12 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import logging
-from typing import TYPE_CHECKING
 
 from aiogram import F, Router
 from aiogram.enums import ParseMode
 from aiogram.filters import Command, CommandStart
+from aiogram.types import Message
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.common.utils import get_schedule, get_today
 from app.core.config import config
@@ -29,11 +30,6 @@ from app.services.user import UserService
 from app.tg.filters import ChatTypeIdFilter
 from app.tg.markups import user as kb
 from app.tg.markups.admin import admin_menu
-
-
-if TYPE_CHECKING:
-    from aiogram.types import Message
-    from sqlalchemy.ext.asyncio import AsyncSession
 
 
 router = Router()

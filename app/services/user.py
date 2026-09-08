@@ -1,14 +1,9 @@
-from typing import TYPE_CHECKING
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.database.models import User
 from app.database.repository.user import UserRepository
 from app.schemas.enums import Platform, UserRole
 from app.schemas.user import UserInfo
-
-
-if TYPE_CHECKING:
-    from sqlalchemy.ext.asyncio import AsyncSession
-
-    from app.database.models import User
 
 
 class UserService:

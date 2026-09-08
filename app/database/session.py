@@ -1,5 +1,5 @@
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from typing import TYPE_CHECKING
 
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
@@ -9,10 +9,6 @@ from sqlalchemy.ext.asyncio import (
 )
 
 from app.core.config import config
-
-
-if TYPE_CHECKING:
-    from collections.abc import AsyncIterator
 
 
 engine: AsyncEngine = create_async_engine(

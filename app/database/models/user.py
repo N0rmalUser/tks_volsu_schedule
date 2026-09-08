@@ -1,15 +1,11 @@
-from datetime import datetime  # noqa: TC003
-from typing import TYPE_CHECKING
+from datetime import datetime
 
 from sqlalchemy import BigInteger, Boolean, DateTime, Enum, ForeignKey, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database.base import Base
+from app.database.models.schedule import Group, Teacher
 from app.schemas.enums import Platform, UserRole
-
-
-if TYPE_CHECKING:
-    from app.database.models.schedule import Group, Teacher
 
 
 class User(Base):

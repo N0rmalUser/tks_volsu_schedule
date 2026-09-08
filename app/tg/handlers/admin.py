@@ -17,11 +17,11 @@
 import asyncio
 import logging
 from datetime import datetime
-from typing import TYPE_CHECKING
 
 from aiogram import F, Router
 from aiogram.filters import Command, CommandObject
 from aiogram.types import FSInputFile, Message
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.common.activity_plotter import ActivityPlotter
 from app.common.schedule_parser import parse_university_schedule
@@ -34,10 +34,6 @@ from app.services.schedule import ScheduleService
 from app.services.user import UserService
 from app.tg.filters import ChatTypeIdFilter
 from app.tg.markups import admin as kb
-
-
-if TYPE_CHECKING:
-    from sqlalchemy.ext.asyncio import AsyncSession
 
 
 router = Router()

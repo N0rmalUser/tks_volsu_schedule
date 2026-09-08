@@ -2,17 +2,13 @@ import logging
 import re
 from datetime import time
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 from docx import Document
+from docx.table import _Row
 
 from app.core.constants import DAYS_OF_WEEK, GROUPS_SCHEDULE_PATH, LESSON_BY_START_TIME
 from app.schemas.enums import WeekType
 from app.schemas.schedule import ScheduleRow
-
-
-if TYPE_CHECKING:
-    from docx.table import _Row
 
 
 logger = logging.getLogger(__name__)

@@ -15,7 +15,8 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import logging
-from typing import TYPE_CHECKING, Any
+from collections.abc import Awaitable, Callable, Coroutine
+from typing import Any
 
 from aiogram import BaseMiddleware
 from aiogram.exceptions import (
@@ -23,6 +24,8 @@ from aiogram.exceptions import (
     TelegramNetworkError,
     TelegramRetryAfter,
 )
+from aiogram.types import Message, TelegramObject, Update
+from sqlalchemy.ext.asyncio.session import AsyncSession
 
 from app.core.config import config
 from app.database.session import session_scope
@@ -31,12 +34,6 @@ from app.services.user import UserService
 
 
 logger = logging.getLogger(__name__)
-
-if TYPE_CHECKING:
-    from collections.abc import Awaitable, Callable, Coroutine
-
-    from aiogram.types import Message, TelegramObject, Update
-    from sqlalchemy.ext.asyncio.session import AsyncSession
 
 
 class SessionMiddleware(BaseMiddleware):

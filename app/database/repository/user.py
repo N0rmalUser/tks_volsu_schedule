@@ -1,14 +1,9 @@
-from typing import TYPE_CHECKING
-
 from sqlalchemy import select
 from sqlalchemy.orm import joinedload
 
 from app.database.models import User
 from app.database.repository.base import BaseRepository
-
-
-if TYPE_CHECKING:
-    from app.schemas.enums import Platform
+from app.schemas.enums import Platform
 
 
 class UserRepository(BaseRepository):

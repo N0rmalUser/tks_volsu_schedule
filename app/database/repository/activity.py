@@ -1,15 +1,11 @@
 from datetime import date, datetime
-from typing import TYPE_CHECKING
 
 from sqlalchemy import func, select
 
 from app.core.constants import TZ
 from app.database.models import Activity
 from app.database.repository.base import BaseRepository
-
-
-if TYPE_CHECKING:
-    from app.schemas.enums import ActivityType
+from app.schemas.enums import ActivityType
 
 
 class ActivityRepository(BaseRepository):

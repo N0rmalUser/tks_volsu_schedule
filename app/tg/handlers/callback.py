@@ -14,9 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-from typing import TYPE_CHECKING
-
 from aiogram import F, Router
+from aiogram.types import CallbackQuery
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.common.utils import get_schedule, get_today
 from app.schemas.enums import ActivityType, Keyboard, Platform, WeekType
@@ -30,11 +30,6 @@ from app.tg.markups.keyboard_factory import (
     DayCallbackFactory,
     DefaultChangeCallbackFactory,
 )
-
-
-if TYPE_CHECKING:
-    from aiogram.types import CallbackQuery
-    from sqlalchemy.ext.asyncio import AsyncSession
 
 
 router = Router()
