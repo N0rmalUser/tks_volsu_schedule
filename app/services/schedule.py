@@ -88,6 +88,48 @@ class ScheduleService:
 
             await schedule_repository.add_schedule(entries)
 
+    def _merge_schedule_entries(self, entries: list[ScheduleEntry]) -> list[ScheduleEntry]:
+        """
+        Объединяет записи расписания, у которых совпадают время, предмет,
+        преподаватель и аудитория, но отличаются группы (потоковые лекции).
+        """
+        merged = {}
+        for e in entries:
+            # Ключ для группировки (всё, кроме названия группы)
+            key = (
+                e.day_of_week,
+                e.lesson_number,
+                e.week_type,
+                e.subject,
+                e.teacher,
+                e.room,
+                e.subgroup,
+            )
+
+            if key not in merged:
+                merged[key] = {
+                    "lesson_number": e.lesson_number,
+                    "day_of_week": e.day_of_week,
+                    "week_type": e.week_type,
+                    "subject": e.subject,
+                    "teacher": e.teacher,
+                    "room": e.room,
+                    "subgroup": e.subgroup,
+                    "groups": [e.group] if e.group else [],
+                }
+            elif e.group:
+                merged[key]["groups"].append(e.group)
+
+        result = []
+        for data in merged.values():
+            # Убираем дубликаты и сортируем названия групп для красивого вывода
+            groups = sorted({g for g in data["groups"] if g})
+            data["group"] = ", ".join(groups) if groups else None
+            del data["groups"]
+            result.append(ScheduleEntry(**data))
+
+        return result
+
     async def get_group_schedule(
         self,
         *,
@@ -165,6 +207,7 @@ class ScheduleService:
                 )
                 for s in schedules
             ]
+            entries = self._merge_schedule_entries(entries)
 
             return teacher_name, entries
 
@@ -205,6 +248,7 @@ class ScheduleService:
                 )
                 for s in schedules
             ]
+            entries = self._merge_schedule_entries(entries)
 
             return room_name, entries
 
