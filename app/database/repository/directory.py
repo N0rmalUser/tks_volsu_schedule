@@ -1,3 +1,5 @@
+from sqlalchemy import select
+
 from app.database.models.schedule import Group, Room, Subject, Teacher
 from app.database.repository.base import BaseRepository
 
@@ -37,3 +39,7 @@ class DirectoryRepository(BaseRepository):
 
     async def get_room_by_id(self, room_id: int) -> type[Room] | None:
         return await self.session.get(Room, room_id)
+
+    async def get_teacher_by_name(self, teacher_name: str) -> type[Teacher] | None:
+        result = await self.session.scalars(select(Teacher).where(Teacher.name == teacher_name))
+        return result.first()

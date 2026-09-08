@@ -191,6 +191,22 @@ class ScheduleService:
                 week_type=week,
             )
 
+            substitutes = config.substitute.get(teacher_name, [])
+
+            for substitute_name in substitutes:
+                substitute = await directory_repository.get_teacher_by_name(substitute_name)
+
+                if substitute is None:
+                    continue
+
+                schedules.extend(
+                    await schedule_repository.get_teacher_schedule(
+                        teacher_id=substitute.id,
+                        day_of_week=day_of_week,
+                        week_type=week,
+                    )
+                )
+
             entries = [
                 ScheduleEntry(
                     lesson_number=s.lesson_number,

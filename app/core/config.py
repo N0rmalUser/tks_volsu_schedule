@@ -59,6 +59,7 @@ class Config(BaseSettings):
 
     students: dict[str, str]
     aliases: dict[str, str]
+    substitute: dict[str, list[str]]
 
     # Вычисляется автоматически
     all_personal: list[str] = []
