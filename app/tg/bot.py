@@ -1,4 +1,5 @@
 import asyncio
+import logging
 
 from aiogram import Bot, Dispatcher
 from aiogram.client.session.aiohttp import AiohttpSession
@@ -20,6 +21,9 @@ async def main() -> None:
 
     setup_logging()
 
+    aiogram_logger = logging.getLogger("aiogram.event")
+    aiogram_logger.setLevel(logging.WARNING)
+
     session = AiohttpSession()
     bot = Bot(token=config.tg_bot_token, session=session)
     dp = Dispatcher(storage=MemoryStorage())
@@ -30,6 +34,7 @@ async def main() -> None:
         user_status.router,
         admin_message.router,
     )
+    dp.update.middleware(middlewares.LoggingMiddleware())
     dp.update.middleware(middlewares.SessionMiddleware())
     dp.update.middleware(middlewares.TrackingMiddleware())
     dp.callback_query.middleware(middlewares.CallbackTelegramErrorsMiddleware())
