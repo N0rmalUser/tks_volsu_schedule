@@ -1,4 +1,3 @@
-import logging
 import re
 from datetime import time
 from pathlib import Path
@@ -10,9 +9,6 @@ from app.core.config import config
 from app.core.constants import DAYS_OF_WEEK, GROUPS_SCHEDULE_PATH, LESSON_BY_START_TIME
 from app.schemas.enums import WeekType
 from app.schemas.schedule import ScheduleRow
-
-
-logger = logging.getLogger(__name__)
 
 
 def _parse_info(text: str) -> dict[str, str | list[str] | list[None] | None] | None:
@@ -408,5 +404,4 @@ def parse_university_schedule() -> list[ScheduleRow]:
                     )
 
             i += 2 if pair is not None else 1
-    logger.info("Расписания университета успешно сохранены в базу данных.")
     return result
