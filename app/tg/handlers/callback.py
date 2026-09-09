@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+import structlog
 from aiogram import F, Router
 from aiogram.types import CallbackQuery
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -33,6 +34,7 @@ from app.tg.markups.keyboard_factory import (
 
 
 router = Router()
+log = structlog.get_logger()
 
 
 @router.callback_query(DayCallbackFactory.filter(IgnoreFilter()))
@@ -51,7 +53,13 @@ async def day_handler(callback: CallbackQuery, callback_data: DayCallbackFactory
     week: WeekType = callback_data.week
     day: int = callback_data.day
     keyboard: Keyboard = callback_data.keyboard
-
+    log.info(
+        "schedule.view",
+        target=keyboard,
+        target_id=value,
+        week=week,
+        day=day,
+    )
     user = await UserService.create(session, Platform.TELEGRAM, callback.from_user.id)
     user_id = await user.get_id()
     service = ActivityService(session)
@@ -77,29 +85,6 @@ async def day_handler(callback: CallbackQuery, callback_data: DayCallbackFactory
     await callback.answer()
 
 
-@router.callback_query(DayCallbackFactory.filter(F.action == "week"))
-async def week_handler(callback: CallbackQuery, callback_data: DayCallbackFactory) -> None:
-    """Функция, обрабатывающая нажатие кнопки недели. Отправляет расписание на следующую неделю для преподавателей,
-    групп и аудиторий, сохраняя день."""
-
-    value: int = callback_data.value
-    week: WeekType = WeekType.ODD if callback_data.week != WeekType.EVEN else WeekType.EVEN
-    day: int = callback_data.day
-    keyboard: Keyboard = callback_data.keyboard
-
-    text = await get_schedule(
-        target=keyboard,
-        day=day,
-        week=week,
-        value=value,
-    )
-    await callback.message.edit_text(
-        text=text,
-        reply_markup=kb.get_days(keyboard=keyboard, week=week, day=day, value=value),
-    )
-    await callback.answer()
-
-
 @router.callback_query(ChangeCallbackFactory.filter(F.action == "room"))
 async def room_handler(callback: CallbackQuery, callback_data: ChangeCallbackFactory) -> None:
     """Функция, обрабатывающая нажатие кнопки аудитории. Отправляет расписание на этот день для аудитории."""
@@ -107,6 +92,14 @@ async def room_handler(callback: CallbackQuery, callback_data: ChangeCallbackFac
     value: int = callback_data.value
     day, week = get_today()
     keyboard = Keyboard.ROOM
+
+    log.info(
+        "schedule.target_selected",
+        target=callback_data.action,
+        day=day,
+        week=week,
+        value=value,
+    )
 
     text = await get_schedule(
         target=keyboard,
@@ -131,7 +124,6 @@ async def group_teacher_handler(
 
     value: int = callback_data.value
     day, week = get_today()
-
     service = await UserService.create(session, Platform.TELEGRAM, callback.from_user.id)
 
     if callback_data.action == "teacher":
@@ -141,6 +133,13 @@ async def group_teacher_handler(
         await service.set_group(value)
         keyboard = Keyboard.STUDENT
 
+    log.info(
+        "schedule.target_selected",
+        target=callback_data.action,
+        day=day,
+        week=week,
+        value=value,
+    )
     text = await get_schedule(
         target=keyboard,
         day=day,
@@ -164,6 +163,11 @@ async def default_teacher_handler(
     callback: CallbackQuery, callback_data: DefaultChangeCallbackFactory, session: AsyncSession
 ) -> None:
     value: int = callback_data.value
+    log.info(
+        "settings.default_changed",
+        target="teacher",
+        target_id=value,
+    )
     if value is None:
         await callback.message.edit_text("Выбор по умолчанию удалён")
         await callback.answer()
@@ -182,6 +186,11 @@ async def default_group_handler(
     callback: CallbackQuery, callback_data: DefaultChangeCallbackFactory, session: AsyncSession
 ) -> None:
     value: int = callback_data.value
+    log.info(
+        "settings.default_changed",
+        target="group",
+        target_id=value,
+    )
     if value is None:
         await callback.message.edit_text("Выбор по умолчанию удалён")
         await callback.answer()

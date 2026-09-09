@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-
+import structlog
 from vkbottle.bot import BotLabeler, Message
 
 from app.common.utils import get_schedule, get_today
@@ -25,10 +25,12 @@ from app.vk.markups import days, directions, group_menu, rooms, teacher_menu, te
 
 
 router = BotLabeler()
+log = structlog.get_logger()
 
 
 @router.message(text=["/start", "Начать"])
 async def start_handler(msg: Message):
+    log.info("command.start")
     async with session_scope() as session:
         service = await UserService.create(session, Platform.VK, msg.from_id)
         role = await service.get_user_role()
@@ -50,6 +52,7 @@ async def start_handler(msg: Message):
 
 @router.message(command="help")
 async def help_handler(msg: Message):
+    log.info("command.help")
     await msg.answer(
         """
 Привет, это бот расписания кафедры ТКС в вк!
@@ -79,6 +82,14 @@ async def schedule_handler(msg: Message):
             keyboard=teachers() if role == UserRole.TEACHER else directions(),
         )
         return
+
+    log.info(
+        "schedule.view",
+        target=role,
+        target_id=entity_id,
+        week=week,
+        day=day,
+    )
 
     if role == UserRole.TEACHER:
         keyboard = Keyboard.TEACHER

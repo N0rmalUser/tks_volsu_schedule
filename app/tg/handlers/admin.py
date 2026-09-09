@@ -27,7 +27,7 @@ from app.common.activity_plotter import ActivityPlotter
 from app.common.schedule_parser import parse_university_schedule
 from app.common.user import user_info
 from app.core.config import config
-from app.core.constants import DATA_PATH, GROUPS_SCHEDULE_PATH, PLOT_PATH, TZ
+from app.core.constants import GROUPS_SCHEDULE_PATH, PLOT_PATH, TZ
 from app.schemas.enums import GroupType, UserRole
 from app.services.activity import ActivityService
 from app.services.schedule import ScheduleService
@@ -37,7 +37,7 @@ from app.tg.markups import admin as kb
 
 
 router = Router()
-logger = logging.getLogger(__name__)
+log = logging.getLogger(__name__)
 
 
 @router.message(Command("month"), ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=config.admin_chat_id))
@@ -86,11 +86,11 @@ async def update_handler(msg: Message) -> None:
         )
     except Exception:
         await start.edit_text("Ошибка обновления базы данных расписания университета")
-        logger.exception("")
+        log.exception("schedule.database_update_failed")
         return
 
     await start.edit_text("База данных расписания обновлена")
-    logger.info("База данных расписания обновлена")
+    log.info("schedule.updated")
 
 
 @router.message(Command("track"), ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=config.admin_chat_id))
@@ -184,20 +184,18 @@ async def file_handler(msg: Message) -> None:
                 msg.bot.collected_messages = []
 
             msg.bot.collected_messages.append(file_map[key]["message"])
-            logger.info(file_map[key]["message"])
-
         else:
             if not hasattr(msg.bot, "collected_messages"):
                 msg.bot.collected_messages = []
             msg.bot.collected_messages.append(f"Файл {file_name} нельзя заменить")
-            logger.info("%s пытался заменить файл %s", msg.from_user.id, file_name)
+            log.info("%s пытался заменить файл %s", msg.from_user.id, file_name)
 
         if hasattr(msg.bot, "send_message_task"):
             msg.bot.send_message_task.cancel()
 
         msg.bot.send_message_task = asyncio.create_task(send_collected_messages(msg))
     except Exception:
-        logger.exception("Ошибка при загрузке файлов: ")
+        log.exception("schedule.file_change_error")
 
 
 async def send_collected_messages(msg: Message) -> None:
@@ -205,6 +203,7 @@ async def send_collected_messages(msg: Message) -> None:
 
     if hasattr(msg.bot, "collected_messages") and msg.bot.collected_messages:
         await msg.answer("Заменил файлы:\n" + "\n".join(msg.bot.collected_messages))
+        log.info("schedule.files_changed")
         del msg.bot.collected_messages
 
 

@@ -33,14 +33,14 @@ from app.tg.markups.admin import admin_menu
 
 
 router = Router()
-logger = structlog.get_logger()
+log = structlog.get_logger()
 
 
 @router.message(CommandStart(), ChatTypeIdFilter(chat_type=["private"]))
 async def start_handler(msg: Message, session: AsyncSession) -> None:
     """Обработчик команды /start"""
 
-    logger.info("start_command_received")
+    log.info("command.start")
     service = await UserService.create(session, Platform.TELEGRAM, msg.from_user.id)
 
     topic_id = await service.get_tg_topic_id()
@@ -66,7 +66,7 @@ async def start_handler(msg: Message, session: AsyncSession) -> None:
             reply_markup=admin_menu(),
             parse_mode=ParseMode.HTML,
         )
-        logger.info("Создан топик имени %s @%s", msg.from_user.id, msg.from_user.username)
+        log.info("user.topic_created")
 
     role: UserRole = await service.get_user_role()
 
@@ -84,6 +84,7 @@ async def start_handler(msg: Message, session: AsyncSession) -> None:
 async def help_handler(msg: Message, session: AsyncSession) -> None:
     """Обработчик команды /help. Отправляет сообщение с описанием бота."""
 
+    log.info("command.help")
     service = await UserService.create(session, Platform.TELEGRAM, msg.from_user.id)
     role: UserRole = await service.get_user_role()
 
@@ -120,20 +121,20 @@ async def help_handler(msg: Message, session: AsyncSession) -> None:
 async def admin_handler(msg: Message, session: AsyncSession) -> None:
     """Обработчик команды /admin. Пересылает сообщение админу и включает слежку за действиями пользователя."""
 
+    log.info("command.admin")
     service = await UserService.create(session, Platform.TELEGRAM, msg.from_user.id)
 
     await service.set_tg_tracking(tracking=True)
     topic_id = await service.get_tg_topic_id()
-    logger.warning("Юзверь %s @%s просит помощи админа", msg.from_user.id, msg.from_user.username)
     await msg.forward(chat_id=config.admin_chat_id, message_thread_id=topic_id)
     await msg.answer("Модератор скоро напишет вам, ожидайте. Пока можете описать проблему.")
-    logger.info("%s написал админу", msg.from_user.id)
 
 
 @router.message(Command("spreadsheets"), ChatTypeIdFilter(chat_type=["private"]))
 async def spreadsheets_handler(msg: Message, session: AsyncSession) -> None:
     """Обработчик команды /spreadsheets. Присылает пользователю файл с расписанием выбранной группы/преподавателя"""
 
+    log.info("spreadsheets_menu_opened")
     service = await UserService.create(session, Platform.TELEGRAM, msg.from_user.id)
     role: UserRole = await service.get_user_role()
 
@@ -158,6 +159,7 @@ async def default_handler(msg: Message, session: AsyncSession) -> None:
 
 @router.message(F.text == "Расписание на сегодня", ChatTypeIdFilter(chat_type=["private"]))
 async def schedule_handler(msg: Message, session: AsyncSession) -> None:
+
     service = await UserService.create(session, Platform.TELEGRAM, msg.from_user.id)
     role: UserRole = await service.get_user_role()
     day, week = get_today()
@@ -169,6 +171,14 @@ async def schedule_handler(msg: Message, session: AsyncSession) -> None:
             f"нажав на соответствующую кнопку.",
         )
         return
+
+    log.info(
+        "schedule.view",
+        target=role,
+        target_id=entity_id,
+        week=week,
+        day=day,
+    )
 
     activity_service = ActivityService(session)
     await activity_service.add(
@@ -193,6 +203,7 @@ async def schedule_handler(msg: Message, session: AsyncSession) -> None:
         ),
         reply_markup=week_kb,
     )
+    log.info("schedule_sent")
 
 
 @router.message(F.text == "Кабинеты", ChatTypeIdFilter(chat_type=["private"]))
@@ -215,7 +226,10 @@ async def text_handler(msg: Message, session: AsyncSession) -> None:
     service = await UserService.create(session, Platform.TELEGRAM, msg.from_user.id)
     tracked = await service.get_tg_tracking()
     if not tracked:
-        logger.info("%s написал неправильную команду", msg.from_user.id)
+        log.warning(
+            "unknown_text_received",
+            text=msg.text[:100],
+        )
         await msg.answer("Я не знаю такой команды")
 
 
@@ -224,4 +238,8 @@ async def other_handler(msg: Message, session: AsyncSession) -> None:
     service = await UserService.create(session, Platform.TELEGRAM, msg.from_user.id)
     tracked = await service.get_tg_tracking()
     if not tracked:
+        log.warning(
+            "unsupported_message_type",
+            content_type=msg.content_type,
+        )
         await msg.answer("Я тебя не понимаю, буковы пиши!")
