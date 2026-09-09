@@ -16,6 +16,7 @@
 
 import logging
 
+from vk.middlewares import LoggingMessageMiddleware, LoggingRawEventMiddleware
 from vkbottle import Bot
 
 from app.core.config import config
@@ -34,6 +35,8 @@ def main() -> None:
     bot = Bot(token=config.vk_bot_token)
     bot.labeler.load(message.router)
     bot.labeler.load(callback.router)
+    bot.labeler.message_view.register_middleware(LoggingMessageMiddleware)
+    bot.labeler.raw_event_view.register_middleware(LoggingRawEventMiddleware)
 
     bot.run()
 
