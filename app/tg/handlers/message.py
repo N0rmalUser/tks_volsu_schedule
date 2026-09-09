@@ -134,7 +134,6 @@ async def admin_handler(msg: Message, session: AsyncSession) -> None:
 async def spreadsheets_handler(msg: Message, session: AsyncSession) -> None:
     """Обработчик команды /spreadsheets. Присылает пользователю файл с расписанием выбранной группы/преподавателя"""
 
-    log.info("spreadsheets_menu_opened")
     service = await UserService.create(session, Platform.TELEGRAM, msg.from_user.id)
     role: UserRole = await service.get_user_role()
 

@@ -188,7 +188,6 @@ async def file_handler(msg: Message) -> None:
             if not hasattr(msg.bot, "collected_messages"):
                 msg.bot.collected_messages = []
             msg.bot.collected_messages.append(f"Файл {file_name} нельзя заменить")
-            log.info("%s пытался заменить файл %s", msg.from_user.id, file_name)
 
         if hasattr(msg.bot, "send_message_task"):
             msg.bot.send_message_task.cancel()
