@@ -162,18 +162,6 @@ async def file_handler(msg: Message) -> None:
 
     file_name = msg.document.file_name
     file_map = {
-        "schedule.db": {
-            "path": DATA_PATH / "db",
-            "message": "Заменили расписание",
-        },
-        "users.db": {
-            "path": DATA_PATH / "db",
-            "message": "Заменили базу данных пользователей",
-        },
-        "activities.db": {
-            "path": DATA_PATH / "db",
-            "message": "Заменили базу данных активности пользователей",
-        },
         ".docx": {
             "path": GROUPS_SCHEDULE_PATH,
             "message": file_name,
