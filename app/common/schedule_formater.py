@@ -10,7 +10,7 @@ def get_time_symbol(start_time: str) -> str:
 
     hour = int(start_time.split(":", maxsplit=1)[0])
     for limit, symbol in TIME_SYMBOLS:
-        if hour < limit:
+        if hour == limit:
             return symbol
 
     return "🕙"

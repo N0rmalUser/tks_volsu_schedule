@@ -20,7 +20,7 @@ ROOMS_SHEETS_PATH = DATA_PATH / "rooms"
 
 PLOT_PATH = DATA_PATH / "plot"
 
-TIME_SYMBOLS = {(8, "🕣"), (10, "🕙"), (12, "🕛"), (13, "🕜"), (14, "🕞"), (16, "🕔"), (18, "🕡")}
+TIME_SYMBOLS = {(8, "🕣"), (10, "🕙"), (12, "🕛"), (13, "🕜"), (15, "🕞"), (17, "🕔"), (18, "🕡")}
 
 LESSON_LABELS = (
     (("пр", "пр."), "Практика"),
