@@ -17,15 +17,16 @@
 import logging
 
 import structlog
-from vk.middlewares import LoggingMessageMiddleware, LoggingRawEventMiddleware
 from vkbottle import Bot
 
 from app.core.config import config
 from app.core.logging_config import setup_logging
 from app.vk.handlers import callback, message
+from app.vk.middlewares import LoggingMessageMiddleware, LoggingRawEventMiddleware
 
 
 log = structlog.get_logger()
+
 
 def main() -> None:
     setup_logging()
