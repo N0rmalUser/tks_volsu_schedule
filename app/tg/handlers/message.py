@@ -203,7 +203,6 @@ async def schedule_handler(msg: Message, session: AsyncSession) -> None:
         ),
         reply_markup=week_kb,
     )
-    log.info("schedule_sent")
 
 
 @router.message(F.text == "Кабинеты", ChatTypeIdFilter(chat_type=["private"]))
