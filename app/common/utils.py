@@ -3,7 +3,8 @@ from datetime import datetime
 from app.common.schedule_formater import ScheduleFormatter
 from app.core.config import config
 from app.core.constants import TZ
-from app.schemas.enums import WEEK_MAP, Keyboard, WeekType
+from app.schemas.enums import Keyboard, WeekType
+from core.constants import WEEK_MAP
 from app.services.schedule import ScheduleService
 
 

@@ -36,9 +36,3 @@ class Keyboard(StrEnum):
     STUDENT = "student"
     TEACHER = "teacher"
     ROOM = "room"
-
-
-WEEK_MAP = {
-    1: WeekType.ODD,
-    2: WeekType.EVEN,
-}

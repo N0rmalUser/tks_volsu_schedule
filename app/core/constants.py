@@ -4,6 +4,7 @@ from pathlib import Path
 import pytz
 
 from app.core.config import config
+from app.schemas.enums import WeekType
 from app.schemas.schedule import LessonTime
 
 
@@ -57,7 +58,6 @@ DAYS_OF_WEEK = {
     "суббота": 6,
 }
 
-
 LESSONS: tuple[LessonTime, ...] = (
     LessonTime(1, time(8, 30), time(10, 0)),
     LessonTime(2, time(10, 10), time(11, 40)),
@@ -69,3 +69,8 @@ LESSONS: tuple[LessonTime, ...] = (
 )
 
 LESSON_BY_START_TIME: dict[time, int] = {lesson.start: lesson.number for lesson in LESSONS}
+
+WEEK_MAP = {
+    1: WeekType.ODD,
+    2: WeekType.EVEN,
+}
