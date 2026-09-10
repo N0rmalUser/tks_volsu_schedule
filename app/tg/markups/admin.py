@@ -15,8 +15,6 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from aiogram.types import (
-    InlineKeyboardButton,
-    InlineKeyboardMarkup,
     KeyboardButton,
     ReplyKeyboardMarkup,
 )
@@ -30,41 +28,13 @@ def admin_menu() -> ReplyKeyboardMarkup:
                 KeyboardButton(text="/teacher"),
             ],
             [
-                KeyboardButton(text="/log"),
                 KeyboardButton(text="/track stop"),
-                KeyboardButton(text="/track status"),
-            ],
-            [
-                KeyboardButton(text="/dump"),
                 KeyboardButton(text="/menu"),
                 KeyboardButton(text="/update"),
             ],
             [
-                KeyboardButton(text="/month"),
-                KeyboardButton(text="/day"),
                 KeyboardButton(text="/info"),
             ],
         ],
         resize_keyboard=True,
-    )
-
-
-def cancel_sending() -> InlineKeyboardMarkup:
-    return InlineKeyboardMarkup(
-        inline_keyboard=[[InlineKeyboardButton(text="❌ Отменить отправку", callback_data="cancel_sending")]],
-    )
-
-
-def message_confirm() -> InlineKeyboardMarkup:
-    return InlineKeyboardMarkup(
-        inline_keyboard=[
-            [
-                InlineKeyboardButton(text="✅ Всем", callback_data="confirm_all"),
-            ],
-            [
-                InlineKeyboardButton(text="👫 Студентам", callback_data="confirm_students"),
-                InlineKeyboardButton(text="👨‍🏫 Преподавателям", callback_data="confirm_teachers"),
-            ],
-            [InlineKeyboardButton(text="❌ Никому", callback_data="cancel_send")],
-        ],
     )

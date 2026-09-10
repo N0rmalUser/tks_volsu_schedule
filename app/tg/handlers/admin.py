@@ -16,20 +16,17 @@
 
 import asyncio
 import logging
-from datetime import datetime
 
 from aiogram import F, Router
 from aiogram.filters import Command, CommandObject
-from aiogram.types import FSInputFile, Message
+from aiogram.types import Message
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.common.activity_plotter import ActivityPlotter
 from app.common.schedule_parser import parse_university_schedule
 from app.common.user import user_info
 from app.core.config import config
-from app.core.constants import GROUPS_SCHEDULE_PATH, PLOT_PATH, TZ
+from app.core.constants import GROUPS_SCHEDULE_PATH
 from app.schemas.enums import GroupType, UserRole
-from app.services.activity import ActivityService
 from app.services.schedule import ScheduleService
 from app.services.user import UserService
 from app.tg.filters import ChatTypeIdFilter
@@ -38,34 +35,6 @@ from app.tg.markups import admin as kb
 
 router = Router()
 log = logging.getLogger(__name__)
-
-
-@router.message(Command("month"), ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=config.admin_chat_id))
-async def handle_send_daily_plot(msg: Message, session: AsyncSession) -> None:
-    """Отправляет график количества пользователей по дням."""
-
-    service = ActivityService(session)
-    stats = await service.get_activity_for_month(datetime.now(TZ))
-
-    ActivityPlotter().save_moth(
-        stats,
-        datetime.now(TZ).strftime("%d %B %Y"),
-    )
-    await msg.answer_document(FSInputFile(PLOT_PATH / "activity_for_month.html"))
-
-
-@router.message(Command("day"), ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=config.admin_chat_id))
-async def handle_send_hourly_plot(msg: Message, session: AsyncSession) -> None:
-    """Отправляет график количества пользователей по часам для определённого дня."""
-
-    service = ActivityService(session)
-    stats = await service.get_activity_for_day(datetime.now(TZ))
-
-    ActivityPlotter().save_day(
-        stats,
-        datetime.now(TZ),
-    )
-    await msg.answer_document(FSInputFile(PLOT_PATH / "activity_for_day.html"))
 
 
 @router.message(Command("menu"), ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=config.admin_chat_id))

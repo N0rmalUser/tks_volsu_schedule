@@ -20,8 +20,7 @@ from aiogram.types import CallbackQuery
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.common.utils import get_schedule, get_today
-from app.schemas.enums import ActivityType, Keyboard, Platform, WeekType
-from app.services.activity import ActivityService
+from app.schemas.enums import Keyboard, Platform, WeekType
 from app.services.schedule import ScheduleService
 from app.services.user import UserService
 from app.tg.filters import IgnoreFilter
@@ -45,7 +44,7 @@ async def ignore_handler(callback: CallbackQuery) -> None:
 
 
 @router.callback_query(DayCallbackFactory.filter(F.action.in_(["day", "week"])))
-async def day_handler(callback: CallbackQuery, callback_data: DayCallbackFactory, session: AsyncSession) -> None:
+async def day_handler(callback: CallbackQuery, callback_data: DayCallbackFactory) -> None:
     """Функция, обрабатывающая нажатие кнопки дня недели. Отправляет расписание на этот день для преподавателей,
     групп и аудиторий."""
 
@@ -59,14 +58,6 @@ async def day_handler(callback: CallbackQuery, callback_data: DayCallbackFactory
         target_id=value,
         week=week,
         day=day,
-    )
-    user = await UserService.create(session, Platform.TELEGRAM, callback.from_user.id)
-    user_id = await user.get_id()
-    service = ActivityService(session)
-    await service.add(
-        user_id=user_id,
-        action=ActivityType.DAY_VIEW,
-        group_id=value,
     )
 
     if callback_data.action == "week":

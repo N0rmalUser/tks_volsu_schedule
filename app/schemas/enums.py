@@ -7,16 +7,6 @@ class WeekType(StrEnum):
     EVEN = "even"
 
 
-class ActivityType(StrEnum):
-    START = "start"
-    SCHEDULE_VIEW = "schedule_view"
-    DAY_VIEW = "day_view"
-    TODAY_VIEW = "today_view"
-
-    DEFAULT_TEACHER_SELECTED = "default_teacher_selected"
-    DEFAULT_GROUP_SELECTED = "default_group_selected"
-
-
 class DayOfWeek(IntEnum):
     MONDAY = 1
     TUESDAY = 2
