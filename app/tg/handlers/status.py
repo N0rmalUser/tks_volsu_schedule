@@ -5,7 +5,7 @@ from aiogram.types import ChatMemberUpdated
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import config
-from app.schemas.enums import Platform
+from app.core.enums import Platform
 from app.services.user import UserService
 
 

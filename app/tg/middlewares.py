@@ -16,8 +16,8 @@ from structlog.contextvars import (
 )
 
 from app.core.config import config
+from app.core.enums import Platform
 from app.database.session import session_scope
-from app.schemas.enums import Platform
 from app.services.user import UserService
 
 

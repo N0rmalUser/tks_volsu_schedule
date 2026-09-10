@@ -2,7 +2,7 @@ from aiogram.types import InlineKeyboardMarkup, KeyboardButton, ReplyKeyboardMar
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from app.core.config import config
-from app.schemas.enums import DayOfWeek, Keyboard, UserRole, WeekType
+from app.core.enums import DayOfWeek, Keyboard, UserRole, WeekType
 from app.services.schedule import ScheduleService
 from app.tg.markups import keyboard_factory
 

@@ -3,9 +3,9 @@ from datetime import datetime
 from sqlalchemy import BigInteger, Boolean, DateTime, Enum, ForeignKey, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from app.core.enums import Platform, UserRole
 from app.database.base import Base
 from app.database.models.schedule import Group, Teacher
-from app.schemas.enums import Platform, UserRole
 
 
 class User(Base):

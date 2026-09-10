@@ -2,9 +2,8 @@ from datetime import datetime
 
 from app.common.schedule_formater import ScheduleFormatter
 from app.core.config import config
-from app.core.constants import TZ
-from app.schemas.enums import Keyboard, WeekType
-from core.constants import WEEK_MAP
+from app.core.constants import TZ, WEEK_MAP
+from app.core.enums import Keyboard, WeekType
 from app.services.schedule import ScheduleService
 
 

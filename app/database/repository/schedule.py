@@ -2,9 +2,9 @@ from sqlalchemy import Sequence, delete, or_, select
 from sqlalchemy.orm import joinedload
 
 from app.core.config import config
+from app.core.enums import GroupType, WeekType
 from app.database.models.schedule import Room, Schedule
 from app.database.repository.base import BaseRepository
-from app.schemas.enums import GroupType, WeekType
 
 
 class ScheduleRepository(BaseRepository):

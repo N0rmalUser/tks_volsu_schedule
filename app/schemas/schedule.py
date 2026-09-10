@@ -3,7 +3,7 @@ from datetime import time
 
 from pydantic import BaseModel
 
-from app.schemas.enums import WeekType
+from app.core.enums import WeekType
 
 
 @dataclass(frozen=True, slots=True)

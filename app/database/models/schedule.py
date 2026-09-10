@@ -9,8 +9,8 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from app.core.enums import GroupType, WeekType
 from app.database.base import Base
-from app.schemas.enums import GroupType, WeekType
 
 
 class Group(Base):

@@ -7,7 +7,7 @@ from docx.table import _Row
 
 from app.core.config import config
 from app.core.constants import DAYS_OF_WEEK, GROUPS_SCHEDULE_PATH, LESSON_BY_START_TIME
-from app.schemas.enums import WeekType
+from app.core.enums import WeekType
 from app.schemas.schedule import ScheduleRow
 
 

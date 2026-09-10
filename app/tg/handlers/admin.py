@@ -10,7 +10,7 @@ from app.common.schedule_parser import parse_university_schedule
 from app.common.user import user_info
 from app.core.config import config
 from app.core.constants import GROUPS_SCHEDULE_PATH
-from app.schemas.enums import GroupType, UserRole
+from app.core.enums import GroupType, UserRole
 from app.services.schedule import ScheduleService
 from app.services.user import UserService
 from app.tg.filters import ChatTypeIdFilter

@@ -1,9 +1,9 @@
 from sqlalchemy import select
 from sqlalchemy.orm import joinedload
 
+from app.core.enums import Platform
 from app.database.models import User
 from app.database.repository.base import BaseRepository
-from app.schemas.enums import Platform
 
 
 class UserRepository(BaseRepository):

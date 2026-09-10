@@ -1,6 +1,6 @@
 from aiogram.filters.callback_data import CallbackData
 
-from app.schemas.enums import Keyboard, WeekType
+from app.core.enums import Keyboard, WeekType
 
 
 class ChangeCallbackFactory(CallbackData, prefix="start"):

@@ -1,7 +1,7 @@
 from vkbottle import Callback, Keyboard, KeyboardButtonColor, Text
 
 from app.core.config import config
-from app.schemas.enums import WeekType
+from app.core.enums import WeekType
 
 
 def group_menu() -> str:

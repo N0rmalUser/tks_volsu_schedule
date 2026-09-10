@@ -4,7 +4,7 @@ from aiogram.types import CallbackQuery
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.common.utils import get_schedule, get_today
-from app.schemas.enums import Keyboard, Platform, WeekType
+from app.core.enums import Keyboard, Platform, WeekType
 from app.services.schedule import ScheduleService
 from app.services.user import UserService
 from app.tg.filters import IgnoreFilter

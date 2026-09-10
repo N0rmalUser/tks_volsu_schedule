@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.common.utils import get_schedule, get_today
 from app.core.config import config
-from app.schemas.enums import Keyboard, Platform, UserRole
+from app.core.enums import Keyboard, Platform, UserRole
 from app.services.user import UserService
 from app.tg.filters import ChatTypeIdFilter
 from app.tg.markups import user as kb

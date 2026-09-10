@@ -2,8 +2,8 @@ import structlog
 from vkbottle.bot import BotLabeler, Message
 
 from app.common.utils import get_schedule, get_today
+from app.core.enums import Keyboard, Platform, UserRole
 from app.database.session import session_scope
-from app.schemas.enums import Keyboard, Platform, UserRole
 from app.services.user import UserService
 from app.vk.markups import days, directions, group_menu, rooms, teacher_menu, teachers
 

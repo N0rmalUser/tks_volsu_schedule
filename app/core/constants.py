@@ -4,7 +4,7 @@ from pathlib import Path
 import pytz
 
 from app.core.config import config
-from app.schemas.enums import WeekType
+from app.core.enums import WeekType
 from app.schemas.schedule import LessonTime
 
 

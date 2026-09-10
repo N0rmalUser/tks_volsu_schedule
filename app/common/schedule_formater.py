@@ -1,7 +1,7 @@
 import re
 
 from app.core.constants import DAY_NAMES, LESSON_LABELS, LESSON_TIME, TIME_SYMBOLS
-from app.schemas.enums import WeekType
+from app.core.enums import WeekType
 from app.schemas.schedule import ScheduleEntry
 
 
