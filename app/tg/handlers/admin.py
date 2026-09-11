@@ -7,7 +7,7 @@ from aiogram.types import Message
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.common.schedule_parser import parse_university_schedule
-from app.common.user import user_info
+from app.common.utils import user_info
 from app.core.config import config
 from app.core.constants import GROUPS_SCHEDULE_PATH
 from app.core.enums import GroupType, UserRole
