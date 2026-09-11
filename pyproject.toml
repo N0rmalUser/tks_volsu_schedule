@@ -7,7 +7,7 @@ requires-python = ">=3.14"
 dependencies = [
     "aiocron>=2.1",
     "aiogram>=3.31.0",
-    "alembic>=1.19.1",
+    "alembic>=1.19.2",
     "asyncio>=4.0.0",
     "asyncpg>=0.31.0",
     "openpyxl>=3.1.5",
@@ -22,8 +22,8 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "pre-commit==4.5.1",
-    "ruff==0.15.0",
+    "pre-commit==4.6.2",
+    "ruff==0.16.7",
 ]
 
 [tool.uv]
