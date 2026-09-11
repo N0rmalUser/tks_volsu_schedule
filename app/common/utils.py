@@ -54,7 +54,7 @@ def format_date(date_and_time: datetime) -> str:
     """Преобразует relativedelta в строку вида 'X лет, Y мес., Z дн.'"""
 
     if date_and_time.tzinfo is None:
-        date_and_time = TZ.localize(date_and_time)
+        date_and_time = date_and_time.replace(tzinfo=TZ)
     rd = relativedelta(datetime.now(TZ), date_and_time)
     parts = [
         (rd.years, "лет"),

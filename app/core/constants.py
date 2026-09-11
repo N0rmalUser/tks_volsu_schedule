@@ -1,15 +1,14 @@
 from datetime import time
 from pathlib import Path
-
-import pytz
+from zoneinfo import ZoneInfo
 
 from app.core.config import config
-from app.core.enums import WeekType
+from app.core.enums import DayOfWeek, WeekType
 from app.schemas.schedule import LessonTime
 
 
 # ===== TIMEZONE =====
-TZ = pytz.timezone(config.timezone)
+TZ: ZoneInfo = ZoneInfo(config.timezone)
 
 # ===== PATHS =====
 ROOT_PATH = Path(__file__).resolve().parent.parent.parent
@@ -73,4 +72,13 @@ LESSON_BY_START_TIME: dict[time, int] = {lesson.start: lesson.number for lesson 
 WEEK_MAP = {
     1: WeekType.ODD,
     2: WeekType.EVEN,
+}
+
+DAYS_SHORT = {
+    DayOfWeek.MONDAY: "Пн",
+    DayOfWeek.TUESDAY: "Вт",
+    DayOfWeek.WEDNESDAY: "Ср",
+    DayOfWeek.THURSDAY: "Чт",
+    DayOfWeek.FRIDAY: "Пт",
+    DayOfWeek.SATURDAY: "Сб",
 }

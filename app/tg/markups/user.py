@@ -2,19 +2,10 @@ from aiogram.types import InlineKeyboardMarkup, KeyboardButton, ReplyKeyboardMar
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from app.core.config import config
-from app.core.enums import DayOfWeek, Keyboard, UserRole, WeekType
+from app.core.constants import DAYS_SHORT
+from app.core.enums import Keyboard, UserRole, WeekType
 from app.services.schedule import ScheduleService
 from app.tg.markups import keyboard_factory
-
-
-DAYS_SHORT = {
-    DayOfWeek.MONDAY: "Пн",
-    DayOfWeek.TUESDAY: "Вт",
-    DayOfWeek.WEDNESDAY: "Ср",
-    DayOfWeek.THURSDAY: "Чт",
-    DayOfWeek.FRIDAY: "Пт",
-    DayOfWeek.SATURDAY: "Сб",
-}
 
 
 def student_menu() -> ReplyKeyboardMarkup:
