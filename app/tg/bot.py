@@ -8,6 +8,7 @@ from aiogram.fsm.storage.memory import MemoryStorage
 
 from app.core.config import config
 from app.core.logging_config import setup_logging
+from app.schemas.keyboard import init_keyboard_data
 from app.tg import middlewares
 from app.tg.handlers import (
     admin as admin_message,
@@ -24,6 +25,7 @@ async def main() -> None:
     """Функция запуска бота. Удаляет веб хуки и стартует polling."""
 
     setup_logging()
+    await init_keyboard_data()
 
     aiogram_logger = logging.getLogger("aiogram.event")
     aiogram_logger.setLevel(logging.WARNING)

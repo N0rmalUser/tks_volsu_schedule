@@ -1,3 +1,4 @@
+import asyncio
 import logging
 
 import structlog
@@ -5,6 +6,7 @@ from vkbottle import Bot
 
 from app.core.config import config
 from app.core.logging_config import setup_logging
+from app.schemas.keyboard import init_keyboard_data
 from app.vk.handlers import callback, message
 from app.vk.middlewares import LoggingMessageMiddleware, LoggingRawEventMiddleware
 
@@ -12,8 +14,10 @@ from app.vk.middlewares import LoggingMessageMiddleware, LoggingRawEventMiddlewa
 log = structlog.get_logger()
 
 
-def main() -> None:
+async def main() -> None:
     setup_logging()
+
+    await init_keyboard_data()
 
     vkbottle_logger = logging.getLogger("vkbottle")
 
@@ -27,8 +31,8 @@ def main() -> None:
     bot.labeler.raw_event_view.register_middleware(LoggingRawEventMiddleware)
 
     log.info("bot_started")
-    bot.run()
+    await bot.run_polling()
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())

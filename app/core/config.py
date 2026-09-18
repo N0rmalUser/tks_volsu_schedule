@@ -47,7 +47,6 @@ class Config(BaseSettings):
 
     # Вычисляется автоматически
     all_personal: list[str] = []
-    all_personal_ids: dict[str, int] = {}
 
     # ===== COLLEGE =====
     api_url: str

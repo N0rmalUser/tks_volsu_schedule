@@ -345,6 +345,12 @@ class ScheduleService:
                 return "Такой группы не существует"
             return cast("str", cast("object", group.name))
 
+    async def get_room_ids(self, room_names: list[str]) -> dict[str, int]:
+        async with session_scope() as session:
+            directory_repository = DirectoryRepository(session)
+            rooms = await directory_repository.get_rooms(room_names)
+            return {room.name: room.id for room in rooms}
+
     async def get_room_name(self, room_id: int) -> str:
         async with session_scope() as session:
             directory_repository = DirectoryRepository(session)

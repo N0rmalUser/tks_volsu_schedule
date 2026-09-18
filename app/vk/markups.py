@@ -2,6 +2,7 @@ from vkbottle import Callback, Keyboard, KeyboardButtonColor, Text
 
 from app.core.config import config
 from app.core.enums import WeekType
+from app.schemas.keyboard import keyboard_data
 
 
 def group_menu() -> str:
@@ -96,12 +97,13 @@ def rooms() -> str:
     keyboard = Keyboard(inline=True)
 
     for i, room in enumerate(config.rooms, start=1):
+        room_id = keyboard_data.room_ids[room]
         keyboard.add(
             Callback(
-                label=str(room),
+                label=room,
                 payload={
                     "action": "room",
-                    "value": i,
+                    "value": room_id,
                 },
             ),
         )
@@ -113,19 +115,19 @@ def rooms() -> str:
 
 
 def get_directions_from_groups() -> list:
-    directions = []
+    _directions = []
     for g in config.groups:
         dir_part = g.split("-", 1)[0].strip() if "-" in g else g.split()[0].strip()
-        if dir_part and dir_part not in directions:
-            directions.append(dir_part)
-    return directions
+        if dir_part and dir_part not in _directions:
+            _directions.append(dir_part)
+    return _directions
 
 
 def directions() -> str:
+    _directions = get_directions_from_groups()
     keyboard = Keyboard(inline=True)
-    directions = get_directions_from_groups()
 
-    for i, direction in enumerate(directions, start=1):
+    for i, direction in enumerate(_directions, start=1):
         keyboard.add(
             Callback(
                 label=direction,
@@ -141,22 +143,18 @@ def directions() -> str:
 def groups(direction: str) -> str:
     keyboard = Keyboard(inline=True)
 
-    filtered = [
-        g
-        for g in config.groups
-        if g.upper().startswith(direction.upper() + "-") or g.upper().startswith(direction.upper())
-    ]
+    filtered = [g for g in config.groups if g.upper().startswith(direction.upper())]
 
-    sorted_groups = sorted([group for group in config.groups if group != "-"])
-    for i, group in enumerate(filtered):
+    for group in filtered:
+        if int(group[-1]) == 1:
+            keyboard.row()
+        group_id = keyboard_data.group_ids[group]
         keyboard.add(
             Callback(
                 label=group,
-                payload={"action": "group", "value": sorted_groups.index(group) + 1},
+                payload={"action": "group", "value": group_id},
             ),
         )
-        if (i + 1) % 2 == 0:
-            keyboard.row()
     return keyboard.get_json()
 
 
@@ -165,21 +163,21 @@ def teachers(page: int = 0) -> str:
 
     start = page * 8
     end = start + 8
-    chunk = sorted(config.teachers)[start:end]
+    chunk = sorted(config.teachers, key=str)[start:end]
 
     for i, teacher in enumerate(chunk, start=1):
-        index = i + page * 8
+        teacher_id = keyboard_data.teacher_ids[teacher]
         keyboard.add(
             Callback(
                 label=teacher,
                 payload={
                     "action": "teacher",
-                    "value": index,
+                    "value": teacher_id,
                 },
             ),
         )
 
-        if index % 2 == 0:
+        if i % 2 == 0:
             keyboard.row()
 
     keyboard.row()

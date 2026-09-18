@@ -4,7 +4,7 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 from app.core.config import config
 from app.core.constants import DAYS_SHORT
 from app.core.enums import Keyboard, UserRole, WeekType
-from app.services.schedule import ScheduleService
+from app.schemas.keyboard import keyboard_data
 from app.tg.markups import keyboard_factory
 
 
@@ -36,9 +36,13 @@ def get_teachers() -> InlineKeyboardMarkup:
     """Возвращает клавиатуру с преподавателями, указанными в конфиге."""
 
     builder = InlineKeyboardBuilder()
-    for index, teacher in enumerate(sorted(config.teachers), start=1):
+    for teacher in sorted(config.teachers, key=str):
         builder.button(
-            text=str(teacher), callback_data=keyboard_factory.ChangeCallbackFactory(action="teacher", value=index)
+            text=teacher,
+            callback_data=keyboard_factory.ChangeCallbackFactory(
+                action="teacher",
+                value=keyboard_data.teacher_ids[teacher],
+            ),
         )
     builder.adjust(2)
     return builder.as_markup()
@@ -49,9 +53,8 @@ def get_groups() -> InlineKeyboardMarkup:
 
     builder = InlineKeyboardBuilder()
     counter = 0
-    groups = config.groups
-    sorted_groups = sorted([group for group in groups if group != "-"])
-    for group in groups:
+
+    for group in config.groups:
         if group == "-":
             counter += 1
             builder.button(
@@ -62,7 +65,7 @@ def get_groups() -> InlineKeyboardMarkup:
                 text=group,
                 callback_data=keyboard_factory.ChangeCallbackFactory(
                     action="group",
-                    value=sorted_groups.index(group) + 1,
+                    value=keyboard_data.group_ids[group],
                 ),
             )
     builder.adjust(3)
@@ -73,11 +76,13 @@ def get_rooms() -> InlineKeyboardMarkup:
     """Возвращает клавиатуру с аудиториями, указанными в конфиге."""
 
     builder = InlineKeyboardBuilder()
-    rooms = config.rooms
-    for index, room in enumerate(rooms, start=1):
+    for room in config.rooms:
         builder.button(
             text=str(room),
-            callback_data=keyboard_factory.ChangeCallbackFactory(action="room", value=index),
+            callback_data=keyboard_factory.ChangeCallbackFactory(
+                action="room",
+                value=keyboard_data.room_ids[room],
+            ),
         )
     builder.adjust(3)
     return builder.as_markup()
@@ -87,13 +92,12 @@ async def get_default_teachers() -> InlineKeyboardMarkup:
     """Возвращает клавиатуру с преподавателями, указанными в конфиге."""
 
     builder = InlineKeyboardBuilder()
-    all_personal_ids = await ScheduleService().get_teacher_ids()
     for teacher in config.all_personal:
         builder.button(
             text=str(teacher),
             callback_data=keyboard_factory.DefaultChangeCallbackFactory(
                 action="default_teacher",
-                value=all_personal_ids[teacher],
+                value=keyboard_data.teacher_ids[teacher],
             ),
         )
     builder.button(
@@ -109,9 +113,8 @@ def get_default_groups() -> InlineKeyboardMarkup:
 
     builder = InlineKeyboardBuilder()
     counter = 0
-    groups = config.groups
-    sorted_groups = sorted([group for group in groups if group != "-"])
-    for group in groups:
+
+    for group in config.groups:
         if group == "-":
             counter += 1
             builder.button(
@@ -122,7 +125,7 @@ def get_default_groups() -> InlineKeyboardMarkup:
                 text=group,
                 callback_data=keyboard_factory.DefaultChangeCallbackFactory(
                     action="default_group",
-                    value=sorted_groups.index(group) + 1,
+                    value=keyboard_data.teacher_ids[group],
                 ),
             )
     builder.button(
@@ -207,12 +210,12 @@ def get_sheet_teachers() -> InlineKeyboardMarkup:
     """Возвращает клавиатуру с преподавателями, указанными в конфиге."""
 
     builder = InlineKeyboardBuilder()
-    for index, teacher in enumerate(config.teachers, start=1):
+    for teacher in sorted(config.teachers, key=str):
         builder.button(
-            text=str(teacher),
+            text=teacher,
             callback_data=keyboard_factory.ChangeCallbackFactory(
                 action="teacher_sheet",
-                value=index,
+                value=keyboard_data.teacher_ids[teacher],
             ),
         )
     builder.adjust(2)
@@ -224,7 +227,7 @@ def get_sheet_groups(user_role: UserRole) -> InlineKeyboardMarkup:
 
     builder = InlineKeyboardBuilder()
     counter = 0
-    for index, group in enumerate(config.groups, start=1):
+    for group in config.groups:
         if group == "-":
             counter += 1
             builder.button(
@@ -236,7 +239,7 @@ def get_sheet_groups(user_role: UserRole) -> InlineKeyboardMarkup:
                 text=group,
                 callback_data=keyboard_factory.ChangeCallbackFactory(
                     action="group_sheet",
-                    value=index,
+                    value=keyboard_data.group_ids[group],
                 ),
             )
     builder.adjust(3)
@@ -255,12 +258,12 @@ def get_sheet_rooms() -> InlineKeyboardMarkup:
     """Возвращает клавиатуру с аудиториями, указанными в конфиге."""
 
     builder = InlineKeyboardBuilder()
-    for index, room in enumerate(config.rooms, start=1):
+    for room in config.rooms:
         builder.button(
             text=str(room),
             callback_data=keyboard_factory.ChangeCallbackFactory(
                 action="room_sheet",
-                value=index,
+                value=keyboard_data.room_ids[room],
             ),
         )
     builder.adjust(3)

@@ -11,6 +11,7 @@ from app.common.utils import user_info
 from app.core.config import config
 from app.core.constants import GROUPS_SCHEDULE_PATH
 from app.core.enums import GroupType, UserRole
+from app.schemas.keyboard import init_keyboard_data
 from app.services.schedule import ScheduleService
 from app.services.user import UserService
 from app.tg.filters import ChatTypeIdFilter
@@ -41,7 +42,7 @@ async def update_handler(msg: Message) -> None:
         await start.edit_text("Ошибка обновления базы данных расписания университета")
         log.exception("schedule.database_update_failed")
         return
-
+    await init_keyboard_data()
     await start.edit_text("База данных расписания обновлена")
     log.info("schedule.updated")
 
