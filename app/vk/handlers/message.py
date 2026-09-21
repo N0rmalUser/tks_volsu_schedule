@@ -1,48 +1,42 @@
-# TKS VOLSU SCHEDULE BOT
-# Copyright (C) 2024 N0rmalUser
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program. If not, see <http://www.gnu.org/licenses/>.
-
-import logging
-
+import structlog
 from vkbottle.bot import BotLabeler, Message
 
-from app.common import get_today, text_maker
-from app.database.schedule import Schedule
-from app.database.vkuser import VkUser
-from app.vk import markups
+from app.common.utils import get_schedule, get_today
+from app.core.enums import Keyboard, Platform, UserRole
+from app.database.session import session_scope
+from app.services.user import UserService
+from app.vk.markups import days, directions, group_menu, rooms, teacher_menu, teachers
 
 
 router = BotLabeler()
+log = structlog.get_logger()
 
 
 @router.message(text=["/start", "Начать"])
 async def start_handler(msg: Message):
-    user = VkUser(msg.from_id)
-
+    log.info("command.start")
+    async with session_scope() as session:
+        service = await UserService.create(session, Platform.VK, msg.from_id)
+        role = await service.get_user_role()
+        if role == UserRole.TEACHER:
+            menu = teacher_menu()
+            keyboard = teachers()
+        else:
+            menu = group_menu()
+            keyboard = directions()
     await msg.answer(
         message="Привет!\n",
-        keyboard=markups.menu(),
+        keyboard=menu,
     )
     await msg.answer(
         message="Выбери себя:",
-        keyboard=markups.teachers() if user.user_type == "teacher" else markups.directions(),
+        keyboard=keyboard,
     )
 
 
 @router.message(command="help")
 async def help_handler(msg: Message):
+    log.info("command.help")
     await msg.answer(
         """
 Привет, это бот расписания кафедры ТКС в вк!
@@ -58,54 +52,57 @@ async def help_handler(msg: Message):
 
 @router.message(text="Расписание на сегодня")
 async def schedule_handler(msg: Message):
-    user = VkUser(msg.from_id)
+    async with session_scope() as session:
+        service = await UserService.create(session, Platform.VK, msg.from_id)
+        role: UserRole = await service.get_user_role()
 
-    day, week = get_today()
-    entity_id: int = user.teacher if user.user_type == "teacher" else user.group
+        day, week = get_today()
+        entity_id = await service.get_default_id()
 
     if not entity_id:
         await msg.answer(
-            f"Сначала выберите {'ФИО преподавателя' if user.user_type == 'teacher' else 'группу'}, "
+            f"Сначала выберите {'ФИО преподавателя' if role == UserRole.TEACHER else 'группу'}, "
             f"нажав на соответствующую кнопку.",
-            keyboard=markups.teachers() if user.user_type == "teacher" else markups.directions(),
+            keyboard=teachers() if role == UserRole.TEACHER else directions(),
         )
         return
 
-    if user.user_type == "teacher":
-        week_kb = markups.days(keyboard_type="teacher", week=week, day=day, value=entity_id)
-        await msg.answer(
-            text_maker.get_teacher_schedule(
-                day=day,
-                week=week,
-                teacher_name=Schedule().get_teacher_name(entity_id),
-            ),
-            keyboard=week_kb,
-        )
-    elif user.user_type == "student":
-        week_kb = markups.days(keyboard_type="group", week=week, day=day, value=entity_id)
-        await msg.answer(
-            text_maker.get_group_schedule(
-                day=day,
-                week=week,
-                group_name=Schedule().get_group_name(entity_id),
-            ),
-            keyboard=week_kb,
-        )
+    log.info(
+        "schedule.view",
+        target=role,
+        target_id=entity_id,
+        week=week,
+        day=day,
+    )
+
+    if role == UserRole.TEACHER:
+        keyboard = Keyboard.TEACHER
+        week_kb = days(keyboard_type=keyboard, week=week, day=day, value=entity_id)
     else:
-        logging.info(f"{msg.from_user.id} неправильный тип пользователя")
-        await msg.answer("Ошибка! Напишите админу /admin")
+        keyboard = Keyboard.STUDENT
+        week_kb = days(keyboard_type=keyboard, week=week, day=day, value=entity_id)
+
+    await msg.answer(
+        await get_schedule(
+            target=keyboard,
+            day=day,
+            week=week,
+            value=entity_id,
+        ),
+        keyboard=week_kb,
+    )
 
 
 @router.message(text="Кабинеты")
 async def rooms_handler(msg: Message):
-    await msg.answer("Выберите кабинет", keyboard=markups.rooms())
+    await msg.answer("Выберите кабинет", keyboard=rooms())
 
 
 @router.message(text="Группы")
 async def groups_handler(msg: Message) -> None:
-    await msg.answer("Выберите группу", keyboard=markups.directions())
+    await msg.answer("Выберите группу", keyboard=directions())
 
 
 @router.message(text="Преподаватели")
 async def teachers_handler(msg: Message) -> None:
-    await msg.answer("Выберите преподавателя", keyboard=markups.teachers())
+    await msg.answer("Выберите преподавателя", keyboard=teachers())

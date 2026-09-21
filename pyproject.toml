@@ -3,63 +3,98 @@ name = "tks-volsu-schedule"
 version = "0.1.0"
 description = "Бот, показывающий расписание для студентов, преподавателей и кабинетов кафедры ТКС ВолГУ"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.14"
 dependencies = [
     "aiocron>=2.1",
-    "aiogram==3.24.0",
-    "aiohttp>=3.12.15",
-    "asyncio>=3.4.3",
-    "lets-plot==4.8.2",
-    "matplotlib==3.10.8",
+    "aiogram>=3.31.0",
+    "alembic>=1.19.2",
+    "asyncio>=4.0.0",
+    "asyncpg>=0.31.0",
     "openpyxl>=3.1.5",
-    "pandas==3.0.0",
-    "pandas-stubs==3.0.0.260204",
-    "pydantic>=2.11.10",
+    "pydantic>=2.13.5",
     "pydantic-settings>=2.15.0",
-    "python-docx>=1.1.2",
-    "pytz>=2024.1",
-    "toml>=0.10.2",
-    "types-pytz==2025.2.0.20251108",
-    "vkbottle>=4.6.2",
+    "python-docx>=1.2.0",
+    "sqlalchemy>=2.0.52",
+    "structlog>=26.1.0",
+    "types-pytz>=2026.3.1.20260727",
+    "vkbottle>=4.11.0",
 ]
 
 [dependency-groups]
 dev = [
-    "pre-commit==4.5.1",
-    "ruff==0.15.0",
+    "pre-commit==4.6.2",
+    "ruff==0.16.7",
 ]
 
 [tool.uv]
 package = false
 
 [tool.ruff]
-target-version = 'py312'
+target-version = 'py314'
 line-length = 120
-extend-exclude = ["__pycache__", "uv.lock", "alembic", "services"]
+extend-exclude = ["__pycache__", "uv.lock", "alembic"]
 
 [tool.ruff.lint]
 select = [
-    # Pycodestyle / Pyflakes
-
+    # Базовые проверки
     "E", "W", "F",
-    # Imports / naming
 
-    "I", "N",
+    # Импорты и соглашения об именовании
+    "I",
+    "ICN",
+    "TID",
+    "N",
 
-    # Bugbear / security / correctness
-    "B", "A", "SLOT", "RET", "RSE", "SIM", "ISC",
+    # Совместимость и современный Python
+    "UP",
+    "FA",
+    "YTT",
+    "INT",
 
-    # Modern Python / typing
-    "UP", "FA", "TCH", "YTT", "INT",
+    # Корректность и потенциальные ошибки
+    "B",
+    "A",
+    "RET",
+    "RSE",
+    "SIM",
+    "ISC",
+    "SLOT",
+    "S",
 
-    # Comprehensions / performance
-    "C4", "PERF", "FURB", "FLY",
+    # Производительность и стиль
+    "C4",
+    "PERF",
+    "FURB",
+    "FLY",
+    "PIE",
 
-    # Code quality
-    "PIE", "RUF", "PTH", "SLF",
+    # Качество кода
+    "RUF",
+    "PTH",
+    "SLF",
+    "PL",
+    "C90",
 
-    # Logging / comments / formatting
-    "ICN", "TID", "COM", "Q", "T10", "T20",
+    # Асинхронность и работа со временем
+    "ASYNC",
+    "DTZ",
+
+    # Логирование и отладка
+    "LOG",
+    "G",
+    "T20",
+    "ERA",
+
+    # Комментарии и строки
+    "COM",
+    "Q",
+
+    # Исключения
+    "TRY",
+
+    # Прочее
+    "T10",   # debugger
+    "FAST",  # FastAPI
 ]
 
 ignore = [
@@ -67,6 +102,8 @@ ignore = [
     "RUF001",
     "RUF002",
     "RUF003",
+    "PLR2004",
+    "TRY003"
 ]
 
 [tool.ruff.lint.isort]
