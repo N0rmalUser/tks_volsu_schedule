@@ -50,6 +50,7 @@ class Config(BaseSettings):
 
     # ===== COLLEGE =====
     api_url: str
+    api_key: str
 
     college_teachers: list[str]
     college_groups: list[str]
