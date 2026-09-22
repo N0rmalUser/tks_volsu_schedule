@@ -14,10 +14,11 @@ def admin_menu() -> ReplyKeyboardMarkup:
             [
                 KeyboardButton(text="/track stop"),
                 KeyboardButton(text="/menu"),
-                KeyboardButton(text="/update"),
+                KeyboardButton(text="/info"),
             ],
             [
-                KeyboardButton(text="/info"),
+                KeyboardButton(text="/university"),
+                KeyboardButton(text="/college"),
             ],
         ],
         resize_keyboard=True,
