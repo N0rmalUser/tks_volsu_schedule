@@ -32,9 +32,9 @@ LESSON_LABELS = (
 )
 
 LESSON_LABELS_NAMES = {
-    "lecture": "Лекция",
-    "practice": "Практика",
-    "lab": "Лабораторные",
+    "lecture": "(Л)",
+    "practice": "(Пр)",
+    "lab": "(Лаб)",
 }
 
 LESSON_TIME = {
