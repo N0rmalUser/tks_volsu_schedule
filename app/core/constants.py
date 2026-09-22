@@ -2,6 +2,8 @@ from datetime import time
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
+from aiohttp import ClientTimeout
+
 from app.core.config import config
 from app.core.enums import DayOfWeek, WeekType
 from app.schemas.schedule import LessonTime
@@ -28,6 +30,12 @@ LESSON_LABELS = (
     (("курс", "кур/проект", "кур/проек."), "Курсовой проект"),
     (("л", "л."), "Лекция"),
 )
+
+LESSON_LABELS_NAMES = {
+    "lecture": "(Л)",
+    "practice": "(Пр)",
+    "lab": "(Лаб)",
+}
 
 LESSON_TIME = {
     1: "08:30-10:00",
@@ -74,6 +82,12 @@ WEEK_MAP = {
     2: WeekType.EVEN,
 }
 
+WEEK_TYPE_MAP = {
+    "both": WeekType.EVERY,
+    "numerator": WeekType.ODD,
+    "denominator": WeekType.EVEN,
+}
+
 DAYS_SHORT = {
     DayOfWeek.MONDAY: "Пн",
     DayOfWeek.TUESDAY: "Вт",
@@ -82,3 +96,9 @@ DAYS_SHORT = {
     DayOfWeek.FRIDAY: "Пт",
     DayOfWeek.SATURDAY: "Сб",
 }
+
+HEADERS = {
+    "X-API-Key": config.api_key,
+}
+
+REQUEST_TIMEOUT = ClientTimeout(total=10)

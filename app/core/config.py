@@ -26,10 +26,6 @@ class Config(BaseSettings):
     # ===== VK =====
     vk_bot_token: str
 
-    # ===== DATE & TIME =====
-    logging_level: str
-    event_level: str
-
     # ===== LOGGING =====
     timezone: str
     numerator: int
@@ -50,10 +46,12 @@ class Config(BaseSettings):
 
     # ===== COLLEGE =====
     api_url: str
-    app_url: str
+    api_key: str
 
     college_teachers: list[str]
     college_groups: list[str]
+
+    substitute_college: dict[str, list[dict[str, str]]]
 
     # ===== POSTGRESQL =====
     postgres_host: str = "postgres"

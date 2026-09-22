@@ -6,6 +6,7 @@ from aiogram.filters import Command, CommandObject
 from aiogram.types import Message
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.common.api_schedule_parser import parse_api_schedule
 from app.common.schedule_parser import parse_university_schedule
 from app.common.utils import user_info
 from app.core.config import config
@@ -27,24 +28,44 @@ async def menu_command_track(msg: Message) -> None:
     await msg.answer("Меню админа", reply_markup=kb.admin_menu())
 
 
-@router.message(Command("update"), ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=config.admin_chat_id))
+@router.message(Command("university"), ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=config.admin_chat_id))
 async def update_handler(msg: Message) -> None:
 
     start = await msg.answer("Обновляю расписание университета...")
     try:
-        rows = parse_university_schedule()
+        university_rows = parse_university_schedule()
 
         await ScheduleService().import_schedule(
-            rows=rows,
+            rows=university_rows,
             group_type=GroupType.UNIVERSITY,
         )
     except Exception:
         await start.edit_text("Ошибка обновления базы данных расписания университета")
-        log.exception("schedule.database_update_failed")
+        log.exception("schedule.university_database_update_failed")
         return
     await init_keyboard_data()
-    await start.edit_text("База данных расписания обновлена")
-    log.info("schedule.updated")
+    await start.edit_text("База данных расписания университета обновлена")
+    log.info("schedule.university_updated")
+
+
+@router.message(Command("college"), ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=config.admin_chat_id))
+async def college_handler(msg: Message) -> None:
+
+    start = await msg.answer("Обновляю расписание колледжа...")
+    try:
+        college_rows = await parse_api_schedule()
+
+        await ScheduleService().import_schedule(
+            rows=college_rows,
+            group_type=GroupType.COLLEGE,
+        )
+    except Exception:
+        await start.edit_text("Ошибка обновления базы данных расписания колледжа")
+        log.exception("schedule.college_database_update_failed")
+        return
+    await init_keyboard_data()
+    await start.edit_text("База данных расписания колледжа обновлена")
+    log.info("schedule.college_updated")
 
 
 @router.message(Command("track"), ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=config.admin_chat_id))
