@@ -127,3 +127,7 @@ indent-style = "space"
 line-ending = "auto"
 docstring-code-format = true
 docstring-code-line-length = 'dynamic'
+
+[tool.semantic_release]
+version_toml = ["pyproject.toml:project.version"]
+tag_format = "v{version}"
