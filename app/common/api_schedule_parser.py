@@ -13,7 +13,26 @@ from app.schemas.schedule import ScheduleRow
 
 log = structlog.get_logger()
 
+
+def _resolve_teacher_name(original_teacher: str, subject: str) -> str:
+    """Определяет фактического преподавателя на основе правил замены из конфига."""
+
+    rules = config.substitute_college.get(original_teacher)
+
+    if not rules:
+        return original_teacher
+
+    for rule in rules:
+        condition = rule.get("subject_contains")
+        if condition is None or condition.lower() in subject.lower():
+            return rule["teacher"]
+
+    return original_teacher
+
+
 def _get_dates() -> tuple[str, str]:
+    """Определяет даты для парсинга в API университета"""
+
     now = datetime.now(TZ)
     start_dt = datetime(
         year=now.year,
@@ -67,11 +86,13 @@ def _extract_schedule_rows(teacher_data: dict[str, Any]) -> list[ScheduleRow]:
             class_type_ru = _map_class_type(lesson_entry["classType"])
             subject = f"{subject_name} {class_type_ru}"
 
+            actual_teacher = _resolve_teacher_name(teacher_name, subject)
+
             rows.append(
                 ScheduleRow(
                     group=groups[0],
                     subject=subject,
-                    teacher=teacher_name,
+                    teacher=actual_teacher,
                     room=rooms[0] if rooms else None,
                     day_of_week=day_of_week,
                     lesson_number=lesson_entry["slotNumber"],

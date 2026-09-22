@@ -55,6 +55,8 @@ class Config(BaseSettings):
     college_teachers: list[str]
     college_groups: list[str]
 
+    substitute_college: dict[str, list[dict[str, str]]]
+
     # ===== POSTGRESQL =====
     postgres_host: str = "postgres"
     postgres_port: int = 5432
