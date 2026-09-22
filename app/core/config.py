@@ -26,10 +26,6 @@ class Config(BaseSettings):
     # ===== VK =====
     vk_bot_token: str
 
-    # ===== DATE & TIME =====
-    logging_level: str
-    event_level: str
-
     # ===== LOGGING =====
     timezone: str
     numerator: int
