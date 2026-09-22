@@ -9,8 +9,12 @@ def run_tg_bot() -> None:
     asyncio.run(tg_main())
 
 
+def run_vk_bot() -> None:
+    asyncio.run(vk_main())
+
+
 if __name__ == "__main__":
-    vk_process = Process(target=vk_main)
+    vk_process = Process(target=run_vk_bot)
     tg_process = Process(target=run_tg_bot)
 
     vk_process.start()
