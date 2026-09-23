@@ -1,6 +1,6 @@
 [project]
 name = "tks-volsu-schedule"
-version = "0.1.0"
+version = "0.1.1"
 description = "Бот, показывающий расписание для студентов, преподавателей и кабинетов кафедры ТКС ВолГУ"
 readme = "README.md"
 requires-python = ">=3.14"

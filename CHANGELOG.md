@@ -1,6 +1,17 @@
 # CHANGELOG
 
 
+## v0.1.1 (2026-09-23)
+
+### Bug Fixes
+
+- Добавил aiohttp
+  ([`420ffe1`](https://github.com/N0rmalUser/tks_volsu_schedule/commit/420ffe1b37db886f30a54e16c2a88e9326512d3b))
+
+- Добавил выгрузку всего расписания через EVERY
+  ([`5097a4f`](https://github.com/N0rmalUser/tks_volsu_schedule/commit/5097a4f2693ff36cac540b180f11deec9ce29860))
+
+
 ## v0.1.0 (2026-09-22)
 
 ### Bug Fixes
