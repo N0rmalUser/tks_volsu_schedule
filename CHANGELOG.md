@@ -1,6 +1,9 @@
 # CHANGELOG
 
 
+## v0.1.2 (2026-09-23)
+
+
 ## v0.1.1 (2026-09-23)
 
 ### Bug Fixes
@@ -10,6 +13,9 @@
 
 - Добавил выгрузку всего расписания через EVERY
   ([`5097a4f`](https://github.com/N0rmalUser/tks_volsu_schedule/commit/5097a4f2693ff36cac540b180f11deec9ce29860))
+
+- Обновил так называемый гайдик
+  ([`b22c29e`](https://github.com/N0rmalUser/tks_volsu_schedule/commit/b22c29ed5f691cfdb4926630c6ed73d4bfd52a5d))
 
 
 ## v0.1.0 (2026-09-22)
