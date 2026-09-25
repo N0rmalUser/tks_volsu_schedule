@@ -15,13 +15,15 @@ class ScheduleRepository(BaseRepository):
         week_type: WeekType,
         subgroup: int | None = None,
     ) -> list[Schedule]:
-
+        week_types = (
+            [WeekType.EVERY, WeekType.ODD, WeekType.EVEN]
+            if week_type == WeekType.EVERY
+            else [WeekType.EVERY, week_type]
+        )
         conditions = [
             filter_clause,
             Schedule.day_of_week == day_of_week,
-            Schedule.week_type.in_(
-                [week_type, WeekType.EVERY],
-            ),
+            Schedule.week_type.in_(week_types),
         ]
 
         if subgroup is not None:
