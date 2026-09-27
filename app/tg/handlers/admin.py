@@ -28,7 +28,9 @@ async def menu_command_track(msg: Message) -> None:
     await msg.answer("Меню админа", reply_markup=kb.admin_menu())
 
 
-@router.message(Command("university"), ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=config.admin_chat_id))
+@router.message(
+    Command("university"), ChatTypeIdFilter(chat_type=["group", "supergroup"], chat_id=config.admin_chat_id)
+)
 async def update_handler(msg: Message) -> None:
 
     start = await msg.answer("Обновляю расписание университета...")
