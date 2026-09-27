@@ -17,8 +17,8 @@ ROOT_PATH = Path(__file__).resolve().parent.parent.parent
 
 DATA_PATH = ROOT_PATH / "data"
 GROUPS_SCHEDULE_PATH = DATA_PATH / "groups"
-TEACHERS_SHEETS_PATH = DATA_PATH / "teachers"
-ROOMS_SHEETS_PATH = DATA_PATH / "rooms"
+TEACHERS_SHEETS_TEMPLATE_PATH = DATA_PATH / "teacher.xlsx"
+ROOMS_SHEETS_TEMPLATE_PATH = DATA_PATH / "rooms.xlsx"
 
 PLOT_PATH = DATA_PATH / "plot"
 

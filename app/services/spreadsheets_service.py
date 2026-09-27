@@ -3,7 +3,7 @@ from io import BytesIO
 from openpyxl import load_workbook
 from openpyxl.styles import Border, Side
 
-from app.core.constants import TEACHERS_SHEETS_PATH
+from app.core.constants import TEACHERS_SHEETS_TEMPLATE_PATH
 from app.core.enums import WeekType
 from app.schemas.schedule import ScheduleEntry
 
@@ -19,7 +19,7 @@ class SpreadsheetsService:
         self,
         lessons: list[ScheduleEntry],
     ) -> BytesIO:
-        wb = load_workbook(TEACHERS_SHEETS_PATH)
+        wb = load_workbook(TEACHERS_SHEETS_TEMPLATE_PATH)
         ws = wb.active
 
         not_empty_rows = []
