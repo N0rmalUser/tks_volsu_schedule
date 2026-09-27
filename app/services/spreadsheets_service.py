@@ -1,10 +1,10 @@
 from io import BytesIO
 
-from core.enums import WeekType
 from openpyxl import load_workbook
 from openpyxl.styles import Border, Side
 
 from app.core.constants import TEACHERS_SHEETS_PATH
+from app.core.enums import WeekType
 from app.schemas.schedule import ScheduleEntry
 
 
@@ -30,30 +30,24 @@ class SpreadsheetsService:
 
             row = self._get_row(lesson)
 
-            not_empty_rows.extend((row, row + 1) if lesson.week_type == WeekType.ODD else (row, row - 1))
+            if lesson.week_type == WeekType.ODD:
+                rows_to_fill = [row]
+                not_empty_rows.extend((row, row + 1))
+            elif lesson.week_type == WeekType.EVERY:
+                rows_to_fill = [row - 1, row]
+                not_empty_rows.extend((row - 1, row))
+            else:
+                rows_to_fill = [row]
+                not_empty_rows.extend((row, row - 1))
 
             group = lesson.group or ""
-
             if lesson.subgroup:
                 group += f".{lesson.subgroup}"
 
-            ws.cell(
-                row=row,
-                column=self.START_COL,
-                value=group,
-            )
-
-            ws.cell(
-                row=row,
-                column=self.START_COL + 1,
-                value=lesson.room,
-            )
-
-            ws.cell(
-                row=row,
-                column=self.START_COL + 2,
-                value=lesson.subject,
-            )
+            for r in rows_to_fill:
+                ws.cell(row=r, column=self.START_COL, value=group)
+                ws.cell(row=r, column=self.START_COL + 1, value=lesson.room)
+                ws.cell(row=r, column=self.START_COL + 2, value=lesson.subject)
 
         self._delete_empty_rows(ws, not_empty_rows)
         self._merge_equal_cells(ws, self.START_COL + 2)
@@ -109,9 +103,6 @@ class SpreadsheetsService:
             prev_value = value
 
     def _get_row(self, lesson: ScheduleEntry) -> int:
-        # day_of_week: 1..6
-        # lesson_number: 1..7
-
         row = self.START_ROW + (lesson.day_of_week - 1) * 14 + (lesson.lesson_number - 1) * 2
 
         if lesson.week_type != WeekType.ODD:
@@ -139,4 +130,3 @@ class SpreadsheetsService:
                         end_row=row + 1,
                         end_column=col,
                     )
-
