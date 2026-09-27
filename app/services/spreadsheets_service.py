@@ -15,16 +15,6 @@ class SpreadsheetsService:
     START_ROW = 2
     START_COL = 3
 
-    TIMES = {
-        1: "08",
-        2: "10",
-        3: "12",
-        4: "13",
-        5: "15",
-        6: "17",
-        7: "18",
-    }
-
     def create_teacher_schedule(
         self,
         lessons: list[ScheduleEntry],
