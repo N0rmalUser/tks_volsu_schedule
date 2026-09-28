@@ -6,13 +6,13 @@ from aiogram.filters import Command, CommandObject
 from aiogram.types import Message
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.common.api_schedule_parser import parse_api_schedule
-from app.common.schedule_parser import parse_university_schedule
-from app.common.utils import user_info
 from app.core.config import config
 from app.core.constants import GROUPS_SCHEDULE_PATH
 from app.core.enums import GroupType, UserRole
+from app.core.utils import user_info
 from app.schemas.keyboard import init_keyboard_data
+from app.services.api_schedule_parser import ApiScheduleParserService
+from app.services.doc_schedule_parser import DocScheduleParserService
 from app.services.schedule import ScheduleService
 from app.services.user import UserService
 from app.tg.filters import ChatTypeIdFilter
@@ -35,7 +35,7 @@ async def update_handler(msg: Message) -> None:
 
     start = await msg.answer("Обновляю расписание университета...")
     try:
-        university_rows = parse_university_schedule()
+        university_rows = DocScheduleParserService().parse_university_schedule()
 
         await ScheduleService().import_schedule(
             rows=university_rows,
@@ -55,7 +55,7 @@ async def college_handler(msg: Message) -> None:
 
     start = await msg.answer("Обновляю расписание колледжа...")
     try:
-        college_rows = await parse_api_schedule()
+        college_rows = await ApiScheduleParserService().parse_api_schedule()
 
         await ScheduleService().import_schedule(
             rows=college_rows,

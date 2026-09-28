@@ -2,12 +2,12 @@ from datetime import datetime
 
 from dateutil.relativedelta import relativedelta
 
-from app.common.schedule_formater import ScheduleFormatter
 from app.core.config import config
 from app.core.constants import TZ, WEEK_MAP
 from app.core.enums import Keyboard, WeekType
 from app.schemas.user import UserInfo
 from app.services.schedule import ScheduleService
+from app.services.schedule_formater import ScheduleFormatterService
 from app.services.user import UserService
 
 
@@ -26,7 +26,7 @@ def get_today() -> tuple[int, WeekType]:
 async def get_schedule(target: Keyboard, day: int, week: WeekType, value: int) -> str:
     text = "Ошибка. Напишите админу /admin"
     service = ScheduleService()
-    formater = ScheduleFormatter()
+    formater = ScheduleFormatterService()
 
     if target == Keyboard.TEACHER:
         teacher_name = await service.get_teacher_name(teacher_id=value)
