@@ -26,6 +26,7 @@ def get_today() -> tuple[int, WeekType]:
 async def get_schedule(target: Keyboard, day: int, week: WeekType, value: int) -> str:
     text = "Ошибка. Напишите админу /admin"
     service = ScheduleService()
+    formater = ScheduleFormatter()
 
     if target == Keyboard.TEACHER:
         teacher_name = await service.get_teacher_name(teacher_id=value)
@@ -41,7 +42,7 @@ async def get_schedule(target: Keyboard, day: int, week: WeekType, value: int) -
                 group_id=group_ids[group_name], day_of_week=day, week=week, subgroup=subgroup
             )
             lessons.extend(group_lessons)
-        text = ScheduleFormatter().teacher(
+        text = formater.teacher(
             teacher_name=teacher_name,
             day_of_week=day,
             week_type=week,
@@ -50,7 +51,7 @@ async def get_schedule(target: Keyboard, day: int, week: WeekType, value: int) -
     elif target == Keyboard.STUDENT:
         group_name = await service.get_group_name(group_id=value)
         lessons = await service.get_group_schedule(group_id=value, day_of_week=day, week=week)
-        text = ScheduleFormatter().group(
+        text = formater.group(
             group_name=group_name,
             day_of_week=day,
             week_type=week,
@@ -59,7 +60,7 @@ async def get_schedule(target: Keyboard, day: int, week: WeekType, value: int) -
     elif target == Keyboard.ROOM:
         group_name = await service.get_room_name(room_id=value)
         lessons = await service.get_room_schedule(room_id=value, day_of_week=day, week=week)
-        text = ScheduleFormatter().room(
+        text = formater.room(
             room_name=group_name,
             day_of_week=day,
             week_type=week,
