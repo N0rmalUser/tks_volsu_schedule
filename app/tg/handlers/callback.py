@@ -1,6 +1,7 @@
 import structlog
 from aiogram import F, Router
-from aiogram.types import CallbackQuery
+from aiogram.types import BufferedInputFile, CallbackQuery
+from services.spreadsheets import SpreadsheetsService
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.enums import Keyboard, Platform, WeekType
@@ -178,3 +179,55 @@ async def default_group_handler(
         f"Группа по умолчанию изменена на {await ScheduleService().get_group_name(value)}",
     )
     await callback.answer()
+
+
+@router.callback_query(ChangeCallbackFactory.filter(F.action == "teacher_sheet"))
+async def teacher_sheet_handler(
+    callback: CallbackQuery,
+    callback_data: ChangeCallbackFactory,
+) -> None:
+    """Показывает полное расписание преподавателя."""
+
+    value = callback_data.value
+
+    if value == 0:
+        await callback.message.edit_text(
+            "Выберите преподавателя",
+            reply_markup=kb.get_sheet_teachers(),
+        )
+        await callback.answer()
+        return
+
+    lessons = await ScheduleService().get_teacher_schedule(
+        teacher_id=value,
+        week=WeekType.EVERY,
+    )
+
+    # Получаем BytesIO объект
+    spreadsheet_io = SpreadsheetsService().create_teacher_schedule(lessons)
+
+    # Отправляем файл из памяти
+    await callback.message.answer_document(
+        document=BufferedInputFile(
+            file=spreadsheet_io.getvalue(),  # bytes
+            filename="расписание.xlsx",
+        )
+    )
+    await callback.answer()
+
+
+@router.callback_query(ChangeCallbackFactory.filter(F.action == "group_sheet"))
+async def group_sheet_handler(
+    callback: CallbackQuery,
+    callback_data: ChangeCallbackFactory,
+    session: AsyncSession,
+) -> None:
+    """Показывает полное расписание группы."""
+
+
+@router.callback_query(ChangeCallbackFactory.filter(F.action == "room_sheet"))
+async def room_sheet_handler(
+    callback: CallbackQuery,
+    callback_data: ChangeCallbackFactory,
+) -> None:
+    """Показывает полное расписание аудитории."""
