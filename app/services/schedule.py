@@ -10,7 +10,8 @@ from app.schemas.schedule import ScheduleEntry, ScheduleRow
 
 
 class ScheduleService:
-    async def init_schedule(self) -> None:
+    @staticmethod
+    async def init_schedule() -> None:
         async with session_scope() as session:
             repository = DirectoryRepository(session)
 
@@ -23,8 +24,8 @@ class ScheduleService:
             await repository.add_rooms([Room(name=name) for name in config.rooms])
             await session.flush()
 
+    @staticmethod
     async def import_schedule(
-        self,
         rows: list[ScheduleRow],
         group_type: GroupType,
     ) -> None:
@@ -85,7 +86,8 @@ class ScheduleService:
 
             await schedule_repository.add_schedule(entries)
 
-    def _merge_schedule_entries(self, entries: list[ScheduleEntry]) -> list[ScheduleEntry]:
+    @staticmethod
+    def _merge_schedule_entries(entries: list[ScheduleEntry]) -> list[ScheduleEntry]:
         """
         Объединяет записи расписания, у которых совпадают время, предмет,
         преподаватель и аудитория, но отличаются группы (потоковые лекции).
@@ -127,8 +129,8 @@ class ScheduleService:
 
         return result
 
+    @staticmethod
     async def get_group_schedule(
-        self,
         *,
         group_id: int,
         day_of_week: int,
@@ -259,8 +261,8 @@ class ScheduleService:
             ]
             return self._merge_schedule_entries(entries)
 
+    @staticmethod
     async def get_teacher_ids(
-        self,
         teacher_names: list[str] = config.all_personal,
     ) -> dict[str, int]:
         async with session_scope() as session:
@@ -268,8 +270,8 @@ class ScheduleService:
             teachers = await directory_repository.get_teachers(teacher_names)
             return {teacher.name: teacher.id for teacher in teachers}
 
+    @staticmethod
     async def get_teacher_name(
-        self,
         teacher_id: int,
     ) -> str:
         async with session_scope() as session:
@@ -279,13 +281,15 @@ class ScheduleService:
                 return "Такого преподавателя не существует"
             return cast("str", cast("object", teacher.name))
 
-    async def get_group_ids(self, group_names: list[str]) -> dict[str, int]:
+    @staticmethod
+    async def get_group_ids(group_names: list[str]) -> dict[str, int]:
         async with session_scope() as session:
             directory_repository = DirectoryRepository(session)
             groups = await directory_repository.get_groups(group_names)
             return {group.name: group.id for group in groups}
 
-    async def get_group_name(self, group_id: int) -> str:
+    @staticmethod
+    async def get_group_name(group_id: int) -> str:
         async with session_scope() as session:
             directory_repository = DirectoryRepository(session)
             group = await directory_repository.get_group_by_id(group_id)
@@ -293,13 +297,15 @@ class ScheduleService:
                 return "Такой группы не существует"
             return cast("str", cast("object", group.name))
 
-    async def get_room_ids(self, room_names: list[str]) -> dict[str, int]:
+    @staticmethod
+    async def get_room_ids(room_names: list[str]) -> dict[str, int]:
         async with session_scope() as session:
             directory_repository = DirectoryRepository(session)
             rooms = await directory_repository.get_rooms(room_names)
             return {room.name: room.id for room in rooms}
 
-    async def get_room_name(self, room_id: int) -> str:
+    @staticmethod
+    async def get_room_name(room_id: int) -> str:
         async with session_scope() as session:
             directory_repository = DirectoryRepository(session)
             room = await directory_repository.get_room_by_id(room_id)
