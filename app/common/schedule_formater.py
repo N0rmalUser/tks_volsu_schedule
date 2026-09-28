@@ -35,14 +35,13 @@ class ScheduleFormatter:
         return f"{DAY_NAMES[day]}       {week_name}\n{title}\n\n"
 
     @staticmethod
-    def group(day_of_week: int, week_type: WeekType, entries: tuple[str, list[ScheduleEntry]]) -> str:
-        group_name, schedule_entries = entries
-        if not schedule_entries:
+    def group(group_name: str, day_of_week: int, week_type: WeekType, entries: list[ScheduleEntry]) -> str:
+        if not entries:
             return ScheduleFormatter._header(group_name, day_of_week, week_type) + "Сегодня пар нет!"
 
         text = ScheduleFormatter._header(group_name, day_of_week, week_type)
 
-        for e in schedule_entries:
+        for e in entries:
             subject = re.sub(r"\([^)]*\)", "", e.subject).strip()
             label = get_lesson_label(str(re.search(r"\(([^)]*)\)", e.subject)))
             time = LESSON_TIME[e.lesson_number]
@@ -57,32 +56,28 @@ class ScheduleFormatter:
         return text
 
     @staticmethod
-    def teacher(*, day_of_week, week_type, entries):
-        teacher_name, entries = entries
+    def teacher(*, teacher_name: str, day_of_week: int, week_type: WeekType, entries: list[ScheduleEntry]) -> str:
         if not entries:
             return ScheduleFormatter._header(teacher_name, day_of_week, week_type) + "Сегодня пар нет!"
 
         text = ScheduleFormatter._header(teacher_name, day_of_week, week_type)
-        for e, is_teacher_entry in entries:
+
+        for e in entries:
             subject = re.sub(r"\([^)]*\)", "", e.subject).strip()
             label = get_lesson_label(str(re.search(r"\(([^)]*)\)", e.subject)))
             time = LESSON_TIME[e.lesson_number]
 
-            if is_teacher_entry:
-                text += (
-                    f"{get_time_symbol(time)} {time}   {label}\n"
-                    f"📖 {subject}\n"
-                    f"👫 {e.group}\n"
-                    f"{f'🧍🏼 Подгруппа: {e.subgroup}\n' if e.subgroup else ''}"
-                    f"🏠 {e.room}\n\n"
-                )
-            else:
-                text += f"{get_time_symbol(time)} {time}   {label}\n📖 {subject}\n👨‍🏫 {e.teacher}\n🏠 {e.room}\n\n"
+            text += (
+                f"{get_time_symbol(time)} {time}   {label}\n"
+                f"📖 {subject}\n"
+                f"👫 {e.group}\n"
+                f"{f'🧍🏼 Подгруппа: {e.subgroup}\n' if e.subgroup else ''}"
+                f"🏠 {e.room}\n\n"
+            )
         return text
 
     @staticmethod
-    def room(*, day_of_week, week_type, entries):
-        room_name, entries = entries
+    def room(*, room_name: str, day_of_week: int, week_type: WeekType, entries: list[ScheduleEntry]):
         if not entries:
             return ScheduleFormatter._header(room_name, day_of_week, week_type) + "Сегодня пар нет!"
 

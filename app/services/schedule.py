@@ -134,14 +134,14 @@ class ScheduleService:
         day_of_week: int,
         week: WeekType,
         subgroup: int | None = None,
-    ) -> tuple[str, list[ScheduleEntry]]:
+    ) -> list[ScheduleEntry]:
         async with session_scope() as session:
             schedule_repository = ScheduleRepository(session)
             directory_repository = DirectoryRepository(session)
             group = await directory_repository.get_group_by_id(group_id)
 
             if group is None or group.name is None:
-                return "Нет такой группы", []
+                return []
 
             group_name = cast("str", cast("object", group.name))
 
@@ -152,7 +152,7 @@ class ScheduleService:
                 subgroup=subgroup,
             )
 
-            entries = [
+            return [
                 ScheduleEntry(
                     lesson_number=s.lesson_number,
                     day_of_week=s.day_of_week,
@@ -166,22 +166,20 @@ class ScheduleService:
                 for s in schedules
             ]
 
-            return group_name, entries
-
     async def get_teacher_schedule(
         self,
         *,
         teacher_id: int,
         day_of_week: int,
         week: WeekType,
-    ) -> tuple[str, list[ScheduleEntry]]:
+    ) -> list[ScheduleEntry]:
         async with session_scope() as session:
             schedule_repository = ScheduleRepository(session)
             directory_repository = DirectoryRepository(session)
             teacher = await directory_repository.get_teacher_by_id(teacher_id)
 
             if teacher is None or teacher.name is None:
-                return "Нет такого преподавателя", []
+                return []
 
             teacher_name = cast("str", cast("object", teacher.name))
 
@@ -220,9 +218,7 @@ class ScheduleService:
                 )
                 for s in schedules
             ]
-            entries = self._merge_schedule_entries(entries)
-
-            return teacher_name, entries
+            return self._merge_schedule_entries(entries)
 
     async def get_room_schedule(
         self,
@@ -230,14 +226,14 @@ class ScheduleService:
         room_id: int,
         day_of_week: int,
         week: WeekType,
-    ) -> tuple[str, list[ScheduleEntry]]:
+    ) -> list[ScheduleEntry]:
         async with session_scope() as session:
             schedule_repository = ScheduleRepository(session)
             directory_repository = DirectoryRepository(session)
             room = await directory_repository.get_room_by_id(room_id)
 
             if room is None or room.name is None:
-                return "Нет такой аудитории", []
+                return []
 
             room_name = cast("str", cast("object", room.name))
 
@@ -261,55 +257,7 @@ class ScheduleService:
                 )
                 for s in schedules
             ]
-            entries = self._merge_schedule_entries(entries)
-
-            return room_name, entries
-
-    def _parse_student_group(self, value: str) -> tuple[str, int | None]:
-        if "." not in value:
-            return value, None
-
-        group, subgroup = value.rsplit(".", 1)
-
-        return group, int(subgroup)
-
-    async def get_teacher_full_schedule(
-        self,
-        *,
-        teacher_id: int,
-        day_of_week: int,
-        week: WeekType,
-    ) -> tuple[str, list[tuple[ScheduleEntry, bool]]]:
-        teacher_name, teacher_entries = await self.get_teacher_schedule(
-            teacher_id=teacher_id,
-            day_of_week=day_of_week,
-            week=week,
-        )
-        student_group = config.students.get(teacher_name)
-
-        if student_group is None:
-            teacher_entries = [(e, True) for e in teacher_entries]
-            return teacher_name, teacher_entries
-
-        group_name, subgroup = self._parse_student_group(student_group)
-        group_ids = await self.get_group_ids([group_name])
-
-        _, group_entries = await self.get_group_schedule(
-            group_id=int(group_ids[group_name]),
-            subgroup=subgroup,
-            day_of_week=day_of_week,
-            week=week,
-        )
-
-        entries = [(entry, True) for entry in teacher_entries] + [(entry, False) for entry in group_entries]
-
-        entries.sort(
-            key=lambda x: (
-                x[0].lesson_number,
-                0 if x[0].subgroup is None else x[0].subgroup,
-            )
-        )
-        return teacher_name, entries
+            return self._merge_schedule_entries(entries)
 
     async def get_teacher_ids(
         self,

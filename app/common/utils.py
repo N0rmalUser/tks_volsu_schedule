@@ -25,24 +25,42 @@ def get_today() -> tuple[int, WeekType]:
 
 async def get_schedule(target: Keyboard, day: int, week: WeekType, value: int) -> str:
     text = "Ошибка. Напишите админу /admin"
+    service = ScheduleService()
 
     if target == Keyboard.TEACHER:
-        lessons = await ScheduleService().get_teacher_full_schedule(teacher_id=value, day_of_week=day, week=week)
+        teacher_name = await service.get_teacher_name(teacher_id=value)
+        group_name = config.students.get(teacher_name)
+        lessons = await service.get_teacher_schedule(teacher_id=value, day_of_week=day, week=week)
+        if group_name:
+            if "." not in group_name:
+                subgroup = None
+            else:
+                group_name, subgroup = group_name.rsplit(".", 1)
+            group_ids = await service.get_group_ids([group_name])
+            group_lessons = await service.get_group_schedule(
+                group_id=group_ids[group_name], day_of_week=day, week=week, subgroup=subgroup
+            )
+            lessons.extend(group_lessons)
         text = ScheduleFormatter().teacher(
+            teacher_name=teacher_name,
             day_of_week=day,
             week_type=week,
             entries=lessons,
         )
     elif target == Keyboard.STUDENT:
-        lessons = await ScheduleService().get_group_schedule(group_id=value, day_of_week=day, week=week)
+        group_name = await service.get_group_name(group_id=value)
+        lessons = await service.get_group_schedule(group_id=value, day_of_week=day, week=week)
         text = ScheduleFormatter().group(
+            group_name=group_name,
             day_of_week=day,
             week_type=week,
             entries=lessons,
         )
     elif target == Keyboard.ROOM:
-        lessons = await ScheduleService().get_room_schedule(room_id=value, day_of_week=day, week=week)
+        group_name = await service.get_room_name(room_id=value)
+        lessons = await service.get_room_schedule(room_id=value, day_of_week=day, week=week)
         text = ScheduleFormatter().room(
+            room_name=group_name,
             day_of_week=day,
             week_type=week,
             entries=lessons,
