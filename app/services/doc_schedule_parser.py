@@ -30,12 +30,7 @@ class DocScheduleParserService:
         raw = text.strip()
 
         # Убираем "- поток N".
-        raw = re.sub(
-            self.STREAM_PATTERN,
-            " ",
-            raw,
-            flags=re.IGNORECASE,
-        )
+        raw = re.sub(self.STREAM_PATTERN, " ", raw)
 
         raw = re.sub(r"\s+", " ", raw)
 
@@ -58,11 +53,7 @@ class DocScheduleParserService:
         classroom = ""
 
         if rest:
-            auditorium = re.search(
-                self.AUDITORIUM_PATTERN,
-                rest,
-                flags=re.IGNORECASE,
-            )
+            auditorium = re.search(self.AUDITORIUM_PATTERN, rest)
 
             if auditorium:
                 classroom = re.sub(
@@ -76,20 +67,10 @@ class DocScheduleParserService:
                     "Спортзал ",
                 )
 
-            rest = re.sub(
-                self.AUDITORIUM_PATTERN,
-                "",
-                rest,
-                flags=re.IGNORECASE,
-            )
+            rest = re.sub(self.AUDITORIUM_PATTERN, "", rest)
 
         # Убираем должности преподавателей.
-        rest = re.sub(
-            self.TEACHER_TITLE_PATTERN,
-            "",
-            rest,
-            flags=re.IGNORECASE,
-        )
+        rest = re.sub(self.TEACHER_TITLE_PATTERN, "", rest)
 
         teachers_raw = [t.strip() for t in re.split(r"\s*,\s*", rest) if t.strip()]
 
@@ -187,13 +168,7 @@ class DocScheduleParserService:
             subject = str(info["subject"])
 
             # Лекция считается общей для обеих подгрупп.
-            is_lecture = bool(
-                re.search(
-                    self.LECTURE_PATTERN,
-                    subject,
-                    flags=re.IGNORECASE,
-                )
-            )
+            is_lecture = bool(re.search(self.LECTURE_PATTERN, subject))
 
             result.append((None if is_lecture else subgroup, info))
 
