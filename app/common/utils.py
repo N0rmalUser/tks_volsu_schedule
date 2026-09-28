@@ -91,9 +91,6 @@ def format_date(date_and_time: datetime) -> str:
 async def user_info(service: UserService) -> str:
     """Возвращает информацию о пользователе, подготовленную к отправке админу"""
 
-    def safe_get(lst: list, idx: int) -> str:
-        return lst[idx] if 0 <= idx < len(lst) else "Unknown"
-
     info: UserInfo = await service.get_user_info()
 
     return f"""
