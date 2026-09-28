@@ -133,8 +133,8 @@ class ScheduleService:
     async def get_group_schedule(
         *,
         group_id: int,
-        day_of_week: int,
-        week: WeekType,
+        day_of_week: int | None = None,
+        week: WeekType | None = None,
         subgroup: int | None = None,
     ) -> list[ScheduleEntry]:
         async with session_scope() as session:
@@ -172,8 +172,8 @@ class ScheduleService:
         self,
         *,
         teacher_id: int,
-        day_of_week: int,
-        week: WeekType,
+        day_of_week: int | None = None,
+        week: WeekType | None = None,
     ) -> list[ScheduleEntry]:
         async with session_scope() as session:
             schedule_repository = ScheduleRepository(session)
@@ -226,8 +226,8 @@ class ScheduleService:
         self,
         *,
         room_id: int,
-        day_of_week: int,
-        week: WeekType,
+        day_of_week: int | None = None,
+        week: WeekType | None = None,
     ) -> list[ScheduleEntry]:
         async with session_scope() as session:
             schedule_repository = ScheduleRepository(session)

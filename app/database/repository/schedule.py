@@ -11,20 +11,22 @@ class ScheduleRepository(BaseRepository):
     async def _get_schedule(
         self,
         filter_clause,
-        day_of_week: int,
-        week_type: WeekType,
+        day_of_week: int | None = None,
+        week_type: WeekType | None = None,
         subgroup: int | None = None,
     ) -> list[Schedule]:
-        week_types = (
-            [WeekType.EVERY, WeekType.ODD, WeekType.EVEN]
-            if week_type == WeekType.EVERY
-            else [WeekType.EVERY, week_type]
-        )
-        conditions = [
-            filter_clause,
-            Schedule.day_of_week == day_of_week,
-            Schedule.week_type.in_(week_types),
-        ]
+        conditions = [filter_clause]
+
+        if day_of_week is not None:
+            conditions.append(Schedule.day_of_week == day_of_week)
+
+        if week_type is not None:
+            week_types = (
+                [WeekType.EVERY, WeekType.ODD, WeekType.EVEN]
+                if week_type == WeekType.EVERY
+                else [WeekType.EVERY, week_type]
+            )
+            conditions.append(Schedule.week_type.in_(week_types))
 
         if subgroup is not None:
             conditions.append(
@@ -44,6 +46,7 @@ class ScheduleRepository(BaseRepository):
                 joinedload(Schedule.room),
             )
             .order_by(
+                Schedule.day_of_week,
                 Schedule.lesson_number,
                 Schedule.subgroup.asc().nulls_first(),
             )
@@ -52,13 +55,33 @@ class ScheduleRepository(BaseRepository):
         result = await self.session.scalars(stmt)
         return list(result)
 
-    async def get_group_schedule(self, *, group_id: int, day_of_week: int, week_type: WeekType, subgroup: int | None):
+    async def get_group_schedule(
+        self,
+        *,
+        group_id: int,
+        day_of_week: int | None = None,
+        week_type: WeekType | None = None,
+        subgroup: int | None = None,
+    ):
         return await self._get_schedule(Schedule.group_id == group_id, day_of_week, week_type, subgroup)
 
-    async def get_teacher_schedule(self, *, teacher_id: int, day_of_week: int, week_type: WeekType):
+    async def get_teacher_schedule(
+        self,
+        *,
+        teacher_id: int | None = None,
+        day_of_week: int | None = None,
+        week_type: WeekType | None = None,
+    ):
         return await self._get_schedule(Schedule.teacher_id == teacher_id, day_of_week, week_type)
 
-    async def get_room_schedule(self, *, room_id: int, room_name: str, day_of_week: int, week_type: WeekType):
+    async def get_room_schedule(
+        self,
+        *,
+        room_id: int,
+        room_name: str | None = None,
+        day_of_week: int | None = None,
+        week_type: WeekType | None = None,
+    ):
         if room_name in config.parent_rooms:
             filter_clause = Schedule.room.has(Room.name.in_(config.parent_rooms[room_name]))
         else:
