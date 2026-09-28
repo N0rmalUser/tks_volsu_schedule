@@ -37,6 +37,7 @@ async def get_schedule(target: Keyboard, day: int, week: WeekType, value: int) -
                 subgroup = None
             else:
                 group_name, subgroup = group_name.rsplit(".", 1)
+                subgroup = int(subgroup)
             group_ids = await service.get_group_ids([group_name])
             group_lessons = await service.get_group_schedule(
                 group_id=group_ids[group_name], day_of_week=day, week=week, subgroup=subgroup
