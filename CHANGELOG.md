@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.1.3 (2026-09-29)
+
+### Bug Fixes
+
+- Починил название аудиторий в колледже
+  ([`4986fc5`](https://github.com/N0rmalUser/tks_volsu_schedule/commit/4986fc5304b45f770001d9b7fad89b4469d0005d))
+
+
 ## v0.1.2 (2026-09-23)
 
 
