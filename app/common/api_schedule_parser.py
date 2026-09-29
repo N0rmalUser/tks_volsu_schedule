@@ -80,6 +80,10 @@ def _extract_schedule_rows(teacher_data: dict[str, Any]) -> list[ScheduleRow]:
 
         for lesson_entry in day_data.get("entries", []):
             rooms = lesson_entry.get("rooms", [])
+            room = rooms[0] if rooms else None
+            if room:
+                room = room[:-1].lower() + room[-1].upper()
+
             groups = lesson_entry.get("groupNames", [])
 
             subject_name = lesson_entry.get("subjectName", "Без названия")
@@ -93,7 +97,7 @@ def _extract_schedule_rows(teacher_data: dict[str, Any]) -> list[ScheduleRow]:
                     group=groups[0],
                     subject=subject,
                     teacher=actual_teacher,
-                    room=rooms[0] if rooms else None,
+                    room=room,
                     day_of_week=day_of_week,
                     lesson_number=lesson_entry["slotNumber"],
                     week_type=_map_week_type(lesson_entry["weekType"]),
