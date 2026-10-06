@@ -148,6 +148,7 @@ async def parse_api_schedule() -> list[ScheduleRow]:
             middle_name = parts[2] if len(parts) > 2 else ""
 
             params = {
+                "institute": "УК",
                 "lastName": last_name,
                 "firstName": first_name,
                 "middleName": middle_name,
