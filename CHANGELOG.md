@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.1.4 (2026-10-06)
+
+### Bug Fixes
+
+- Сделал парсинг только для Университетского Колледжа
+  ([`e6692b8`](https://github.com/N0rmalUser/tks_volsu_schedule/commit/e6692b84d9df3072892e68ce087c6cdbd06f5e55))
+
+
 ## v0.1.3 (2026-09-29)
 
 ### Bug Fixes
