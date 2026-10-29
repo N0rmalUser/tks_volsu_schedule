@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v1.1.0 (2026-10-29)
+
+### Features
+
+- Добавлен автодеплой
+  ([`38c72d8`](https://github.com/N0rmalUser/tks_volsu_schedule/commit/38c72d8cf36ec1d36c2aeba39c9eb8a48ae7dfc1))
+
+
 ## v1.0.0 (2026-10-29)
 
 ### Bug Fixes
