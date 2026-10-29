@@ -37,6 +37,20 @@ services:
         condition: service_completed_successfully
     restart: "no"
 
+  schedule_worker:
+    build: .
+    container_name: schedule_worker
+    command: python -m app.core.schedule_worker
+    env_file: .env
+    volumes:
+      - ./data:/app/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrations:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
   tg_bot:
     build: .
     container_name: schedule_tg_bot
