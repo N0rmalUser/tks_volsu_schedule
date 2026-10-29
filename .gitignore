@@ -3,6 +3,9 @@ __pycache__/
 .venv/
 *.egg-info/
 
+*.py[cod]
+.ruff_cache
+
 .env
 
 .vkbottle
