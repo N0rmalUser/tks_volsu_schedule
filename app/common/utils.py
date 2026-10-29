@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from dateutil.relativedelta import relativedelta
+from schemas.keyboard import KeyboardData
 
 from app.common.schedule_formater import ScheduleFormatter
 from app.core.config import config
@@ -9,6 +10,9 @@ from app.core.enums import Keyboard, WeekType
 from app.schemas.user import UserInfo
 from app.services.schedule import ScheduleService
 from app.services.user import UserService
+
+
+keyboard_data = KeyboardData()
 
 
 def get_today() -> tuple[int, WeekType]:
@@ -88,3 +92,13 @@ async def user_info(service: UserService) -> str:
 <code>Преподаватель:</code> <code>{info.teacher_name}</code>
 <code>Группа:       </code> <code>{info.group_name}</code>
 """
+
+
+async def init_keyboard_data() -> None:
+    service = ScheduleService()
+
+    sorted_groups = sorted([group for group in config.groups if group != "-"])
+
+    keyboard_data.teacher_ids = await service.get_teacher_ids(config.all_personal)
+    keyboard_data.group_ids = await service.get_group_ids(sorted_groups)
+    keyboard_data.room_ids = await service.get_room_ids(config.rooms)

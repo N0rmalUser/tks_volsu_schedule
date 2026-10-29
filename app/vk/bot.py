@@ -4,9 +4,9 @@ import logging
 import structlog
 from vkbottle import Bot
 
+from app.common.utils import init_keyboard_data
 from app.core.config import config
 from app.core.logging_config import setup_logging
-from app.schemas.keyboard import init_keyboard_data
 from app.vk.handlers import callback, message
 from app.vk.middlewares import LoggingMessageMiddleware, LoggingRawEventMiddleware
 

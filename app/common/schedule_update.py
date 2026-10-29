@@ -1,10 +1,10 @@
 import structlog
-from common.api_schedule_parser import parse_api_schedule
-from core.enums import GroupType
-from schemas.keyboard import init_keyboard_data
-from services.schedule import ScheduleService
 
+from app.common.api_schedule_parser import parse_api_schedule
 from app.common.docx_schedule_parser import parse_university_schedule
+from app.common.utils import init_keyboard_data
+from app.core.enums import GroupType
+from app.services.schedule import ScheduleService
 
 
 log = structlog.getLogger()

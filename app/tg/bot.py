@@ -6,9 +6,9 @@ from aiogram import Bot, Dispatcher
 from aiogram.client.session.aiohttp import AiohttpSession
 from aiogram.fsm.storage.memory import MemoryStorage
 
+from app.common.utils import init_keyboard_data
 from app.core.config import config
 from app.core.logging_config import setup_logging
-from app.schemas.keyboard import init_keyboard_data
 from app.tg import middlewares
 from app.tg.handlers import (
     admin as admin_message,
