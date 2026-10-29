@@ -1,6 +1,6 @@
-from common.utils import keyboard_data
 from vkbottle import Callback, Keyboard, KeyboardButtonColor, Text
 
+from app.common.utils import keyboard_data
 from app.core.config import config
 from app.core.enums import WeekType
 

@@ -1,7 +1,7 @@
 from aiogram.types import InlineKeyboardMarkup, KeyboardButton, ReplyKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
-from common.utils import keyboard_data
 
+from app.common.utils import keyboard_data
 from app.core.config import config
 from app.core.constants import DAYS_SHORT
 from app.core.enums import Keyboard, UserRole, WeekType
