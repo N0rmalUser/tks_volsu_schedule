@@ -4,7 +4,7 @@ from zoneinfo import ZoneInfo
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
-from app.core.schedule_update import update_college_schedule
+from app.common.schedule_update import update_college_schedule
 
 
 logging.basicConfig(level=logging.INFO)
