@@ -1,0 +1,117 @@
+name: Build and Deploy
+
+on:
+  release:
+    types: [ published ]
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - target: migrations
+          - target: seed
+          - target: scheduler
+          - target: telegram
+          - target: vk
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Login to GHCR
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: Dockerfile
+          target: ${{ matrix.target }}
+          push: true
+          tags: |
+            ghcr.io/n0rmaluser/tks_volsu_schedule:${{ github.event.release.tag_name }}-${{ matrix.target }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/N0rmalUser/tks_volsu_schedule
+            org.opencontainers.image.version=${{ github.event.release.tag_name }}
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate release version
+        env:
+          APP_VERSION: ${{ github.event.release.tag_name }}
+        run: |
+          if [[ ! "$APP_VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]]; then
+            echo "Unexpected release tag: $APP_VERSION"
+            exit 1
+          fi
+
+      - name: Deploy over SSH
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+          APP_VERSION: ${{ github.event.release.tag_name }}
+        run: |
+          set -euo pipefail
+
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+          scp -P "$DEPLOY_PORT" \
+            compose.prod.yml \
+            "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/compose.prod.yml"
+
+          ssh -p "$DEPLOY_PORT" \
+            "$DEPLOY_USER@$DEPLOY_HOST" \
+            "cd '$DEPLOY_PATH' && APP_VERSION='$APP_VERSION' bash -se" <<'REMOTE'
+          set -euo pipefail
+
+          echo "Pulling images for $APP_VERSION"
+          docker compose -f compose.prod.yml pull
+
+          echo "Waiting for PostgreSQL"
+          docker compose -f compose.prod.yml up -d --wait postgres
+
+          echo "Applying migrations"
+          docker compose -f compose.prod.yml run --rm --no-deps migrations
+
+          echo "Running seed"
+          docker compose -f compose.prod.yml run --rm --no-deps seed
+
+          echo "Starting application services"
+          docker compose -f compose.prod.yml up -d --no-deps \
+            schedule_worker tg_bot vk_bot
+
+          docker compose -f compose.prod.yml ps
+          REMOTE
