@@ -40,3 +40,7 @@ async def main() -> None:
         await asyncio.Event().wait()
     finally:
         scheduler.shutdown(wait=False)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
