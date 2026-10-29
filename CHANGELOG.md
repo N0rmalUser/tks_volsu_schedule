@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v1.1.1 (2026-10-29)
+
+### Bug Fixes
+
+- Исправлен деплой токен
+  ([`684af76`](https://github.com/N0rmalUser/tks_volsu_schedule/commit/684af761b8dee683151e0e6c36d905d86bb1536a))
+
+
 ## v1.1.0 (2026-10-29)
 
 ### Features
